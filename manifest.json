@@ -1,0 +1,37 @@
+{
+  "package": "opencode-implantacion-sistemas-agentes-skills",
+  "agents": [
+    "auditor",
+    "unidad-02-analisis",
+    "unidad-02-arquitectura",
+    "unidad-02-diseno",
+    "unidad-02-modelado",
+    "unidad-03-desarrollo",
+    "unidad-04-pruebas",
+    "unidad-05-documentacion",
+    "unidad-06-despliegue",
+    "unidad-07-soporte-seguridad"
+  ],
+  "agent_count": 10,
+  "skills": [
+    "brainstorming",
+    "deployment-readiness",
+    "documentation-as-code",
+    "requesting-code-review",
+    "skill-authoring",
+    "systematic-debugging",
+    "test-driven-development",
+    "threat-modeling",
+    "vercel-react-best-practices",
+    "verification-before-completion",
+    "web-design-guidelines",
+    "webapp-testing",
+    "writing-plans"
+  ],
+  "skill_count": 13,
+  "project_local": true,
+  "contains_opencode_json": false,
+  "reason_config_omitted": "Preserve existing project configuration and avoid overwriting user settings.",
+  "unit_1_available": false,
+  "knowledge_status": "Unit 02-07 files are placeholders pending source-based transcription."
+}
