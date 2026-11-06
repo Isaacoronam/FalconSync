@@ -1,4 +1,6 @@
 import { isInsideFalcon } from '../config/falcon.js';
+import Adventure from '../models/Adventure.js';
+import AdventureStop from '../models/AdventureStop.js';
 import AuditLog from '../models/AuditLog.js';
 import Location, {
   CONSERVATION_STATUSES,
@@ -6,6 +8,11 @@ import Location, {
   LOCATION_STATUSES,
 } from '../models/Location.js';
 import { recordAudit } from '../services/auditService.js';
+import {
+  createCheckInToken,
+  hashCheckInToken,
+} from '../services/checkInTokenService.js';
+import { QR_FORMATS, renderCheckInQr } from '../services/qrService.js';
 import { storageAdapter } from '../services/storage/index.js';
 import { HttpError } from '../utils/HttpError.js';
 
@@ -195,6 +202,21 @@ function readStatus(body, issues, { allowArchived = false } = {}) {
   return body.status;
 }
 
+function readCheckInRadius(body, issues) {
+  if (!hasOwn(body, 'checkInRadiusMeters')) {
+    return undefined;
+  }
+
+  const value = Number(body.checkInRadiusMeters);
+
+  if (!Number.isInteger(value) || value < 10 || value > 500) {
+    issues.push('El radio de check-in debe ser un entero entre 10 y 500 metros');
+    return undefined;
+  }
+
+  return value;
+}
+
 function readHttpUrl(body, key, issues) {
   const value = readText(body, key, issues, { max: 500 });
 
@@ -311,6 +333,12 @@ function buildPayload(body, { partial = false } = {}) {
     payload.status = status;
   }
 
+  const checkInRadiusMeters = readCheckInRadius(body, issues);
+
+  if (checkInRadiusMeters !== undefined) {
+    payload.checkInRadiusMeters = checkInRadiusMeters;
+  }
+
   if (issues.length > 0) {
     throw validationError(issues);
   }
@@ -338,6 +366,30 @@ function ensureEditable(location) {
       409,
       'LOCATION_ARCHIVED',
       'El punto de interés está archivado. Restáuralo antes de editarlo',
+    );
+  }
+}
+
+async function ensureLocationNotInUse(location) {
+  const publishedAdventureIds = await Adventure.distinct('_id', {
+    status: 'published',
+    deletedAt: null,
+  });
+
+  if (publishedAdventureIds.length === 0) {
+    return;
+  }
+
+  const stop = await AdventureStop.exists({
+    location: location._id,
+    adventure: { $in: publishedAdventureIds },
+  });
+
+  if (stop) {
+    throw new HttpError(
+      409,
+      'LOCATION_IN_USE',
+      'El punto de interés es parada de una aventura publicada. Retíralo o sustitúyelo antes de archivarlo o retirarlo de publicación',
     );
   }
 }
@@ -462,6 +514,14 @@ export async function updateAdminLocation(request, response) {
     }
   }
 
+  if (
+    payload.status !== undefined &&
+    payload.status !== 'published' &&
+    location.status === 'published'
+  ) {
+    await ensureLocationNotInUse(location);
+  }
+
   const changedFields = Object.keys(payload);
   Object.assign(location, payload, { updatedBy: request.user._id });
   await location.save();
@@ -487,6 +547,8 @@ export async function deleteAdminLocation(request, response) {
       'El punto de interés ya está archivado',
     );
   }
+
+  await ensureLocationNotInUse(location);
 
   location.status = 'archived';
   location.deletedAt = new Date();
@@ -605,6 +667,64 @@ export async function deleteAdminLocationImage(request, response) {
   });
 
   response.json({ data: location });
+}
+
+export async function rotateLocationCheckInToken(request, response) {
+  const location = await findLocationOrFail(request.params.id);
+  ensureEditable(location);
+
+  const format =
+    typeof request.query.format === 'string'
+      ? request.query.format.toLowerCase()
+      : 'svg';
+
+  if (!QR_FORMATS.includes(format)) {
+    throw new HttpError(
+      400,
+      'INVALID_QR_FORMAT',
+      `El formato del QR debe ser uno de: ${QR_FORMATS.join(', ')}`,
+    );
+  }
+
+  const token = createCheckInToken();
+  const rotatedAt = new Date();
+
+  location.checkInTokenHash = hashCheckInToken(token);
+  location.checkInTokenVersion = (location.checkInTokenVersion ?? 0) + 1;
+  location.checkInTokenRotatedAt = rotatedAt;
+  location.updatedBy = request.user._id;
+  await location.save();
+
+  const qr = await renderCheckInQr({
+    locationId: location._id,
+    token,
+    format,
+  });
+
+  await recordAudit({
+    request,
+    action: 'location.qr.rotated',
+    entityType: 'Location',
+    entityId: location._id,
+    summary: `Rotó el QR de check-in del POI «${location.title}»`,
+    metadata: {
+      slug: location.slug,
+      tokenVersion: location.checkInTokenVersion,
+      format,
+    },
+  });
+
+  response.set('Cache-Control', 'no-store');
+  response.json({
+    data: {
+      location: location.toJSON(),
+      token,
+      tokenVersion: location.checkInTokenVersion,
+      rotatedAt,
+      format,
+      qrDataUrl: qr.dataUrl,
+    },
+  });
 }
 
 export async function listAuditLog(request, response) {

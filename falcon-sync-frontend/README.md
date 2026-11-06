@@ -23,17 +23,24 @@ npm run e2e
 ## Estructura relevante
 
 - `src/app/features/map/coro-map.component.ts`: mapa Leaflet, filtros y popups.
+- `src/app/features/aventuras/`: catálogo, detalle, progreso y check-in de aventuras.
 - `src/app/features/admin/`: layout, panel, listado de POI, formulario, selector de mapa y
   auditoría.
+- `src/app/features/admin/aventuras/`: listado, creación/edición, paradas y QR de aventuras.
 - `src/app/core/services/location-api.service.ts`: cliente HTTP de lugares.
 - `src/app/core/services/admin-api.service.ts`: cliente HTTP del CRUD administrativo.
+- `src/app/core/services/adventure-api.service.ts`: cliente HTTP de aventuras y paradas.
+- `src/app/core/services/check-in-api.service.ts`: cliente HTTP de check-in.
+- `src/app/core/services/qr-admin-api.service.ts`: cliente HTTP de rotación de QR.
 - `src/app/core/models/location.model.ts`: contrato TypeScript de `Location`.
 - `src/app/core/models/admin.model.ts`: resumen, POI administrativo y auditoría.
+- `src/app/core/models/adventure.model.ts`: contratos TypeScript de aventuras, paradas,
+  progreso, check-in y QR.
 - `src/environments/environment.ts`: URL base de la API.
 - `proxy.conf.json`: proxy de desarrollo hacia el backend.
 - `public/images/locations/`: imágenes de los POI, referenciadas por el campo `images` de la API.
 - `public/favicon.ico`: favicon de FalconSync usado por `src/index.html`.
-- `e2e/`: suite Playwright de mapa, autenticación y administración de POI.
+- `e2e/`: suite Playwright de mapa, autenticación, administración de POI y aventuras.
 
 ## Administración
 
@@ -42,6 +49,19 @@ npm run e2e
 - `/admin/poi/nuevo` y `/admin/poi/:id/editar`: ficha completa con selector Leaflet limitado
   a Falcón y gestión de imágenes.
 - `/admin/auditoria`: historial de acciones administrativas.
+- `/admin/aventuras`: listado administrativo de aventuras, publicación, archivo y
+  restauración.
+- `/admin/aventuras/nuevo` y `/admin/aventuras/:id/editar`: creación y edición de
+  aventuras.
+- `/admin/aventuras/:id/paradas`: gestión y reordenamiento de paradas.
+- `/admin/locations/:id/qr`: generación, impresión y descarga de QR de check-in.
+
+Públicas:
+
+- `/aventuras`: catálogo de aventuras publicadas.
+- `/aventuras/:slug`: detalle de aventura con paradas ordenadas.
+- `/aventuras/:slug/progreso`: progreso del usuario autenticado.
+- `/checkin/:locationId?token=...`: check-in con geolocalización.
 
 La tabla de POI se convierte en tarjetas por debajo de 700 px. Las imágenes se suben al
 backend y se sirven desde `/api/uploads/...`; el frontend no guarda archivos localmente.

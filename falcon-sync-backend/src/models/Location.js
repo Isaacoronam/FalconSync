@@ -118,6 +118,26 @@ const locationSchema = new mongoose.Schema(
       default: 'published',
       index: true,
     },
+    checkInTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    checkInTokenVersion: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    checkInTokenRotatedAt: {
+      type: Date,
+      default: null,
+    },
+    checkInRadiusMeters: {
+      type: Number,
+      default: 50,
+      min: [10, 'El radio de check-in debe ser al menos 10 metros'],
+      max: [500, 'El radio de check-in no puede superar 500 metros'],
+    },
     deletedAt: {
       type: Date,
       default: null,
@@ -152,7 +172,11 @@ locationSchema.index({ status: 1, deletedAt: 1, title: 1 });
 locationSchema.set('toJSON', {
   transform: (_document, returned) => {
     returned.id = returned._id.toString();
+    returned.checkInTokenConfigured =
+      Boolean(returned.checkInTokenHash) ||
+      (returned.checkInTokenVersion ?? 0) > 0;
     delete returned._id;
+    delete returned.checkInTokenHash;
     delete returned.createdBy;
     delete returned.updatedBy;
     delete returned.deletedBy;

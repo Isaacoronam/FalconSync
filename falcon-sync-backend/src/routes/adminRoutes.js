@@ -1,5 +1,18 @@
 import { Router } from 'express';
 import {
+  addAdminAdventureStop,
+  archiveAdminAdventure,
+  createAdminAdventure,
+  deleteAdminAdventureStop,
+  getAdminAdventure,
+  listAdminAdventures,
+  publishAdminAdventure,
+  reorderAdminAdventureStops,
+  restoreAdminAdventure,
+  updateAdminAdventure,
+  updateAdminAdventureStop,
+} from '../controllers/adminAdventureController.js';
+import {
   createAdminLocation,
   deleteAdminLocation,
   deleteAdminLocationImage,
@@ -7,6 +20,7 @@ import {
   listAdminLocations,
   listAuditLog,
   restoreAdminLocation,
+  rotateLocationCheckInToken,
   updateAdminLocation,
   uploadAdminLocationImage,
 } from '../controllers/adminLocationController.js';
@@ -32,6 +46,20 @@ router.post(
   uploadAdminLocationImage,
 );
 router.delete('/locations/:id/images', deleteAdminLocationImage);
+router.post('/locations/:id/qr/rotate', rotateLocationCheckInToken);
+
+router.get('/adventures', listAdminAdventures);
+router.post('/adventures', createAdminAdventure);
+router.get('/adventures/:id', getAdminAdventure);
+router.patch('/adventures/:id', updateAdminAdventure);
+router.delete('/adventures/:id', archiveAdminAdventure);
+router.post('/adventures/:id/publish', publishAdminAdventure);
+router.post('/adventures/:id/archive', archiveAdminAdventure);
+router.post('/adventures/:id/restore', restoreAdminAdventure);
+router.put('/adventures/:id/stops/reorder', reorderAdminAdventureStops);
+router.post('/adventures/:id/stops', addAdminAdventureStop);
+router.patch('/adventures/:id/stops/:stopId', updateAdminAdventureStop);
+router.delete('/adventures/:id/stops/:stopId', deleteAdminAdventureStop);
 
 router.get('/audit', listAuditLog);
 

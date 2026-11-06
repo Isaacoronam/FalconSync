@@ -1,0 +1,95 @@
+@if (notFound()) {
+  <h1>Aventura no encontrada</h1>
+  <p class="form-error" role="alert">La aventura solicitada no existe o no está publicada.</p>
+  <a class="button button--ghost" routerLink="/aventuras">Volver al catálogo</a>
+} @else if (error()) {
+  <p class="form-error" role="alert">{{ error() }}</p>
+} @else if (loading()) {
+  <p>Cargando progreso…</p>
+} @else {
+  @let progress = this.progress()!;
+
+  <h1>Progreso de {{ progress.adventure.title }}</h1>
+
+  <div class="progreso-resumen">
+    <div class="progreso-tarjeta">
+      <span class="progreso-tarjeta__etiqueta">Progreso</span>
+      <span class="progreso-tarjeta__valor">{{ progress.percentage }}%</span>
+    </div>
+    <div class="progreso-tarjeta">
+      <span class="progreso-tarjeta__etiqueta">Paradas visitadas</span>
+      <span class="progreso-tarjeta__valor">
+        {{ progress.visitedStops }} de {{ progress.totalStops }}
+      </span>
+    </div>
+    <div class="progreso-tarjeta">
+      <span class="progreso-tarjeta__etiqueta">Restantes</span>
+      <span class="progreso-tarjeta__valor">{{ progress.remainingStops }}</span>
+    </div>
+  </div>
+
+  <div class="progreso-barra">
+    <div
+      class="progreso-barra__relleno"
+      [style.width.%]="progress.percentage"
+      [attr.aria-valuenow]="progress.percentage"
+      role="progressbar"
+      aria-label="Progreso de la aventura"
+    ></div>
+  </div>
+
+  @if (progress.nextStop) {
+    <div class="progreso-siguiente">
+      <h2>Siguiente parada</h2>
+      <p class="progreso-siguiente__orden">Orden {{ progress.nextStop.order }}</p>
+      <p class="progreso-siguiente__lugar">{{ progress.nextStop.location.title }}</p>
+    </div>
+  }
+
+  <h2>Paradas</h2>
+  <section class="progreso-lista" aria-label="Estado de las paradas">
+    @for (stop of progress.stops; track stop.id) {
+      <article class="progreso-item">
+        <div class="progreso-item__main">
+          <span class="progreso-item__orden">{{ stop.order }}</span>
+          <span class="progreso-item__lugar">{{ stop.location.title }}</span>
+        </div>
+        <span
+          class="progreso-item__estado"
+          [class.progreso-item__estado--visitado]="stop.visited"
+        >
+          {{ stop.visited ? 'Visitada' : 'Pendiente' }}
+        </span>
+        @if (stop.visited && stop.checkInAt) {
+          <span class="progreso-item__fecha">{{ formatDate(stop.checkInAt) }}</span>
+        }
+      </article>
+    }
+  </section>
+
+  @if (progress.completed) {
+    @let badge = progress.adventure.badge;
+    <div class="progreso-cierre">
+      <h2>¡Ruta completada!</h2>
+      <p>
+        Has visitado todas las paradas de
+        <strong>{{ progress.adventure.title }}</strong>.
+      </p>
+      @if (badge) {
+        <div class="progreso-insignia">
+          <span class="progreso-insignia__nombre">{{ badge.name }}</span>
+          @if (badge.description) {
+            <span class="progreso-insignia__desc">{{ badge.description }}</span>
+          }
+        </div>
+      }
+      @if (progress.completedAt) {
+        <p class="progreso-cierre__fecha">
+          Fecha de cierre: {{ formatDate(progress.completedAt) }}
+        </p>
+      }
+    </div>
+  }
+
+  <a class="button button--ghost" routerLink="/aventuras">Volver al catálogo</a>
+}

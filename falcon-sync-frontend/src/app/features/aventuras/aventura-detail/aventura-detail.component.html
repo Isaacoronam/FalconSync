@@ -1,0 +1,71 @@
+@if (notFound()) {
+  <h1>Aventura no encontrada</h1>
+  <p class="form-error" role="alert">La aventura solicitada no existe o no está publicada.</p>
+  <a class="button button--ghost" routerLink="/aventuras">Volver al catálogo</a>
+} @else if (error()) {
+  <p class="form-error" role="alert">{{ error() }}</p>
+} @else if (loading()) {
+  <p>Cargando aventura…</p>
+} @else {
+  @let aventura = this.adventure()!;
+
+  <h1>{{ aventura.title }}</h1>
+  <div class="aventura-meta">
+    <span class="aventura-meta__chip">{{ difficultyLabel(aventura.difficulty) }}</span>
+    <span class="aventura-meta__chip">{{ durationLabel(aventura.estimatedMinutes) }}</span>
+    <span class="aventura-meta__chip">{{ stops().length }} parada{{ stops().length !== 1 ? 's' : '' }}</span>
+  </div>
+
+  @if (aventura.coverImage) {
+    <img
+      class="aventura-cover"
+      [src]="aventura.coverImage"
+      [alt]="'Portada de ' + aventura.title"
+      loading="lazy"
+      (error)="onCoverError($event)"
+    />
+  }
+
+  <p class="aventura-summary">{{ aventura.summary }}</p>
+
+  <p class="aventura-description">{{ aventura.description }}</p>
+
+  @if (aventura.badge) {
+    @let b = aventura.badge!;
+    <div class="aventura-badge">
+      <span class="aventura-badge__name">{{ b.name }}</span>
+      @if (b.description) {
+        <span class="aventura-badge__desc">{{ b.description }}</span>
+      }
+    </div>
+  }
+
+  <h2>Paradas de la ruta</h2>
+  <p class="aventura-stops__intro">
+    Recorre las paradas en orden y haz check-in en cada punto de interés.
+  </p>
+
+  <section class="aventura-stops" aria-label="Paradas de la aventura">
+    @for (stop of stops(); track stop.id; let i = $index) {
+      <article class="stop-card">
+        <div class="stop-card__header">
+          <span class="stop-card__order">{{ i + 1 }}</span>
+          <h3 class="stop-card__title">{{ stop.location.title }}</h3>
+          <a class="button button--ghost stop-card__checkin" [routerLink]="['/checkin', stop.location.id]">
+            Check-in
+          </a>
+        </div>
+        @if (stop.didacticText) {
+          <p class="stop-card__text">{{ stop.didacticText }}</p>
+        }
+        @if (stop.instructions) {
+          <div class="stop-card__instructions">
+            <strong>Cómo llegar:</strong> {{ stop.instructions }}
+          </div>
+        }
+      </article>
+    }
+  </section>
+
+  <a class="button button--ghost" routerLink="/aventuras">Volver al catálogo</a>
+}

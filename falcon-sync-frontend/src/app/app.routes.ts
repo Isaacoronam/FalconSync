@@ -9,6 +9,40 @@ export const routes: Routes = [
       import('./features/map/coro-map.component').then((module) => module.CoroMapComponent),
   },
   {
+    path: 'aventuras',
+    title: 'Catálogo de aventuras | FALCONSYNC',
+    loadComponent: () =>
+      import('./features/aventuras/aventura-list/aventura-list.component').then(
+        (module) => module.AventuraListComponent,
+      ),
+  },
+  {
+    path: 'aventuras/:slug',
+    title: 'Aventura | FALCONSYNC',
+    loadComponent: () =>
+      import('./features/aventuras/aventura-detail/aventura-detail.component').then(
+        (module) => module.AventuraDetailComponent,
+      ),
+  },
+  {
+    path: 'aventuras/:slug/progreso',
+    canActivate: [authGuard],
+    title: 'Progreso de la aventura | FALCONSYNC',
+    loadComponent: () =>
+      import(
+        './features/aventuras/aventura-progreso/aventura-progreso.component'
+      ).then((module) => module.AventuraProgresoComponent),
+  },
+  {
+    path: 'checkin/:locationId',
+    canActivate: [authGuard],
+    title: 'Check-in | FALCONSYNC',
+    loadComponent: () =>
+      import('./features/aventuras/checkin/checkin.component').then(
+        (module) => module.CheckinComponent,
+      ),
+  },
+  {
     path: 'login',
     title: 'Iniciar sesión | FALCONSYNC',
     canActivate: [guestGuard],
@@ -80,6 +114,46 @@ export const routes: Routes = [
           import('./features/admin/audit/admin-audit.component').then(
             (module) => module.AdminAuditComponent,
           ),
+      },
+      {
+        path: 'aventuras',
+        title: 'Aventuras | FALCONSYNC',
+        loadComponent: () =>
+          import(
+            './features/admin/aventuras/admin-aventura-list/admin-aventura-list.component'
+          ).then((module) => module.AdminAventuraListComponent),
+      },
+      {
+        path: 'aventuras/nuevo',
+        title: 'Nueva aventura | FALCONSYNC',
+        loadComponent: () =>
+          import(
+            './features/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
+          ).then((module) => module.AdminAventuraFormComponent),
+      },
+      {
+        path: 'aventuras/:id/editar',
+        title: 'Editar aventura | FALCONSYNC',
+        loadComponent: () =>
+          import(
+            './features/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
+          ).then((module) => module.AdminAventuraFormComponent),
+      },
+      {
+        path: 'aventuras/:id/paradas',
+        title: 'Paradas de la aventura | FALCONSYNC',
+        loadComponent: () =>
+          import(
+            './features/admin/aventuras/admin-aventura-stops/admin-aventura-stops.component'
+          ).then((module) => module.AdminAventuraStopsComponent),
+      },
+      {
+        path: 'locations/:id/qr',
+        title: 'Imprimir QR | FALCONSYNC',
+        loadComponent: () =>
+          import(
+            './features/admin/aventuras/qr-imprimir/qr-imprimir.component'
+          ).then((module) => module.QrImprimirComponent),
       },
     ],
   },

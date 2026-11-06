@@ -24,12 +24,14 @@
       >
         CoroMap
       </a>
-      <span class="site-nav__link site-nav__link--soon">
-        Patrimonio <small>Próximamente</small>
-      </span>
-      <span class="site-nav__link site-nav__link--soon">
-        CoroAventura <small>Próximamente</small>
-      </span>
+      <a
+        class="site-nav__link"
+        routerLink="/aventuras"
+        routerLinkActive="site-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Aventuras
+      </a>
 
       @if (auth.isAuthenticated()) {
         @if (auth.isAdmin()) {

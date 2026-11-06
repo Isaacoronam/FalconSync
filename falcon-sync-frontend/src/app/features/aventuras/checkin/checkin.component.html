@@ -1,0 +1,75 @@
+<h1>Check-in en punto de interés</h1>
+<p class="lead">
+  Registra tu visita al punto de interés. Debes estar físicamente cerca del lugar.
+</p>
+
+@if (locationTitle()) {
+  <p class="checkin__lugar">{{ locationTitle() }}</p>
+}
+
+@if (message()) {
+  <p
+    class="form-message"
+    [class.form-message--success]="messageType() === 'success'"
+    [class.form-message--error]="messageType() === 'error'"
+    role="alert"
+  >
+    {{ message() }}
+  </p>
+}
+
+@if (stage() === 'success') {
+  <div class="checkin-exito">
+    <h2>Check-in confirmado</h2>
+    <p>Tu visita ha sido registrada y tu progreso se ha actualizado.</p>
+    <a class="button button--ghost" routerLink="/aventuras">Ver otras aventuras</a>
+  </div>
+} @else {
+  <form class="checkin-form" (ngSubmit)="realizarCheckIn()" novalidate>
+    @if (!tokenPrecargado()) {
+      <div class="form-field">
+        <label for="checkin-token">Token del QR</label>
+        <input
+          id="checkin-token"
+          type="text"
+          placeholder="Pega el token del código QR"
+          [value]="token()"
+          (input)="onTokenInput($event)"
+          [attr.aria-invalid]="tokenError() ? 'true' : null"
+        />
+        @if (tokenError()) {
+          <p id="checkin-token-error" class="form-field__error">{{ tokenError() }}</p>
+        }
+      </div>
+    } @else {
+      <p class="checkin__token-precargado">
+        Token del QR precargado desde el enlace de escaneo.
+      </p>
+    }
+
+    @if (distanceMeters() !== null && radiusMeters() !== null) {
+      <p class="checkin__distancia">
+        Última intención: a {{ distanceMeters() }} m del punto (radio permitido: {{ radiusMeters() }} m).
+      </p>
+    }
+
+    <button
+      class="button button--primary button--block"
+      type="submit"
+      [disabled]="checking() || !token()"
+      [class.checkin__btn--locating]="stage() === 'locating'"
+    >
+      @if (stage() === 'locating') {
+        <span>Obteniendo ubicación…</span>
+      } @else {
+        <span>Registrar check-in</span>
+      }
+    </button>
+  </form>
+
+  <p class="checkin__aviso">
+    Se requiere permiso de ubicación. Si el navegador lo bloquea, concede el permiso e inténtalo de nuevo.
+  </p>
+
+  <a class="button button--ghost" routerLink="/aventuras">Volver al catálogo</a>
+}

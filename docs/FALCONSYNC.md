@@ -1,6 +1,6 @@
-# FalconSync — estado de los cortes 0, 1, 1.5 y 2
+# FalconSync — estado de los cortes 0 a 4
 
-Fecha de verificación: 2026-11-05.
+Fecha de verificación: 2026-11-06.
 
 ## Alcance implementado
 
@@ -60,6 +60,33 @@ Fecha de verificación: 2026-11-05.
 El detalle de endpoints, permisos, validaciones y límites está en
 [`docs/ADMINISTRACION.md`](./ADMINISTRACION.md).
 
+### Corte 3 — CoroAventura backend
+
+- Modelos `Adventure`, `AdventureStop` y `CheckIn`.
+- Check-in global por POI, con índice único `(user, location)`.
+- QR opaco por POI: token de 32 bytes, hash SHA-256 persistido y rotación que invalida los
+  QR anteriores.
+- Geocerca Haversine validada en servidor, con radio configurable entre 10 y 500 m.
+- Progreso en cualquier orden, siguiente parada sugerida y cierre de ruta.
+- CRUD administrativo de aventuras, publicación, archivo, restauración y reordenamiento de
+  paradas.
+- Bloqueo de archivado o despublicación de un POI usado por una aventura publicada.
+- Auditoría de cambios de aventura y rotaciones de QR.
+
+El detalle está en [`docs/AVENTURAS.md`](./AVENTURAS.md).
+
+### Corte 4 — CoroAventura frontend
+
+- Catálogo público de aventuras publicadas (`/aventuras`).
+- Detalle de aventura con paradas ordenadas (`/aventuras/:slug`).
+- Progreso del usuario autenticado (`/aventuras/:slug/progreso`).
+- Check-in con geolocalización del navegador (`/checkin/:locationId?token=...`).
+- Administración de aventuras, paradas y reordenamiento (`/admin/aventuras*`).
+- Generación, impresión y descarga de QR de check-in (`/admin/locations/:id/qr`).
+- Suite E2E con Playwright y geolocalización simulada (`e2e/coro-aventura.spec.ts`).
+
+El detalle está en [`docs/COROAVENTURA-FRONTEND.md`](./COROAVENTURA-FRONTEND.md).
+
 ## Stack verificado
 
 | Componente | Versión |
@@ -77,6 +104,7 @@ El detalle de endpoints, permisos, validaciones y límites está en
 | multer | 2.x |
 | cookie-parser | 1.4.7 |
 | Playwright Test | 1.65.0 |
+| qrcode | 1.5.4 |
 | Vitest (frontend) | 4.x, integrado por Angular CLI |
 | Node test runner (backend) | `node --test` |
 
@@ -101,21 +129,23 @@ FalconSYN/
 │   │   └── seedLocations.js
 │   ├── src/
 │   │   ├── config/            # entorno, Mongo y límites de Falcón
-│   │   ├── controllers/       # auth, admin, POI y locations públicas
+│   │   ├── controllers/       # auth, admin, POI, aventuras, QR y check-in
 │   │   ├── middlewares/       # auth, origin, rate limit, upload, errores
-│   │   ├── models/            # User, RefreshSession, Location, AuditLog
+│   │   ├── models/            # User, RefreshSession, Location, Adventure, AdventureStop, CheckIn, AuditLog
 │   │   ├── routes/
-│   │   ├── services/          # auth, auditoría y storage
-│   │   └── utils/             # HttpError, validaciones
+│   │   ├── services/          # auth, auditoría, storage, QR, tokens, progreso
+│   │   └── utils/             # HttpError, validaciones, distancia Haversine
 │   ├── uploads/               # imágenes locales, ignoradas por Git
-│   └── test/                  # locations, auth y adminLocations
+│   └── test/                  # locations, auth, adminLocations y adventures
 ├── falcon-sync-frontend/
-│   ├── e2e/                   # map, auth y admin-poi
+│   ├── e2e/                   # map, auth, admin-poi y coro-aventura
 │   ├── public/images/locations/
 │   ├── src/app/
 │   │   ├── core/              # guards, interceptor, modelos, servicios
 │   │   ├── features/
-│   │   │   ├── admin/         # layout, dashboard, POI y auditoría
+│   │   │   ├── admin/         # layout, dashboard, POI, auditoría y aventuras
+│   │   │   │   └── aventuras/ # listado, formulario, paradas y QR
+│   │   │   ├── aventuras/     # catálogo, detalle, progreso y check-in
 │   │   │   ├── auth/          # login, registro, cambio, 403
 │   │   │   └── map/
 │   │   ├── environments/
@@ -126,6 +156,8 @@ FalconSYN/
 ├── docs/
 │   ├── ADMINISTRACION.md
 │   ├── AUTENTICACION.md
+│   ├── AVENTURAS.md
+│   ├── COROAVENTURA-FRONTEND.md
 │   └── FALCONSYNC.md
 └── .nvmrc
 ```
@@ -165,8 +197,10 @@ Resumen operativo:
 - `npm run create-admin` creó `admin@falconsync.local`; la contraseña está en `.env` y debe
   cambiarse en el primer acceso.
 - El script es idempotente: una segunda ejecución no modifica la contraseña existente.
-- El panel `/admin` ya permite gestionar POI, imágenes y auditoría. La gestión de usuarios,
-  las rutas, los QR y la moderación corresponden a los cortes siguientes.
+- El panel `/admin` ya permite gestionar POI, imágenes, auditoría y aventuras. El backend de
+  aventuras, paradas, QR y check-in está implementado en el Corte 3 y su interfaz en el
+  Corte 4; la gestión de usuarios, la moderación y las rutas guiadas corresponden a cortes
+  siguientes.
 
 ## Comandos de arranque
 
@@ -194,6 +228,9 @@ npm start
 - API: `http://localhost:3000`
 - Aplicación: `http://localhost:4200`
 - El frontend usa `proxy.conf.json` para enviar `/api` al backend.
+- El backend se detiene si el puerto ya está ocupado; detén la instancia anterior antes de
+  iniciar otra. `npm run seed` también completa `status` y `deletedAt` en POI creados con
+  versiones anteriores.
 
 En Windows, si no se dispone de `cp`, crear `.env` manualmente a partir de
 `.env.example`. No se deben usar los valores de ejemplo en producción.
@@ -206,6 +243,8 @@ Públicos:
 - `GET /api/locations?page=1&limit=50&category=religious`
 - `GET /api/locations/near?lat=11.4075&lng=-69.6778&radius=500`
 - `GET /api/locations/:slug`
+- `GET /api/adventures?page=1&limit=20`
+- `GET /api/adventures/:slug`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
@@ -215,6 +254,8 @@ Autenticados:
 
 - `GET /api/auth/me`
 - `POST /api/auth/change-password`
+- `GET /api/adventures/:slug/progress`
+- `POST /api/check-ins`
 
 Administración (rol `admin`, cambio de contraseña completado):
 
@@ -227,6 +268,19 @@ Administración (rol `admin`, cambio de contraseña completado):
 - `POST /api/admin/locations/:id/restore`
 - `POST /api/admin/locations/:id/images`
 - `DELETE /api/admin/locations/:id/images`
+- `POST /api/admin/locations/:id/qr/rotate?format=svg|png`
+- `GET /api/admin/adventures?q=&status=&page=&limit=`
+- `GET /api/admin/adventures/:id`
+- `POST /api/admin/adventures`
+- `PATCH /api/admin/adventures/:id`
+- `DELETE /api/admin/adventures/:id` (borrado lógico)
+- `POST /api/admin/adventures/:id/publish`
+- `POST /api/admin/adventures/:id/archive`
+- `POST /api/admin/adventures/:id/restore`
+- `POST /api/admin/adventures/:id/stops`
+- `PATCH /api/admin/adventures/:id/stops/:stopId`
+- `DELETE /api/admin/adventures/:id/stops/:stopId`
+- `PUT /api/admin/adventures/:id/stops/reorder`
 - `GET /api/admin/audit?page=&limit=&action=&entityId=`
 
 Las imágenes se sirven en `/api/uploads/...`.
@@ -278,16 +332,21 @@ se dispone de coordenadas y fuente verificables para agregarlo sin inventar dato
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm test` en `falcon-sync-backend` | 33/33 aprobadas (10 admin POI + 12 auth + 11 locations) |
+| Pruebas backend | `npm test` en `falcon-sync-backend` | 46/46 aprobadas (10 admin POI + 13 CoroAventura + 12 auth + 11 locations) |
 | Seed idempotente | `npm run seed` | 6 lugares sincronizados |
 | Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
-| Pruebas frontend | `npm test -- --watch=false` | 18/18 aprobadas |
+| Pruebas frontend | `npm test -- --watch=false` | 29 aprobadas (incluye servicios de aventuras, check-in y QR) |
 | Build producción | `npm run build` | Correcto, sin warnings |
-| E2E permanente | `npm run e2e` en `falcon-sync-frontend` | 6/6 aprobadas con Edge |
+| E2E permanente | `npx playwright test --project=chromium` en `falcon-sync-frontend` | 13/13 aprobadas con Edge |
 | Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
 | Workflow CI | `.github/workflows/ci.yml` | Creado, **no ejecutado** en remoto |
+
+La suite `test/adventures.test.js` cubre QR, rotación, hash no expuesto, check-in válido,
+duplicado, fuera de geocerca, token inválido, progreso en cualquier orden, siguiente parada,
+cierre, check-in global compartido, POI no publicado como parada, POI en uso, publicación,
+reordenamiento, permisos y auditoría.
 
 La suite E2E comprueba:
 
@@ -300,7 +359,11 @@ La suite E2E comprueba:
 - admin operativo con panel y métricas;
 - cambio obligatorio del admin inicial y desbloqueo posterior;
 - creación de un POI, carga de imagen, publicación y aparición en el mapa;
-- archivo lógico, desaparición del API público y restauración como borrador.
+- archivo lógico, desaparición del API público y restauración como borrador;
+- escaneo de QR sin sesión: redirección a login con `returnUrl` completo y token conservado;
+- check-in con geolocalización simulada dentro del radio, progreso al 33 % y siguiente parada;
+- rechazo de check-in duplicado y de posición fuera de la geocerca;
+- recorrido completo de las tres paradas, cierre de ruta al 100 %, insignia y fecha.
 
 La E2E local usa Microsoft Edge mediante el canal de Playwright. En CI se configuró
 Chromium, pero esa ejecución no está verificada todavía. Las imágenes de la E2E se guardan
@@ -318,6 +381,15 @@ en `test-results/e2e-uploads` y no contaminan la carpeta `uploads/` de desarroll
   expone POI publicados y no serializa referencias internas de usuario.
 - Las imágenes se validan por firma binaria, se limitan a JPEG/PNG/WebP, 5 MB y 8 por POI.
   La carpeta `uploads/` está ignorada por Git.
+- El QR de check-in usa un token opaco de 32 bytes; solo se persiste su hash SHA-256, la
+  comparación es en tiempo constante y el hash nunca se serializa.
+- La geocerca se valida en servidor con Haversine, con radio configurable entre 10 y 500 m.
+- El check-in tiene rate limit específico (30 intentos por IP cada 15 minutos) y no registra
+  tokens en logs ni en auditoría.
+- El API público solo expone aventuras publicadas y paradas con POI publicado; el hash del
+  token y las referencias de usuario no salen en las respuestas.
+- Un POI que es parada de una aventura publicada no puede archivarse ni despublicarse hasta
+  retirar la parada o archivar la aventura (`409 LOCATION_IN_USE`).
 - El seed y los endpoints de lectura son públicos por diseño en este corte.
 - El rate limit se desactiva en `NODE_ENV=test` para no interferir con las pruebas; sus
   umbrales no tienen una prueba automatizada propia.
@@ -333,8 +405,13 @@ en `test-results/e2e-uploads` y no contaminan la carpeta `uploads/` de desarroll
 - El slug de un POI archivado no se reutiliza automáticamente; debe elegirse otro.
 - Las imágenes locales no generan miniaturas ni eliminan metadatos EXIF, no pasan por
   antivirus y no están replicadas. En producción deben incluirse en el respaldo.
-- No existen todavía aventuras, paradas, check-in, QR, geocercas, moderación, artículos,
-  eventos ni agenda.
+- El backend de aventuras, paradas, QR y check-in está implementado y el frontend de
+  aventuras se completó en el Corte 4; faltan el escáner de QR, la moderación, los
+  artículos, los eventos y la agenda.
+- No hay seed de aventuras ni imágenes de QR almacenadas; el token solo se devuelve al rotar.
+- El QR puede fotografiarse y compartirse y la ubicación del cliente puede simularse; la
+  geocerca reduce el abuso, pero no elimina el fraude.
+- El slug de una aventura archivada no se reutiliza automáticamente.
 - La autoría y licencia de las imágenes siguen pendientes de verificación.
 - No se creó configuración Docker porque Docker no está instalado en el entorno.
 - Los tiles de OpenStreetMap se usan con atribución visible. Para producción debe revisarse

@@ -23,12 +23,16 @@ Los secretos JWT deben tener al menos 32 caracteres y no deben reutilizarse.
 
 La API queda en `http://localhost:3000`.
 
+Si el puerto ya está ocupado, el arranque se detiene con un mensaje explícito. Detén la
+instancia anterior (`netstat -ano | findstr :3000`) antes de iniciar una nueva. El log de
+arranque incluye el PID de la instancia que queda escuchando.
+
 ## Comandos
 
 ```bash
 npm run dev          # servidor con recarga
 npm start            # servidor normal
-npm run seed         # upsert idempotente de los 6 POI
+npm run seed         # upsert idempotente de los 6 POI y backfill de status/deletedAt
 npm run create-admin # bootstrap idempotente del administrador
 npm test             # suite de backend
 ```
@@ -41,6 +45,8 @@ Lectura pública:
 - `GET /api/locations?page=1&limit=50&category=religious`
 - `GET /api/locations/near?lat=11.4075&lng=-69.6778&radius=500`
 - `GET /api/locations/:slug`
+- `GET /api/adventures?page=1&limit=20`
+- `GET /api/adventures/:slug`
 
 Autenticación:
 
@@ -50,6 +56,11 @@ Autenticación:
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `POST /api/auth/change-password`
+
+Aventuras y check-in (autenticado):
+
+- `GET /api/adventures/:slug/progress`
+- `POST /api/check-ins` (`{ locationId, token, latitude, longitude }`)
 
 Administración (rol `admin`):
 
@@ -62,13 +73,27 @@ Administración (rol `admin`):
 - `POST /api/admin/locations/:id/restore`
 - `POST /api/admin/locations/:id/images` (`multipart/form-data`, campo `image`)
 - `DELETE /api/admin/locations/:id/images` (`{ "url": "..." }`)
+- `POST /api/admin/locations/:id/qr/rotate?format=svg|png`
+- `GET /api/admin/adventures?q=&status=&page=&limit=`
+- `GET /api/admin/adventures/:id`
+- `POST /api/admin/adventures`
+- `PATCH /api/admin/adventures/:id`
+- `DELETE /api/admin/adventures/:id` (borrado lógico)
+- `POST /api/admin/adventures/:id/publish`
+- `POST /api/admin/adventures/:id/archive`
+- `POST /api/admin/adventures/:id/restore`
+- `POST /api/admin/adventures/:id/stops`
+- `PATCH /api/admin/adventures/:id/stops/:stopId`
+- `DELETE /api/admin/adventures/:id/stops/:stopId`
+- `PUT /api/admin/adventures/:id/stops/reorder` (`{ "order": ["stopId1", "stopId2"] }`)
 - `GET /api/admin/audit?page=&limit=&action=&entityId=`
 
 Las imágenes se sirven desde `/api/uploads/...`.
 
 El detalle de cookies, rotación de refresh, roles y límites está en
 [`../docs/AUTENTICACION.md`](../docs/AUTENTICACION.md). El CRUD de POI, imágenes y auditoría
-está documentado en [`../docs/ADMINISTRACION.md`](../docs/ADMINISTRACION.md).
+está documentado en [`../docs/ADMINISTRACION.md`](../docs/ADMINISTRACION.md). El diseño de
+aventuras, QR, geocercas y check-in está en [`../docs/AVENTURAS.md`](../docs/AVENTURAS.md).
 
 ## Seguridad
 
@@ -80,10 +105,17 @@ está documentado en [`../docs/ADMINISTRACION.md`](../docs/ADMINISTRACION.md).
 - Rate limit en registro, login, refresh y cambio de contraseña.
 - `CORS` con credenciales y comprobación de origen en endpoints con cookie.
 - El administrador creado por bootstrap debe cambiar la contraseña en el primer acceso.
-- El CRUD administrativo exige rol `admin`; el API público solo devuelve POI publicados.
+- El CRUD administrativo exige rol `admin`; el API público solo devuelve POI y aventuras
+  publicados.
 - Las imágenes se validan por firma binaria (JPEG/PNG/WebP), con límite de 5 MB y 8 por POI.
   El adaptador local vive en `src/services/storage/` y puede sustituirse por otro
   almacenamiento.
+- El QR de check-in es opaco: token de 32 bytes, hash SHA-256 persistido con `select: false`,
+  comparación en tiempo constante y rotación que invalida los QR anteriores.
+- La geocerca Haversine se valida solo en servidor; el radio por POI es configurable entre 10
+  y 500 m (50 m por defecto).
+- El check-in tiene rate limit propio (30 intentos por IP cada 15 minutos) y no registra
+  tokens en logs ni en auditoría.
 
 ## Seed y fuentes
 
@@ -114,9 +146,9 @@ No se incluyen secretos reales en el repositorio. `.env` está ignorado por Git.
 
 ## Pruebas
 
-`npm test` ejecuta las pruebas de ubicaciones, autenticación y administración de POI con
-`node --test` y `supertest`, usando bases de datos locales de prueba. En total se verificaron
-33 pruebas.
+`npm test` ejecuta las pruebas de ubicaciones, autenticación, administración de POI y
+CoroAventura (aventuras, QR, check-in y progreso) con `node --test` y `supertest`, usando
+bases de datos locales de prueba. En total se verificaron 46 pruebas (46/46 aprobadas).
 
 La suite E2E permanente vive en `../falcon-sync-frontend/e2e` y arranca esta API con
 `scripts/e2eServer.js` sobre la base `falconsync_e2e`.

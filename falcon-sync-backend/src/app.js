@@ -6,7 +6,9 @@ import mongoose from 'mongoose';
 import { config } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
 import adminRoutes from './routes/adminRoutes.js';
+import adventureRoutes from './routes/adventureRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import checkInRoutes from './routes/checkInRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
 
 export function createApp() {
@@ -51,6 +53,8 @@ export function createApp() {
 
   app.use('/api/auth', authRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/adventures', adventureRoutes);
+  app.use('/api/check-ins', checkInRoutes);
   app.use('/api/locations', locationRoutes);
 
   app.use(notFoundHandler);

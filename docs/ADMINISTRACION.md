@@ -41,6 +41,8 @@ El modelo `Location` incorpora:
 | `deletedAt` | Fecha del borrado lógico; `null` si está activo. |
 | `createdBy`, `updatedBy`, `deletedBy` | Referencias internas al usuario; no se serializan en las respuestas JSON. |
 | `images` | Rutas públicas de imágenes, hasta 8. |
+| `checkInRadiusMeters` | Radio de check-in del POI, entre 10 y 500 m; por defecto 50. |
+| `checkInTokenVersion`, `checkInTokenRotatedAt` | Estado de rotación del QR; el hash no se serializa. |
 
 El API público solo devuelve POI con `status=published` y `deletedAt=null`. Los borradores y
 archivados quedan visibles únicamente en el API administrativo.
@@ -72,11 +74,15 @@ archivados quedan visibles únicamente en el API administrativo.
 | `POST` | `/api/admin/locations/:id/restore` | Restaura como borrador. |
 | `POST` | `/api/admin/locations/:id/images` | Sube una imagen `multipart/form-data` en el campo `image`. |
 | `DELETE` | `/api/admin/locations/:id/images` | Quita una imagen mediante `{ "url": "..." }`. |
+| `POST` | `/api/admin/locations/:id/qr/rotate?format=svg\|png` | Rota el token QR y devuelve el token y la imagen una sola vez. |
 | `GET` | `/api/admin/audit` | Auditoría paginada, filtrable por `action` y `entityId`. |
 
 Errores propios: `DUPLICATE_SLUG`, `LOCATION_ARCHIVED`, `LOCATION_NOT_ARCHIVED`,
-`IMAGE_LIMIT_REACHED`, `IMAGE_NOT_FOUND`, `INVALID_IMAGE`, `INVALID_IMAGE_TYPE`,
-`IMAGE_TOO_LARGE`.
+`LOCATION_IN_USE`, `IMAGE_LIMIT_REACHED`, `IMAGE_NOT_FOUND`, `INVALID_IMAGE`,
+`INVALID_IMAGE_TYPE`, `IMAGE_TOO_LARGE`, `INVALID_QR_FORMAT`.
+
+`LOCATION_IN_USE` impide archivar o despublicar un POI que sea parada de una aventura
+publicada. El detalle de aventuras, QR y check-in está en [`AVENTURAS.md`](./AVENTURAS.md).
 
 ## Borrado lógico
 
@@ -139,10 +145,10 @@ menores a 700 px para evitar desplazamiento horizontal.
 
 | Comprobación | Resultado |
 |---|---|
-| Pruebas backend | 33/33 |
-| Pruebas frontend | 18/18 |
+| Pruebas backend | 46/46 (incluye 13 de CoroAventura) |
+| Pruebas frontend | 29/29 |
 | Build de producción | Correcto |
-| E2E | 6/6 con Edge local |
+| E2E | 13/13 con Edge local |
 | `npm audit --omit=dev` | 0 vulnerabilidades en backend y frontend |
 
 La prueba E2E `admin-poi.spec.ts` crea un POI, sube una imagen, lo publica, comprueba que

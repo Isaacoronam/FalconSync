@@ -7,6 +7,16 @@ export const AUDIT_ACTIONS = [
   'location.restored',
   'location.image.uploaded',
   'location.image.removed',
+  'location.qr.rotated',
+  'adventure.created',
+  'adventure.updated',
+  'adventure.published',
+  'adventure.archived',
+  'adventure.restored',
+  'adventure.stop.added',
+  'adventure.stop.updated',
+  'adventure.stop.removed',
+  'adventure.stops.reordered',
 ];
 
 const auditLogSchema = new mongoose.Schema(
@@ -36,7 +46,7 @@ const auditLogSchema = new mongoose.Schema(
       type: String,
       required: true,
       default: 'Location',
-      enum: ['Location'],
+      enum: ['Location', 'Adventure', 'AdventureStop'],
       index: true,
     },
     entityId: {

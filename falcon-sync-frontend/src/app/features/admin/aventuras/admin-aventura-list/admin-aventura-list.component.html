@@ -1,0 +1,91 @@
+<h1>Aventuras</h1>
+<p class="lead">
+  Gestión administrativa de aventuras: borrador, publicada y archivada.
+</p>
+
+<div class="admin-toolbar">
+  <form class="filters" [formGroup]="filters" (ngSubmit)="applyFilters()" novalidate>
+    <div class="form-field">
+      <label>Buscar</label>
+      <input id="filtro-q" formControlName="q" placeholder="Título o slug" />
+    </div>
+    <div class="form-field">
+      <label>Estado</label>
+      <select id="filtro-estado" formControlName="status">
+        @for (opcion of statuses; track opcion.value) {
+          <option [value]="opcion.value">{{ opcion.label }}</option>
+        }
+      </select>
+    </div>
+    <button class="button button--primary" type="submit">Filtrar</button>
+    <button type="button" class="button button--ghost" (click)="clearFilters()">Limpiar</button>
+    <a class="button button--primary" routerLink="nuevo">Crear aventura</a>
+  </form>
+</div>
+
+@if (error()) {
+  <p class="form-error" role="alert">{{ error() }}</p>
+}
+@if (notice()) {
+  <p class="form-success" role="status">{{ notice() }}</p>
+}
+
+@if (loading()) {
+  <p>Cargando aventuras…</p>
+} @else if (adventures().length === 0) {
+  <p class="empty">No se encontraron aventuras con esos filtros.</p>
+} @else {
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Slug</th>
+        <th>Estado</th>
+        <th>Actualizada</th>
+        <th class="admin-table__actions">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (aventura of adventures(); track aventura.id) {
+        <tr>
+          <td>{{ aventura.title }}</td>
+          <td>{{ aventura.slug }}</td>
+          <td>
+            <span class="admin-badge">{{ statusLabel(aventura.status) }}</span>
+          </td>
+          <td>{{ formatDate(aventura.updatedAt) }}</td>
+          <td class="admin-table__actions">
+            <a class="button button--ghost" [routerLink]="[aventura.id, 'editar']">Editar</a>
+            <a class="button button--ghost" [routerLink]="[aventura.id, 'paradas']">Paradas</a>
+            @if (aventura.status !== 'published') {
+              <button
+                class="button button--ghost"
+                [disabled]="busy() === aventura.id"
+                (click)="publish(aventura)"
+              >
+                {{ busy() === aventura.id ? 'Publicando…' : 'Publicar' }}
+              </button>
+            } @else {
+              <button
+                class="button button--ghost"
+                [disabled]="busy() === aventura.id"
+                (click)="archive(aventura)"
+              >
+                {{ busy() === aventura.id ? 'Archivando…' : 'Archivar' }}
+              </button>
+            }
+            @if (aventura.status === 'archived') {
+              <button
+                class="button button--ghost"
+                [disabled]="busy() === aventura.id"
+                (click)="restore(aventura)"
+              >
+                {{ busy() === aventura.id ? 'Restaurando…' : 'Restaurar' }}
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

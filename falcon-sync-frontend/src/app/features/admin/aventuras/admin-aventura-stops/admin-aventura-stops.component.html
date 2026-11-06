@@ -1,0 +1,143 @@
+<h1>Paradas de {{ adventureTitle() }}</h1>
+<a class="button button--ghost" routerLink="../../">Volver a la aventura</a>
+
+@if (error()) {
+  <p class="form-error" role="alert">{{ error() }}</p>
+}
+@if (success()) {
+  <p class="form-success" role="status">{{ success() }}</p>
+}
+
+@if (loading()) {
+  <p>Cargando paradas…</p>
+} @else {
+  <section class="stops-actions">
+    @if (!adding()) {
+      <button class="button button--primary" type="button" (click)="startAdd()">
+        Añadir parada
+      </button>
+    } @else {
+      <button class="button button--ghost" type="button" (click)="cancelAdd()">Cancelar</button>
+    }
+    <a class="button button--ghost" routerLink="../qr/{{ adventureId() }}">Imprimir QR del POI</a>
+  </section>
+
+  @if (adding()) {
+    <form class="add-stop-form" (ngSubmit)="addStop()" novalidate>
+      <div class="form-field">
+        <label for="stop-location">Punto de interés <span class="requerido">*</span></label>
+        <select id="stop-location" formControlName="locationId">
+          <option value="">Selecciona un punto de interés publicado</option>
+          @for (location of locations(); track location.id) {
+            <option [value]="location.id">{{ location.title }}</option>
+          }
+        </select>
+        @if (stopForm.controls.locationId.hasError('required') && stopForm.controls.locationId.touched) {
+          <p class="form-field__error">Selecciona un punto de interés.</p>
+        }
+      </div>
+      <div class="form-field">
+        <label for="stop-order">Orden</label>
+        <input
+          id="stop-order"
+          type="number"
+          formControlName="order"
+          min="1"
+        />
+        @if (stopForm.controls.order.hasError('required') && stopForm.controls.order.touched) {
+          <p class="form-field__error">El orden es obligatorio.</p>
+        }
+        @if (stopForm.controls.order.hasError('min') && stopForm.controls.order.touched) {
+          <p class="form-field__error">El orden debe ser al menos 1.</p>
+        }
+      </div>
+      <div class="form-field">
+        <label for="stop-didactic">Texto didáctico</label>
+        <textarea id="stop-didactic" formControlName="didacticText" rows="2"></textarea>
+        <p class="form-field__help">Máximo 2000 caracteres.</p>
+      </div>
+      <div class="form-field">
+        <label for="stop-instructions">Instrucciones</label>
+        <textarea id="stop-instructions" formControlName="instructions" rows="2"></textarea>
+        <p class="form-field__help">Máximo 2000 caracteres.</p>
+      </div>
+      <div class="form-actions">
+        <button class="button button--primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Añadiendo…' : 'Añadir parada' }}
+        </button>
+        <button class="button button--ghost" type="button" (click)="cancelAdd()">Cancelar</button>
+      </div>
+    </form>
+  }
+
+  @if (stops().length === 0 && !adding()) {
+    <p class="empty">Esta aventura no tiene paradas todavía. Añade al menos una para poder publicarla.</p>
+  }
+
+  <section class="stops-list" aria-label="Paradas de la aventura">
+    @for (stop of stops(); track stop.id) {
+      <article class="stop-card">
+        <div class="stop-card__header">
+          <span class="stop-card__order">{{ stop.order }}</span>
+          <span class="stop-card__lugar">{{ stop.location.title }}</span>
+          <span class="stop-card__estado">
+            {{ stop.location.status }}
+          </span>
+        </div>
+
+        @if (editingStopId() === stop.id) {
+          <form class="edit-stop-form" (ngSubmit)="saveEdit(stop)" novalidate>
+            <div class="form-field">
+              <label>Texto didáctico</label>
+              <textarea
+                id="edit-didactic"
+                [value]="editDraft().didacticText"
+                (input)="updateDraftField('didacticText', $any($event.target).value)"
+                rows="2"
+              ></textarea>
+            </div>
+            <div class="form-field">
+              <label>Instrucciones</label>
+              <textarea
+                id="edit-instructions"
+                [value]="editDraft().instructions"
+                (input)="updateDraftField('instructions', $any($event.target).value)"
+                rows="2"
+              ></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="button button--primary" type="submit" [disabled]="saving()">
+                Guardar
+              </button>
+              <button class="button button--ghost" type="button" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </form>
+        } @else {
+          @if (stop.didacticText) {
+            <p class="stop-card__text">{{ stop.didacticText }}</p>
+          }
+          @if (stop.instructions) {
+            <p class="stop-card__instructions">{{ stop.instructions }}</p>
+          }
+          <div class="stop-card__actions">
+            <button class="button button--ghost" type="button" (click)="moveStop(stop, 'up')" [disabled]="stop.order === 1">
+              Subir
+            </button>
+            <button class="button button--ghost" type="button" (click)="moveStop(stop, 'down')">
+              Bajar
+            </button>
+            <button class="button button--ghost" type="button" (click)="editStop(stop)">
+              Editar
+            </button>
+            <button class="button button--ghost" type="button" (click)="deleteStop(stop)">
+              Eliminar
+            </button>
+            <a class="button button--ghost" [routerLink]="['/admin/locations', stop.location.id, 'qr']">
+              QR
+            </a>
+          </div>
+        }
+      </article>
+    }
+  </section>
+}

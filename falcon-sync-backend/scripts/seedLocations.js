@@ -101,9 +101,27 @@ export const locations = [
   },
 ];
 
+async function backfillPublicationFields() {
+  const statusResult = await Location.updateMany(
+    { status: { $exists: false } },
+    { $set: { status: "published" } },
+  );
+  const deletedAtResult = await Location.updateMany(
+    { deletedAt: { $exists: false } },
+    { $set: { deletedAt: null } },
+  );
+
+  if (statusResult.modifiedCount > 0 || deletedAtResult.modifiedCount > 0) {
+    console.log(
+      `[seed] Campos de publicación completados en ${Math.max(statusResult.modifiedCount, deletedAtResult.modifiedCount)} lugares`,
+    );
+  }
+}
+
 async function seedLocations() {
   await connectDB();
   await Location.init();
+  await backfillPublicationFields();
 
   for (const location of locations) {
     await Location.findOneAndUpdate(
