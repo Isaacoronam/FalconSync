@@ -45,10 +45,18 @@ OpenCode busca las skills de proyecto en `.opencode/skills/<nombre>/SKILL.md`. N
 
 ## Aplicación FalconSync
 
-Este repositorio también contiene el primer corte de la aplicación:
+Este repositorio también contiene la aplicación:
 
-- `falcon-sync-backend/`: API REST con Express 5.3 y Mongoose 9.12.
-- `falcon-sync-frontend/`: Angular 21 (core 21.2.26, CLI 21.2.29) con Leaflet 1.9.4.
+- `falcon-sync-backend/`: API REST con Express 5.3, Mongoose 9.12, autenticación JWT,
+  CRUD de POI, imágenes locales y auditoría.
+- `falcon-sync-frontend/`: Angular 21 con Leaflet 1.9.4, autenticación, panel administrativo
+  completo para POI y suite E2E permanente con Playwright.
 - `docs/FALCONSYNC.md`: alcance, comandos, fuentes de datos, verificación y pendientes.
+- `docs/AUTENTICACION.md`: modelo de sesión, roles, cookies y límites de seguridad.
+- `docs/ADMINISTRACION.md`: CRUD de POI, borrado lógico, imágenes y auditoría.
+- `.github/workflows/ci.yml`: workflow de pruebas, build y E2E (creado, aún no ejecutado en
+  remoto).
 
-El arranque verificado usa MongoDB 9.0.4 local, backend en `http://localhost:3000` y frontend en `http://localhost:4200`.
+El arranque verificado usa MongoDB 9.0.4 local, backend en `http://localhost:3000` y
+frontend en `http://localhost:4200`. La suite E2E usa una base `falconsync_e2e` y los
+puertos 3101/4201.

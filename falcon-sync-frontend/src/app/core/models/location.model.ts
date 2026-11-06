@@ -2,6 +2,8 @@ export type LocationCategory = 'architecture' | 'monument' | 'nature' | 'religio
 
 export type ConservationStatus = 'good' | 'fair' | 'poor' | 'unknown';
 
+export type LocationStatus = 'draft' | 'published' | 'archived';
+
 export interface LocationCategoryOption {
   value: LocationCategory | 'all';
   label: string;
@@ -23,6 +25,8 @@ export interface FalconLocation {
   conservationStatus: ConservationStatus;
   sourceUrl?: string;
   isProvisional: boolean;
+  status?: LocationStatus;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

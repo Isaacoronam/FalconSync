@@ -1,0 +1,118 @@
+.admin-shell {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  align-items: start;
+  gap: 1.4rem;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(251, 247, 239, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.admin-sidebar__heading {
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-sidebar__eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--terracotta);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.admin-sidebar__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.admin-nav__link {
+  padding: 0.6rem 0.7rem;
+  border-radius: 9px;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.admin-nav__link:hover {
+  background: var(--cream);
+}
+
+.admin-nav__link--active {
+  color: var(--terracotta-dark);
+  background: var(--cream);
+  box-shadow: inset 3px 0 0 var(--terracotta);
+}
+
+.admin-sidebar__footer {
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.admin-sidebar__user {
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-sidebar__role {
+  margin: 0.1rem 0 0.65rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-sidebar__map-link {
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.admin-content {
+  min-width: 0;
+}
+
+@media (max-width: 880px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    gap: 0.8rem;
+  }
+
+  .admin-sidebar__heading,
+  .admin-sidebar__footer {
+    display: none;
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

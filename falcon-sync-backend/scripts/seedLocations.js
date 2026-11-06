@@ -1,7 +1,8 @@
+import { pathToFileURL } from "node:url";
 import { connectDB, disconnectDB } from "../src/config/db.js";
 import Location from "../src/models/Location.js";
 
-const locations = [
+export const locations = [
   {
     title: "Catedral de Coro",
     slug: "catedral-de-coro",
@@ -120,11 +121,19 @@ async function seedLocations() {
   console.log(`[seed] ${locations.length} lugares sincronizados`);
 }
 
-seedLocations()
-  .catch((error) => {
-    console.error("[seed] Error:", error);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await disconnectDB();
-  });
+export { seedLocations };
+
+const isDirectRun =
+  process.argv[1] &&
+  pathToFileURL(process.argv[1]).href === import.meta.url;
+
+if (isDirectRun) {
+  seedLocations()
+    .catch((error) => {
+      console.error("[seed] Error:", error);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await disconnectDB();
+    });
+}

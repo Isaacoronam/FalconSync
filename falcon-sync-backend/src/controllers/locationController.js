@@ -26,7 +26,7 @@ export async function listLocations(request, response) {
     MAX_PAGE_SIZE,
   );
 
-  const filter = {};
+  const filter = { status: 'published', deletedAt: null };
 
   if (request.query.category) {
     if (!LOCATION_CATEGORIES.includes(request.query.category)) {
@@ -61,7 +61,11 @@ export async function listLocations(request, response) {
 }
 
 export async function getLocationBySlug(request, response) {
-  const location = await Location.findOne({ slug: request.params.slug });
+  const location = await Location.findOne({
+    slug: request.params.slug,
+    status: 'published',
+    deletedAt: null,
+  });
 
   if (!location) {
     return response.status(404).json({
@@ -94,6 +98,8 @@ export async function listNearbyLocations(request, response) {
   }
 
   const locations = await Location.find({
+    status: 'published',
+    deletedAt: null,
     location: {
       $nearSphere: {
         $geometry: {

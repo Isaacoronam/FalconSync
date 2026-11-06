@@ -15,6 +15,7 @@ npm install
 npm start
 npm test -- --watch=false
 npm run build
+npm run e2e
 ```
 
 `npm start` usa `proxy.conf.json` para enviar `/api` al backend. La aplicación queda en `http://localhost:4200`.
@@ -22,12 +23,31 @@ npm run build
 ## Estructura relevante
 
 - `src/app/features/map/coro-map.component.ts`: mapa Leaflet, filtros y popups.
+- `src/app/features/admin/`: layout, panel, listado de POI, formulario, selector de mapa y
+  auditoría.
 - `src/app/core/services/location-api.service.ts`: cliente HTTP de lugares.
+- `src/app/core/services/admin-api.service.ts`: cliente HTTP del CRUD administrativo.
 - `src/app/core/models/location.model.ts`: contrato TypeScript de `Location`.
+- `src/app/core/models/admin.model.ts`: resumen, POI administrativo y auditoría.
 - `src/environments/environment.ts`: URL base de la API.
 - `proxy.conf.json`: proxy de desarrollo hacia el backend.
 - `public/images/locations/`: imágenes de los POI, referenciadas por el campo `images` de la API.
 - `public/favicon.ico`: favicon de FalconSync usado por `src/index.html`.
+- `e2e/`: suite Playwright de mapa, autenticación y administración de POI.
+
+## Administración
+
+- `/admin`: panel con métricas por estado y actividad reciente.
+- `/admin/poi`: búsqueda, filtros, paginación, edición, archivo y restauración.
+- `/admin/poi/nuevo` y `/admin/poi/:id/editar`: ficha completa con selector Leaflet limitado
+  a Falcón y gestión de imágenes.
+- `/admin/auditoria`: historial de acciones administrativas.
+
+La tabla de POI se convierte en tarjetas por debajo de 700 px. Las imágenes se suben al
+backend y se sirven desde `/api/uploads/...`; el frontend no guarda archivos localmente.
+
+El detalle funcional y de seguridad está en
+[`../docs/ADMINISTRACION.md`](../docs/ADMINISTRACION.md).
 
 ## Cartografía
 

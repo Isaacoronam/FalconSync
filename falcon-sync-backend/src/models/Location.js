@@ -10,6 +10,8 @@ export const LOCATION_CATEGORIES = [
 
 export const CONSERVATION_STATUSES = ['good', 'fair', 'poor', 'unknown'];
 
+export const LOCATION_STATUSES = ['draft', 'published', 'archived'];
+
 function validateCoordinates(value) {
   if (!Array.isArray(value) || value.length !== 2) {
     return false;
@@ -107,6 +109,35 @@ const locationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: {
+        values: LOCATION_STATUSES,
+        message: 'Estado de publicación no válido',
+      },
+      default: 'published',
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -116,11 +147,15 @@ const locationSchema = new mongoose.Schema(
 
 locationSchema.index({ location: '2dsphere' });
 locationSchema.index({ category: 1, title: 1 });
+locationSchema.index({ status: 1, deletedAt: 1, title: 1 });
 
 locationSchema.set('toJSON', {
   transform: (_document, returned) => {
     returned.id = returned._id.toString();
     delete returned._id;
+    delete returned.createdBy;
+    delete returned.updatedBy;
+    delete returned.deletedBy;
     return returned;
   },
 });

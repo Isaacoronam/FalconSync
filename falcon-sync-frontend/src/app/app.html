@@ -4,12 +4,18 @@
       <span class="brand__mark" aria-hidden="true">F</span>
       <span class="brand__copy">
         <span class="brand__eyebrow">Santa Ana de Coro · Patrimonio Mundial</span>
-        <span class="brand__name">FalconSync</span>
+        <span class="brand__name">FALCONSYNC</span>
       </span>
     </a>
 
     <nav class="site-nav" aria-label="Navegación principal">
-      <a class="site-nav__link site-nav__link--active" routerLink="/" aria-current="page">
+      <a
+        class="site-nav__link"
+        routerLink="/"
+        routerLinkActive="site-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
         CoroMap
       </a>
       <span class="site-nav__link site-nav__link--soon">
@@ -18,6 +24,47 @@
       <span class="site-nav__link site-nav__link--soon">
         CoroAventura <small>Próximamente</small>
       </span>
+
+      @if (auth.isAuthenticated()) {
+        @if (auth.isAdmin()) {
+          <a
+            class="site-nav__link"
+            routerLink="/admin"
+            routerLinkActive="site-nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            Admin
+          </a>
+        }
+        <a
+          class="site-nav__user"
+          routerLink="/cambiar-contrasena"
+          title="Cambiar contraseña"
+          [attr.aria-label]="'Cuenta de ' + (auth.currentUser()?.name ?? '') + '. Cambiar contraseña'"
+        >
+          {{ auth.currentUser()?.name }}
+        </a>
+        <button type="button" class="site-nav__link site-nav__link--button" (click)="logout()">
+          Salir
+        </button>
+      } @else {
+        <a
+          class="site-nav__link"
+          routerLink="/login"
+          routerLinkActive="site-nav__link--active"
+          ariaCurrentWhenActive="page"
+        >
+          Iniciar sesión
+        </a>
+        <a
+          class="site-nav__link site-nav__link--cta"
+          routerLink="/registro"
+          routerLinkActive="site-nav__link--active"
+          ariaCurrentWhenActive="page"
+        >
+          Crear cuenta
+        </a>
+      }
     </nav>
   </header>
 
@@ -27,7 +74,7 @@
 
   <footer class="site-footer">
     <p>
-      <strong>FalconSync</strong> · Prototipo académico de patrimonio inteligente para Santa Ana de
+      <strong>FALCONSYNC</strong> · Prototipo académico de patrimonio inteligente para Santa Ana de
       Coro.
     </p>
     <p>
@@ -36,6 +83,6 @@
         >OpenStreetMap</a
       >. Contenido patrimonial pendiente de revisión experta.
     </p>
-    <p>© {{ year }} FalconSync</p>
+    <p>© {{ year }} FALCONSYNC</p>
   </footer>
 </div>

@@ -6,10 +6,18 @@ import {
   OnDestroy,
   computed,
   inject,
+  isDevMode,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
+import {
+  CORO_INITIAL_ZOOM,
+  CORO_VIEW,
+  FALCON_BOUNDS,
+  FALCON_MIN_ZOOM,
+  LOCATION_DETAIL_ZOOM,
+} from '../../core/config/falcon-bounds';
 import {
   ConservationStatus,
   FalconLocation,
@@ -63,6 +71,10 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      delete (window as Window & { __falconsyncMap?: L.Map }).__falconsyncMap;
+    }
+
     this.map?.remove();
   }
 
@@ -105,8 +117,19 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     }
 
     const [longitude, latitude] = location.location.coordinates;
-    this.map.flyTo([latitude, longitude], 17, { duration: 0.8 });
+    this.map.flyTo([latitude, longitude], LOCATION_DETAIL_ZOOM, { duration: 0.8 });
     this.markers.get(location.slug)?.openPopup();
+  }
+
+  protected showFalconOverview(): void {
+    if (!this.map) {
+      return;
+    }
+
+    this.map.closePopup();
+    this.map.fitBounds(FALCON_BOUNDS, {
+      padding: [24, 24],
+    });
   }
 
   protected categoryLabel(category: LocationCategory): string {
@@ -125,7 +148,10 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     this.map = L.map('coro-map', {
       zoomControl: true,
       scrollWheelZoom: true,
-    }).setView([11.4078, -69.6785], 16);
+      maxBounds: FALCON_BOUNDS,
+      maxBoundsViscosity: 1,
+      minZoom: FALCON_MIN_ZOOM,
+    }).setView(CORO_VIEW, CORO_INITIAL_ZOOM);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -134,7 +160,20 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     }).addTo(this.map);
 
     this.markerLayer = L.layerGroup().addTo(this.map);
+    this.exposeMapForDiagnostics();
     setTimeout(() => this.map?.invalidateSize(), 0);
+  }
+
+  /**
+   * Expone la instancia de Leaflet solo en desarrollo para que la suite E2E
+   * pueda comprobar los límites reales del mapa. No se incluye en producción.
+   */
+  private exposeMapForDiagnostics(): void {
+    if (!isDevMode() || typeof window === 'undefined') {
+      return;
+    }
+
+    (window as Window & { __falconsyncMap?: L.Map }).__falconsyncMap = this.map;
   }
 
   private renderMarkers(): void {
@@ -173,12 +212,12 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
 
     if (this.locations().length === 1) {
       const [longitude, latitude] = this.locations()[0].location.coordinates;
-      this.map.setView([latitude, longitude], 16);
+      this.map.setView([latitude, longitude], LOCATION_DETAIL_ZOOM - 1);
       return;
     }
 
     if (this.selectedCategory() === 'all') {
-      this.map.setView([11.4078, -69.6785], 16);
+      this.map.setView(CORO_VIEW, CORO_INITIAL_ZOOM);
       return;
     }
 
@@ -191,7 +230,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
 
     this.map.fitBounds(bounds, {
       padding: [48, 48],
-      maxZoom: 17,
+      maxZoom: LOCATION_DETAIL_ZOOM,
     });
   }
 

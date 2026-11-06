@@ -34,6 +34,7 @@
   border-radius: 50%;
   font-family: var(--font-display);
   font-size: 1.5rem;
+  font-weight: 700;
   color: var(--gold);
   background: rgba(255, 255, 255, 0.04);
 }
@@ -55,7 +56,8 @@
 .brand__name {
   font-family: var(--font-display);
   font-size: clamp(1.5rem, 2.6vw, 2rem);
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .site-nav {
@@ -63,6 +65,40 @@
   align-items: center;
   gap: 0.35rem;
   flex-wrap: wrap;
+}
+
+.site-nav__user {
+  max-width: 12rem;
+  overflow: hidden;
+  padding: 0 0.35rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-nav__user:hover {
+  color: var(--paper);
+  text-decoration: underline;
+}
+
+.site-nav__link--button {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.site-nav__link--cta {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--paper);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.site-nav__link--cta:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .site-nav__link {

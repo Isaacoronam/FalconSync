@@ -4,6 +4,9 @@ dist/
 .angular/
 coverage/
 *.tsbuildinfo
+playwright-report/
+test-results/
+blob-report/
 
 # Variables de entorno y secretos
 .env

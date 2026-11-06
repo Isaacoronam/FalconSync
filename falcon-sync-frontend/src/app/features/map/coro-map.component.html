@@ -99,6 +99,16 @@
       role="application"
       aria-label="Mapa interactivo del patrimonio de Coro"
     ></div>
+    <div class="map-stage__actions">
+      <button
+        type="button"
+        class="map-stage__action"
+        title="Ajustar el mapa al límite operativo del estado Falcón"
+        (click)="showFalconOverview()"
+      >
+        Ver todo Falcón
+      </button>
+    </div>
     <div class="map-stage__overlay" aria-hidden="true">
       <span class="map-stage__hint">Selecciona un punto para ver su ficha</span>
     </div>

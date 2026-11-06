@@ -23,14 +23,15 @@
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(2rem, 4.2vw, 3.5rem);
-  font-weight: 400;
+  font-weight: 700;
   line-height: 1.03;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .map-hero h1 em {
   color: var(--terracotta);
-  font-weight: 400;
+  font-style: normal;
+  font-weight: 600;
 }
 
 .map-hero__lead {
@@ -60,7 +61,7 @@
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 2rem;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1;
 }
 
@@ -262,6 +263,8 @@
   overflow: hidden;
   font-family: var(--font-display);
   font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -324,6 +327,36 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+}
+
+.map-stage__actions {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  z-index: 500;
+}
+
+.map-stage__action {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(43, 26, 19, 0.14);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: rgba(251, 247, 239, 0.94);
+  box-shadow: 0 4px 16px rgba(43, 26, 19, 0.12);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.map-stage__action:hover {
+  border-color: var(--terracotta);
+  color: var(--terracotta-dark);
+  background: var(--paper);
 }
 
 .map-stage__overlay {
