@@ -97,8 +97,11 @@ nativo, recarga la URL sin `?token=` y nunca se emite `POST /api/check-ins`.
 |---|---|
 | `npx playwright test e2e/coro-aventura.spec.ts --project=chromium` | 5/5 aprobadas |
 | `npx playwright test --project=chromium` | 13/13 aprobadas |
+| `$env:CI=1; npx playwright test --project=chromium` | 13/13 aprobadas con Chromium |
 
-La corrida local usa Microsoft Edge mediante el canal configurado en Playwright.
+La corrida local usa Microsoft Edge mediante el canal configurado en Playwright. La corrida
+con `CI=1` usa Chromium y replica el navegador configurado en GitHub Actions; la ejecución
+remota del workflow sigue pendiente.
 
 ## Requisitos de arranque local
 

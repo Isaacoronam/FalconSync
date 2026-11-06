@@ -41,8 +41,9 @@ Fecha de verificación: 2026-11-06.
   entorno de desarrollo.
 - Workflow de GitHub Actions creado en `.github/workflows/ci.yml` con MongoDB de servicio,
   pruebas, build, Chromium y E2E.
-- El workflow **no fue ejecutado** todavía: no se hizo push ni se dispone de una ejecución
-  remota verificada. El YAML no se declara verde.
+- El workflow **no fue ejecutado** todavía en GitHub: la rama se subió, pero no se abrió un
+  PR ni existe una ejecución remota verificada. El YAML no se declara verde. La suite E2E sí
+  se ejecutó localmente con Chromium en modo CI (13/13).
 
 ### Corte 2 — Administración y POI
 
@@ -337,7 +338,7 @@ se dispone de coordenadas y fuente verificables para agregarlo sin inventar dato
 | Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
 | Pruebas frontend | `npm test -- --watch=false` | 29 aprobadas (incluye servicios de aventuras, check-in y QR) |
 | Build producción | `npm run build` | Correcto, sin warnings |
-| E2E permanente | `npx playwright test --project=chromium` en `falcon-sync-frontend` | 13/13 aprobadas con Edge |
+| E2E permanente | `npx playwright test --project=chromium` en `falcon-sync-frontend` | 13/13 con Edge y 13/13 con Chromium en modo CI |
 | Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
@@ -365,9 +366,10 @@ La suite E2E comprueba:
 - rechazo de check-in duplicado y de posición fuera de la geocerca;
 - recorrido completo de las tres paradas, cierre de ruta al 100 %, insignia y fecha.
 
-La E2E local usa Microsoft Edge mediante el canal de Playwright. En CI se configuró
-Chromium, pero esa ejecución no está verificada todavía. Las imágenes de la E2E se guardan
-en `test-results/e2e-uploads` y no contaminan la carpeta `uploads/` de desarrollo.
+La E2E local usa Microsoft Edge mediante el canal de Playwright. La misma suite se ejecutó
+con Chromium y `CI=1` para replicar el navegador del workflow: 13/13. La ejecución remota de
+GitHub Actions sigue pendiente. Las imágenes de la E2E se guardan en
+`test-results/e2e-uploads` y no contaminan la carpeta `uploads/` de desarrollo.
 
 ## Seguridad y dependencias
 
