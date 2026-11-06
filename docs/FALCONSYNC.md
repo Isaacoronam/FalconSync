@@ -12,10 +12,12 @@ Fecha de verificación: 2026-11-05.
 - Mapa limitado al rectángulo operativo de Falcón con `maxBounds`,
   `maxBoundsViscosity=1` y `minZoom=8`.
 - Vista inicial en Coro a zoom 13 y control “Ver todo Falcón”.
-- **Pendiente:** el logo maestro PNG no estaba disponible en el repositorio ni en el
-  adjunto de la conversación. El header conserva la marca “F”, y el favicon y
-  `apple-touch-icon` siguen sin regenerarse. No se inventó ni se sustituyó por una
-  identidad distinta.
+- Logo maestro integrado en `falcon-sync-frontend/public/brand/falconsync-logo.png`
+  (PNG aprobado, 195×195, con transparencia), derivado a 48×48 sin deformar para el
+  marcador del header.
+- Favicon y `apple-touch-icon` regenerados desde el logo maestro
+  (`favicon.ico` con 16/32/48 px, `favicon-32.png`, `apple-touch-icon.png` de 180×180)
+  mediante `npm run brand:assets`.
 
 ### Corte 1 — Autenticación y permisos
 
@@ -147,9 +149,9 @@ const FALCON_BOUNDS = [
   hace `fitBounds` al rectángulo.
 - El rectángulo **no es el polígono oficial de Falcón**. Para el contorno exacto hace falta
   un GeoJSON verificado de OSM/INE con atribución.
-- El logo sigue pendiente porque no se recibió el PNG maestro. No se debe considerar
-  cerrada la identidad visual hasta incorporarlo y regenerar favicon y
-  `apple-touch-icon` desde el mismo archivo.
+- El logo maestro se incorporó en `public/brand/falconsync-logo.png` y de él se
+  derivaron favicon, `favicon-32.png` y `apple-touch-icon` (180×180) con
+  `npm run brand:assets`. La identidad visual queda cerrada en este corte.
 
 ## Autenticación
 
@@ -322,8 +324,8 @@ en `test-results/e2e-uploads` y no contaminan la carpeta `uploads/` de desarroll
 
 ## Limitaciones y pendientes
 
-- **Logo maestro pendiente:** sin el PNG no se puede cerrar la identidad visual ni
-  regenerar favicon/`apple-touch-icon`.
+- El logo maestro y los iconos de marca se integraron y regeneraron en este corte
+  (`public/brand/falconsync-logo.png`, `npm run brand:assets`).
 - El límite del mapa es rectangular y operativo, no el polígono oficial de Falcón.
 - No hay verificación de correo, recuperación de contraseña, MFA ni gestión de sesiones.
 - El panel admin no gestiona usuarios ni roles; el rol `moderator` sigue reservado para el
