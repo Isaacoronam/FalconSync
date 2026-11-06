@@ -71,10 +71,15 @@ test('crea, publica, archiva y restaura un POI con imagen', async ({ page }) => 
   await expect(page.locator('.form-success')).toContainText('se archivó');
   await expect(row.locator('.admin-badge')).toContainText('Archivado');
 
-  await page.goto('/');
+  await page.getByRole('link', { name: 'CoroMap' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator('.location-card').first()).toBeVisible();
   await expect(page.locator('.location-card', { hasText: title })).toHaveCount(0);
 
-  await page.goto('/admin/poi');
+  await page.getByRole('link', { name: 'Admin', exact: true }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.getByRole('link', { name: 'Puntos de interés' }).click();
+  await expect(page).toHaveURL(/\/admin\/poi$/);
   await page.locator('#poi-search').fill(title);
   await page.getByRole('button', { name: 'Filtrar' }).click();
 
