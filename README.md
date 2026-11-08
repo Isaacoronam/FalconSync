@@ -54,6 +54,7 @@ Este repositorio también contiene la aplicación:
 - `docs/FALCONSYNC.md`: alcance, comandos, fuentes de datos, verificación y pendientes.
 - `docs/AUTENTICACION.md`: modelo de sesión, roles, cookies y límites de seguridad.
 - `docs/ADMINISTRACION.md`: CRUD de POI, borrado lógico, imágenes y auditoría.
+- `docs/POI.md`: catálogo, reglas de publicación, fuentes y créditos de imágenes.
 - `docs/AVENTURAS.md`: modelo de aventuras, QR opaco, geocercas, check-in y progreso.
 - `.github/workflows/ci.yml`: workflow de pruebas, build y E2E (creado, aún no ejecutado en
   remoto).

@@ -49,6 +49,13 @@ test('crea, publica, archiva y restaura un POI con imagen', async ({ page }) => 
   await expect(page.locator('.admin-image-card')).toHaveCount(1);
   await expect(page.locator('.admin-image-card img')).toBeVisible();
 
+  await page
+    .locator('#poi-coordinate-source-field')
+    .fill('Verificación E2E de coordenadas');
+  await page
+    .locator('#poi-coordinate-verified-field')
+    .fill(new Date().toISOString().slice(0, 10));
+  await page.locator('#poi-verification-field').selectOption('single-source');
   await page.locator('#poi-status-field').selectOption('published');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
   await expect(page.locator('.form-success')).toContainText('Cambios guardados');

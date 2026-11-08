@@ -2,7 +2,10 @@ import type {
   ConservationStatus,
   FalconLocation,
   LocationCategory,
+  LocationCircuit,
   LocationStatus,
+  LocationTag,
+  LocationVerificationLevel,
 } from './location.model';
 
 export interface AuditEntry {
@@ -58,6 +61,8 @@ export interface AdminLocationFilters {
   q?: string;
   status?: LocationStatus | 'all';
   category?: LocationCategory | 'all';
+  circuit?: LocationCircuit | 'all';
+  tag?: LocationTag | 'all';
   page?: number;
   limit?: number;
 }
@@ -67,12 +72,19 @@ export interface AdminLocationPayload {
   slug?: string;
   category: LocationCategory;
   description: string;
+  address?: string;
+  circuits: LocationCircuit[];
+  tags: LocationTag[];
   historicalPeriod?: string;
   conservationStatus: ConservationStatus;
   sourceUrl?: string;
+  coordinateSource?: string;
+  coordinateVerifiedAt?: string | null;
+  verificationLevel: LocationVerificationLevel;
   audioGuideUrl?: string;
   status: Exclude<LocationStatus, 'archived'>;
   isProvisional: boolean;
+  isCatalogVisible: boolean;
   latitude: number;
   longitude: number;
   images?: string[];

@@ -6,11 +6,49 @@ export const LOCATION_CATEGORIES = [
   'nature',
   'religious',
   'urban',
+  'museum',
+  'viewpoint',
+  'commerce',
+  'service',
+];
+
+export const LOCATION_CIRCUITS = [
+  'casco-historico',
+  'museos',
+  'naturaleza-miradores',
+  'espacios-urbanos',
+  'la-vela',
+  'comercio-servicios',
+];
+
+export const LOCATION_TAGS = [
+  'colonial',
+  'unesco',
+  'gastronomy',
+  'theater',
+  'sports',
+  'promenade',
+  'market',
+  'crafts',
+  'family',
+  'photogenic',
+  'free-entry',
+  'guided-tour',
+];
+
+export const LOCATION_VERIFICATION_LEVELS = [
+  'unverified',
+  'single-source',
+  'verified',
 ];
 
 export const CONSERVATION_STATUSES = ['good', 'fair', 'poor', 'unknown'];
 
 export const LOCATION_STATUSES = ['draft', 'published', 'archived'];
+
+function validateUniqueValues(value) {
+  return !Array.isArray(value) || new Set(value).size === value.length;
+}
 
 function validateCoordinates(value) {
   if (!Array.isArray(value) || value.length !== 2) {
@@ -28,6 +66,33 @@ function validateCoordinates(value) {
     latitude <= 90
   );
 }
+
+const imageCreditSchema = new mongoose.Schema(
+  {
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    author: {
+      type: String,
+      trim: true,
+    },
+    license: {
+      type: String,
+      trim: true,
+    },
+    licenseUrl: {
+      type: String,
+      trim: true,
+    },
+    sourceUrl: {
+      type: String,
+      trim: true,
+    },
+  },
+  { _id: false },
+);
 
 const locationSchema = new mongoose.Schema(
   {
@@ -63,6 +128,45 @@ const locationSchema = new mongoose.Schema(
       trim: true,
       maxlength: [5000, 'La descripción no puede superar 5000 caracteres'],
     },
+    address: {
+      type: String,
+      trim: true,
+      maxlength: [240, 'La dirección no puede superar 240 caracteres'],
+    },
+    circuits: {
+      type: [
+        {
+          type: String,
+          enum: {
+            values: LOCATION_CIRCUITS,
+            message: 'Circuito no válido',
+          },
+        },
+      ],
+      default: [],
+      validate: {
+        validator: validateUniqueValues,
+        message: 'Los circuitos no pueden repetirse',
+      },
+      index: true,
+    },
+    tags: {
+      type: [
+        {
+          type: String,
+          enum: {
+            values: LOCATION_TAGS,
+            message: 'Etiqueta no válida',
+          },
+        },
+      ],
+      default: [],
+      validate: {
+        validator: validateUniqueValues,
+        message: 'Las etiquetas no pueden repetirse',
+      },
+      index: true,
+    },
     historicalPeriod: {
       type: String,
       trim: true,
@@ -89,6 +193,10 @@ const locationSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    imageCredits: {
+      type: [imageCreditSchema],
+      default: [],
+    },
     audioGuideUrl: {
       type: String,
       trim: true,
@@ -105,9 +213,31 @@ const locationSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    coordinateSource: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'La fuente de coordenadas no puede superar 500 caracteres'],
+    },
+    coordinateVerifiedAt: {
+      type: Date,
+      default: null,
+    },
+    verificationLevel: {
+      type: String,
+      enum: {
+        values: LOCATION_VERIFICATION_LEVELS,
+        message: 'Nivel de verificación no válido',
+      },
+      default: 'unverified',
+      index: true,
+    },
     isProvisional: {
       type: Boolean,
       default: false,
+    },
+    isCatalogVisible: {
+      type: Boolean,
+      default: true,
     },
     status: {
       type: String,
@@ -115,7 +245,7 @@ const locationSchema = new mongoose.Schema(
         values: LOCATION_STATUSES,
         message: 'Estado de publicación no válido',
       },
-      default: 'published',
+      default: 'draft',
       index: true,
     },
     checkInTokenHash: {
@@ -168,6 +298,26 @@ const locationSchema = new mongoose.Schema(
 locationSchema.index({ location: '2dsphere' });
 locationSchema.index({ category: 1, title: 1 });
 locationSchema.index({ status: 1, deletedAt: 1, title: 1 });
+locationSchema.index({ circuits: 1, status: 1, title: 1 });
+locationSchema.index({ tags: 1, status: 1, title: 1 });
+
+locationSchema.pre('validate', function ensurePublishable() {
+  if (this.status === 'published') {
+    if (this.isProvisional) {
+      this.invalidate(
+        'status',
+        'Un punto de interés provisional no puede publicarse',
+      );
+    }
+
+    if (!this.coordinateVerifiedAt) {
+      this.invalidate(
+        'coordinateVerifiedAt',
+        'La fecha de verificación de coordenadas es obligatoria para publicar',
+      );
+    }
+  }
+});
 
 locationSchema.set('toJSON', {
   transform: (_document, returned) => {

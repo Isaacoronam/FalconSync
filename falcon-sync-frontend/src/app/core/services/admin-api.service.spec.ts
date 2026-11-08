@@ -26,13 +26,15 @@ describe('AdminApiService', () => {
         q: 'catedral',
         status: 'draft',
         category: 'religious',
+        circuit: 'casco-historico',
+        tag: 'unesco',
         page: 2,
         limit: 10,
       })
       .subscribe();
 
     const request = httpMock.expectOne(
-      '/api/admin/locations?q=catedral&status=draft&category=religious&page=2&limit=10',
+      '/api/admin/locations?q=catedral&status=draft&category=religious&circuit=casco-historico&tag=unesco&page=2&limit=10',
     );
     expect(request.request.method).toBe('GET');
     request.flush({ data: [], meta: { page: 2, limit: 10, total: 0, totalPages: 0 } });
@@ -44,9 +46,13 @@ describe('AdminApiService', () => {
         title: 'Casa de Prueba',
         category: 'architecture',
         description: 'Descripción de prueba suficientemente larga.',
+        circuits: ['casco-historico'],
+        tags: ['colonial'],
         conservationStatus: 'unknown',
+        verificationLevel: 'unverified',
         status: 'draft',
         isProvisional: false,
+        isCatalogVisible: true,
         latitude: 11.4075,
         longitude: -69.6778,
       })

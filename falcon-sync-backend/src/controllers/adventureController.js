@@ -6,7 +6,7 @@ import { HttpError } from '../utils/HttpError.js';
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
 const PUBLIC_LOCATION_FIELDS =
-  'title slug category description location images conservationStatus checkInRadiusMeters';
+  'title slug category description address circuits tags location images conservationStatus verificationLevel checkInRadiusMeters';
 
 function parsePositiveInteger(value, fallback) {
   const parsed = Number.parseInt(value, 10);
@@ -85,7 +85,12 @@ export async function getPublicAdventureBySlug(request, response) {
     .populate({
       path: 'location',
       select: PUBLIC_LOCATION_FIELDS,
-      match: { status: 'published', deletedAt: null },
+      match: {
+        status: 'published',
+        deletedAt: null,
+        isProvisional: { $ne: true },
+        isCatalogVisible: { $ne: false },
+      },
     });
 
   response.json({

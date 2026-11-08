@@ -50,7 +50,7 @@
           <button type="button" class="state__retry" (click)="loadLocations()">Reintentar</button>
         </div>
       } @else if (!hasLocations()) {
-        <p class="state">No hay lugares para esta categoría.</p>
+        <p class="state">No hay lugares para estos filtros.</p>
       } @else {
         <ul class="location-list">
           @for (location of locations(); track location.id) {
@@ -78,6 +78,9 @@
                   <span class="location-card__title">{{ location.title }}</span>
                   <span class="location-card__meta">
                     {{ categoryLabel(location.category) }}
+                    @if (location.circuits.length) {
+                      · {{ circuitLabel(location.circuits[0]) }}
+                    }
                     @if (location.historicalPeriod) {
                       · {{ location.historicalPeriod }}
                     }

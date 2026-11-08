@@ -32,7 +32,9 @@ arranque incluye el PID de la instancia que queda escuchando.
 ```bash
 npm run dev          # servidor con recarga
 npm start            # servidor normal
-npm run seed         # upsert idempotente de los 6 POI y backfill de status/deletedAt
+npm run seed         # inserta los POI ausentes (23: 6 publicados y 17 borradores)
+npm run seed:sync    # actualiza fichas/visibilidad sin tocar coordenadas, estado ni isProvisional
+npm run seed:verify  # comprueba existencia, publicación y desviación de coordenadas
 npm run create-admin # bootstrap idempotente del administrador
 npm test             # suite de backend
 ```
@@ -42,7 +44,8 @@ npm test             # suite de backend
 Lectura pública:
 
 - `GET /api/health`
-- `GET /api/locations?page=1&limit=50&category=religious`
+- `GET /api/locations?page=1&limit=50&category=religious&circuit=casco-historico&tag=unesco`
+- `GET /api/locations?includeProvisional=true` (mapa: agrega provisionales visibles y rotulados)
 - `GET /api/locations/near?lat=11.4075&lng=-69.6778&radius=500`
 - `GET /api/locations/:slug`
 - `GET /api/adventures?page=1&limit=20`
@@ -65,7 +68,7 @@ Aventuras y check-in (autenticado):
 Administración (rol `admin`):
 
 - `GET /api/admin/summary`
-- `GET /api/admin/locations?q=&status=&category=&page=&limit=`
+- `GET /api/admin/locations?q=&status=&category=&circuit=&tag=&page=&limit=`
 - `GET /api/admin/locations/:id`
 - `POST /api/admin/locations`
 - `PATCH /api/admin/locations/:id`
@@ -105,8 +108,9 @@ aventuras, QR, geocercas y check-in está en [`../docs/AVENTURAS.md`](../docs/AV
 - Rate limit en registro, login, refresh y cambio de contraseña.
 - `CORS` con credenciales y comprobación de origen en endpoints con cookie.
 - El administrador creado por bootstrap debe cambiar la contraseña en el primer acceso.
-- El CRUD administrativo exige rol `admin`; el API público solo devuelve POI y aventuras
-  publicados.
+- El CRUD administrativo exige rol `admin`; la lista y el detalle normal solo devuelven POI
+  publicados. La lista del mapa puede solicitar borradores provisionales visibles con
+  `includeProvisional=true`; nunca habilita detalle individual, aventura ni check-in.
 - Las imágenes se validan por firma binaria (JPEG/PNG/WebP), con límite de 5 MB y 8 por POI.
   El adaptador local vive en `src/services/storage/` y puede sustituirse por otro
   almacenamiento.
@@ -146,9 +150,9 @@ No se incluyen secretos reales en el repositorio. `.env` está ignorado por Git.
 
 ## Pruebas
 
-`npm test` ejecuta las pruebas de ubicaciones, autenticación, administración de POI y
+`npm test` ejecuta las pruebas de ubicaciones, autenticación, administración de POI, seed y
 CoroAventura (aventuras, QR, check-in y progreso) con `node --test` y `supertest`, usando
-bases de datos locales de prueba. En total se verificaron 46 pruebas (46/46 aprobadas).
+bases de datos locales de prueba.
 
 La suite E2E permanente vive en `../falcon-sync-frontend/e2e` y arranca esta API con
 `scripts/e2eServer.js` sobre la base `falconsync_e2e`.

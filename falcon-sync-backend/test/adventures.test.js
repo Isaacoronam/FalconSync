@@ -61,9 +61,15 @@ function poiPayload(overrides = {}) {
     category: 'architecture',
     description:
       'Punto de interés de prueba con una descripción suficientemente extensa.',
+    address: 'Casco histórico de Coro, municipio Miranda',
+    circuits: ['casco-historico'],
+    tags: ['colonial'],
     latitude: BASE_COORDINATES[1],
     longitude: BASE_COORDINATES[0],
     conservationStatus: 'unknown',
+    coordinateSource: 'Google Maps, Plus Code de prueba',
+    coordinateVerifiedAt: '2026-11-01T00:00:00.000Z',
+    verificationLevel: 'single-source',
     isProvisional: false,
     status: 'published',
     ...overrides,
@@ -383,6 +389,44 @@ describe('CoroAventura — aventuras, QR y check-in', () => {
     assert.equal(await CheckIn.countDocuments({}), 0);
   });
 
+  it('rechaza el check-in en un POI provisional aunque tenga token vigente', async () => {
+    const location = await createLocation({
+      title: 'POI Provisional Check-in',
+      slug: 'poi-provisional-check-in',
+    });
+    const { token } = await rotateQr(location.id);
+
+    await Location.collection.updateOne(
+      { slug: 'poi-provisional-check-in' },
+      { $set: { isProvisional: true } },
+    );
+
+    const response = await asUser(request(app).post('/api/check-ins')).send(
+      checkInPayload(location.id, token),
+    );
+
+    assert.equal(response.status, 409);
+    assert.equal(response.body.error.code, 'LOCATION_NOT_AVAILABLE');
+    assert.equal(await CheckIn.countDocuments({}), 0);
+  });
+
+  it('rechaza el check-in de un POI excluido del catálogo', async () => {
+    const location = await createLocation({
+      title: 'POI Fuera del Catálogo',
+      slug: 'poi-fuera-del-catalogo',
+      isCatalogVisible: false,
+    });
+    const { token } = await rotateQr(location.id);
+
+    const response = await asUser(request(app).post('/api/check-ins')).send(
+      checkInPayload(location.id, token),
+    );
+
+    assert.equal(response.status, 409);
+    assert.equal(response.body.error.code, 'LOCATION_NOT_AVAILABLE');
+    assert.equal(await CheckIn.countDocuments({}), 0);
+  });
+
   it('permite configurar el radio entre 10 y 500 metros', async () => {
     const location = await createLocation({ title: 'POI Radio' });
 
@@ -481,6 +525,54 @@ describe('CoroAventura — aventuras, QR y check-in', () => {
     );
     assert.equal(allowedDelete.status, 200);
     assert.equal(allowedDelete.body.data.status, 'archived');
+  });
+
+  it('oculta un POI provisional del API público y lo rechaza como parada', async () => {
+    const location = await createLocation({
+      title: 'POI Provisional Público',
+      slug: 'poi-provisional-publico',
+    });
+    const adventure = await createAdventure({
+      slug: 'ruta-provisional-publica',
+    });
+
+    await Location.collection.updateOne(
+      { slug: 'poi-provisional-publico' },
+      { $set: { isProvisional: true } },
+    );
+
+    const publicList = await request(app).get('/api/locations');
+    assert.equal(publicList.body.meta.total, 0);
+
+    const publicDetail = await request(app).get(
+      '/api/locations/poi-provisional-publico',
+    );
+    assert.equal(publicDetail.status, 404);
+
+    const stop = await asAdmin(
+      request(app).post(`/api/admin/adventures/${adventure.id}/stops`),
+    ).send({ locationId: location.id });
+
+    assert.equal(stop.status, 409);
+    assert.equal(stop.body.error.code, 'LOCATION_NOT_PUBLISHED');
+  });
+
+  it('rechaza como parada un POI excluido del catálogo', async () => {
+    const location = await createLocation({
+      title: 'Comercio Fuera del Catálogo',
+      slug: 'comercio-fuera-del-catalogo',
+      isCatalogVisible: false,
+    });
+    const adventure = await createAdventure({
+      slug: 'ruta-comercio-no-visible',
+    });
+
+    const stop = await asAdmin(
+      request(app).post(`/api/admin/adventures/${adventure.id}/stops`),
+    ).send({ locationId: location.id });
+
+    assert.equal(stop.status, 409);
+    assert.equal(stop.body.error.code, 'LOCATION_NOT_PUBLISHED');
   });
 
   it('publica aventuras con paradas ordenadas y las expone solo si están publicadas', async () => {

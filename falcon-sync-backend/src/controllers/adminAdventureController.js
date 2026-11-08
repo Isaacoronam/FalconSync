@@ -288,6 +288,8 @@ async function readPublishedLocation(locationId) {
     _id: locationId,
     status: 'published',
     deletedAt: null,
+    isProvisional: { $ne: true },
+    isCatalogVisible: { $ne: false },
   });
 
   if (!location) {
@@ -317,6 +319,8 @@ async function ensureAdventureCanPublish(adventure) {
     _id: { $in: locationIds },
     status: 'published',
     deletedAt: null,
+    isProvisional: { $ne: true },
+    isCatalogVisible: { $ne: false },
   }).select('_id');
   const publishedIds = new Set(
     publishedLocations.map((location) => location._id.toString()),

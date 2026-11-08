@@ -5,7 +5,10 @@ import AuditLog from '../models/AuditLog.js';
 import Location, {
   CONSERVATION_STATUSES,
   LOCATION_CATEGORIES,
+  LOCATION_CIRCUITS,
   LOCATION_STATUSES,
+  LOCATION_TAGS,
+  LOCATION_VERIFICATION_LEVELS,
 } from '../models/Location.js';
 import { recordAudit } from '../services/auditService.js';
 import {
@@ -231,6 +234,100 @@ function readHttpUrl(body, key, issues) {
   return value;
 }
 
+function readEnumArray(body, key, allowed, issues) {
+  if (!hasOwn(body, key)) {
+    return undefined;
+  }
+
+  if (!Array.isArray(body[key])) {
+    issues.push(`El campo ${key} debe enviarse como una lista`);
+    return undefined;
+  }
+
+  const values = [];
+
+  for (const entry of body[key]) {
+    if (typeof entry !== 'string' || !allowed.includes(entry)) {
+      issues.push(`El campo ${key} solo admite: ${allowed.join(', ')}`);
+      continue;
+    }
+
+    if (values.includes(entry)) {
+      issues.push(`El campo ${key} no puede repetir valores`);
+      continue;
+    }
+
+    values.push(entry);
+  }
+
+  return values;
+}
+
+function readVerificationLevel(body, issues) {
+  if (!hasOwn(body, 'verificationLevel')) {
+    return undefined;
+  }
+
+  if (!LOCATION_VERIFICATION_LEVELS.includes(body.verificationLevel)) {
+    issues.push(
+      `El nivel de verificación debe ser uno de: ${LOCATION_VERIFICATION_LEVELS.join(', ')}`,
+    );
+    return undefined;
+  }
+
+  return body.verificationLevel;
+}
+
+function readDate(body, key, issues) {
+  if (!hasOwn(body, key)) {
+    return undefined;
+  }
+
+  if (body[key] === null || body[key] === '') {
+    return null;
+  }
+
+  const date = new Date(body[key]);
+
+  if (Number.isNaN(date.getTime())) {
+    issues.push(`El campo ${key} debe ser una fecha válida o null`);
+    return undefined;
+  }
+
+  return date;
+}
+
+function ensurePublishable(payload, current = {}) {
+  const status = payload.status ?? current.status ?? 'draft';
+
+  if (status !== 'published') {
+    return;
+  }
+
+  const isProvisional =
+    payload.isProvisional ?? current.isProvisional ?? false;
+  const coordinateVerifiedAt = hasOwn(payload, 'coordinateVerifiedAt')
+    ? payload.coordinateVerifiedAt
+    : current.coordinateVerifiedAt;
+  const issues = [];
+
+  if (isProvisional) {
+    issues.push(
+      'No se puede publicar un punto de interés provisional. Verifica sus coordenadas y desmarca isProvisional',
+    );
+  }
+
+  if (!coordinateVerifiedAt) {
+    issues.push(
+      'No se puede publicar sin fecha de verificación de coordenadas (coordinateVerifiedAt)',
+    );
+  }
+
+  if (issues.length > 0) {
+    throw validationError(issues);
+  }
+}
+
 function buildPayload(body, { partial = false } = {}) {
   const issues = [];
   const payload = {};
@@ -277,6 +374,24 @@ function buildPayload(body, { partial = false } = {}) {
     payload.description = description;
   }
 
+  const address = readText(body, 'address', issues, { max: 240 });
+
+  if (address !== undefined) {
+    payload.address = address;
+  }
+
+  const circuits = readEnumArray(body, 'circuits', LOCATION_CIRCUITS, issues);
+
+  if (circuits !== undefined) {
+    payload.circuits = circuits;
+  }
+
+  const tags = readEnumArray(body, 'tags', LOCATION_TAGS, issues);
+
+  if (tags !== undefined) {
+    payload.tags = tags;
+  }
+
   const historicalPeriod = readText(body, 'historicalPeriod', issues, {
     max: 120,
   });
@@ -307,6 +422,26 @@ function buildPayload(body, { partial = false } = {}) {
     payload.sourceUrl = sourceUrl;
   }
 
+  const coordinateSource = readText(body, 'coordinateSource', issues, {
+    max: 500,
+  });
+
+  if (coordinateSource !== undefined) {
+    payload.coordinateSource = coordinateSource;
+  }
+
+  const coordinateVerifiedAt = readDate(body, 'coordinateVerifiedAt', issues);
+
+  if (coordinateVerifiedAt !== undefined) {
+    payload.coordinateVerifiedAt = coordinateVerifiedAt;
+  }
+
+  const verificationLevel = readVerificationLevel(body, issues);
+
+  if (verificationLevel !== undefined) {
+    payload.verificationLevel = verificationLevel;
+  }
+
   const audioGuideUrl = readHttpUrl(body, 'audioGuideUrl', issues);
 
   if (audioGuideUrl !== undefined) {
@@ -325,6 +460,16 @@ function buildPayload(body, { partial = false } = {}) {
     } else {
       payload.isProvisional = body.isProvisional;
     }
+  }
+
+  if (hasOwn(body, 'isCatalogVisible')) {
+    if (typeof body.isCatalogVisible !== 'boolean') {
+      issues.push('isCatalogVisible debe ser verdadero o falso');
+    } else {
+      payload.isCatalogVisible = body.isCatalogVisible;
+    }
+  } else if (!partial) {
+    payload.isCatalogVisible = true;
   }
 
   const status = readStatus(body, issues);
@@ -422,6 +567,26 @@ export async function listAdminLocations(request, response) {
     filter.category = request.query.category;
   }
 
+  if (request.query.circuit && request.query.circuit !== 'all') {
+    if (!LOCATION_CIRCUITS.includes(request.query.circuit)) {
+      throw validationError([
+        `El circuito debe ser all o uno de: ${LOCATION_CIRCUITS.join(', ')}`,
+      ]);
+    }
+
+    filter.circuits = request.query.circuit;
+  }
+
+  if (request.query.tag && request.query.tag !== 'all') {
+    if (!LOCATION_TAGS.includes(request.query.tag)) {
+      throw validationError([
+        `La etiqueta debe ser all o una de: ${LOCATION_TAGS.join(', ')}`,
+      ]);
+    }
+
+    filter.tags = request.query.tag;
+  }
+
   if (request.query.q) {
     const search = String(request.query.q).trim().slice(0, 120);
 
@@ -460,6 +625,7 @@ export async function getAdminLocation(request, response) {
 
 export async function createAdminLocation(request, response) {
   const payload = buildPayload(request.body);
+  ensurePublishable(payload);
 
   const existing = await Location.findOne({ slug: payload.slug });
 
@@ -498,6 +664,8 @@ export async function updateAdminLocation(request, response) {
   if (Object.keys(payload).length === 0) {
     throw validationError(['No se envió ningún campo editable']);
   }
+
+  ensurePublishable(payload, location);
 
   if (payload.slug && payload.slug !== location.slug) {
     const duplicate = await Location.findOne({

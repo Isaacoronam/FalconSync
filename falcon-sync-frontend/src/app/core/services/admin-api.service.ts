@@ -37,6 +37,14 @@ export class AdminApiService {
       params = params.set('category', filters.category);
     }
 
+    if (filters.circuit && filters.circuit !== 'all') {
+      params = params.set('circuit', filters.circuit);
+    }
+
+    if (filters.tag && filters.tag !== 'all') {
+      params = params.set('tag', filters.tag);
+    }
+
     params = params
       .set('page', String(filters.page ?? 1))
       .set('limit', String(filters.limit ?? 20));

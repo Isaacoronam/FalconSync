@@ -1,6 +1,6 @@
 # CoroAventura — aventuras, QR y check-in (Corte 3, backend)
 
-Fecha de verificación: 2026-11-05.
+Fecha de verificación: 2026-11-06.
 
 Este documento describe el backend de aventuras patrimoniales de FalconSync. No atribuye el
 diseño a una unidad académica: las transcripciones de las Unidades 2 a 7 todavía no están
@@ -106,9 +106,10 @@ otra vez; el QR anterior dejará de funcionar.
 
 ### 5. Integridad POI–aventura
 
-- Una parada solo puede crearse o cambiarse hacia un POI con `status=published` y
-  `deletedAt=null`.
-- Publicar una aventura exige al menos una parada y que todas apunten a POI publicados.
+- Una parada solo puede crearse o cambiarse hacia un POI con `status=published`,
+  `deletedAt=null`, `isCatalogVisible=true` y no provisional.
+- Publicar una aventura exige al menos una parada y que todas apunten a POI publicados y
+  visibles en el catálogo.
 - Archivar o despublicar un POI que sea parada de una aventura publicada responde
   `409 LOCATION_IN_USE`.
 - Para liberar el POI hay que retirar la parada o archivar la aventura.
@@ -307,7 +308,7 @@ posiciones.
 - La rotación de QR registra `location.qr.rotated` con versión y formato, sin token.
 - Los cambios de aventura y paradas se auditan.
 - El API público solo expone aventuras `published` sin borrado lógico y paradas con POI
-  publicado.
+  publicado, visible en catálogo y no provisional.
 - Las rutas administrativas reutilizan `authenticate` y `requireRole('admin')`.
 
 ## Pruebas
@@ -319,15 +320,16 @@ cd falcon-sync-backend
 npm test
 ```
 
-Resultado real del 2026-11-05:
+Resultado real del 2026-11-07:
 
 | Suite | Pruebas | Resultado |
 |---|---|---|
-| Administración de POI | 10 | Aprobadas |
-| CoroAventura | 13 | Aprobadas |
+| Administración de POI | 12 | Aprobadas |
+| CoroAventura | 18 | Aprobadas |
 | Autenticación | 12 | Aprobadas |
-| API de lugares | 11 | Aprobadas |
-| **Total** | **46** | **46/46 aprobadas** |
+| API de lugares | 14 | Aprobadas |
+| Seed de POI | 2 | Aprobadas |
+| **Total** | **58** | **58/58 aprobadas** |
 
 La suite `test/adventures.test.js` cubre:
 
@@ -349,6 +351,9 @@ La suite `test/adventures.test.js` cubre:
 16. Reordenamiento completo y rechazo de listas incompletas.
 17. Usuario normal bloqueado en rutas administrativas.
 18. Auditoría de creación, edición, archivo, restauración y rotación de QR.
+19. Check-in rechazado en un POI provisional aunque tenga token vigente.
+20. POI provisional oculto del API público y rechazado como parada de aventura.
+21. POI excluido del catálogo rechazado como parada y check-in.
 
 ## Gate del corte
 
@@ -360,7 +365,7 @@ La suite `test/adventures.test.js` cubre:
 | Fuera de geocerca rechazado | Cumplido | `400 CHECK_IN_OUTSIDE_GEOFENCE`. |
 | Token inválido rechazado | Cumplido | `400 INVALID_CHECK_IN_TOKEN`, incluido token rotado. |
 | Progreso correcto | Cumplido | Orden libre, siguiente parada, porcentaje y cierre. |
-| Pruebas backend verdes | Cumplido | `npm test`: 46/46. |
+| Pruebas backend verdes | Cumplido | `npm test`: 58/58. |
 | Documentación | Cumplido | Este documento y actualización de `FALCONSYNC.md`. |
 
 ## Límites y pendientes

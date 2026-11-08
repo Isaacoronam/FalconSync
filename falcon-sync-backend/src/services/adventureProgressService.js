@@ -2,11 +2,11 @@ import AdventureStop from '../models/AdventureStop.js';
 import CheckIn from '../models/CheckIn.js';
 
 const PUBLIC_LOCATION_FIELDS =
-  'title slug category description location images conservationStatus checkInRadiusMeters';
+  'title slug category description address circuits tags location images conservationStatus verificationLevel checkInRadiusMeters';
 
 /**
  * Calcula el progreso de una aventura a partir de los check-in globales del
- * usuario. Solo cuentan las paradas cuyo POI sigue publicado y sin archivar.
+ * usuario. Solo cuentan las paradas cuyo POI sigue publicado, visible y activo.
  */
 export async function buildAdventureProgress(adventure, userId) {
   const stops = await AdventureStop.find({ adventure: adventure._id })
@@ -14,7 +14,12 @@ export async function buildAdventureProgress(adventure, userId) {
     .populate({
       path: 'location',
       select: PUBLIC_LOCATION_FIELDS,
-      match: { status: 'published', deletedAt: null },
+      match: {
+        status: 'published',
+        deletedAt: null,
+        isProvisional: { $ne: true },
+        isCatalogVisible: { $ne: false },
+      },
     });
 
   const activeStops = stops.filter((stop) => stop.location);

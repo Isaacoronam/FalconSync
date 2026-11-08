@@ -10,6 +10,9 @@ const catedral: FalconLocation = {
   slug: 'catedral-de-coro',
   category: 'religious',
   description: 'Templo colonial frente a la Plaza Bolívar.',
+  address: 'Frente a la Plaza Bolívar, casco histórico de Coro',
+  circuits: ['casco-historico'],
+  tags: ['colonial', 'unesco'],
   historicalPeriod: 'Siglos XVI-XVIII',
   location: {
     type: 'Point',
@@ -18,6 +21,9 @@ const catedral: FalconLocation = {
   images: ['/images/locations/catedral-de-coro.jpg'],
   conservationStatus: 'unknown',
   sourceUrl: 'https://www.openstreetmap.org/way/370610638',
+  coordinateSource: 'OpenStreetMap way 370610638',
+  coordinateVerifiedAt: '2026-11-06T00:00:00.000Z',
+  verificationLevel: 'single-source',
   isProvisional: false,
   createdAt: '2026-11-05T00:00:00.000Z',
   updatedAt: '2026-11-05T00:00:00.000Z',
@@ -55,10 +61,19 @@ describe('LocationApiService', () => {
     });
   });
 
-  it('envía el filtro de categoría a la API', () => {
-    service.list('religious').subscribe();
+  it('envía los filtros de categoría, circuito y etiqueta a la API', () => {
+    service
+      .list({
+        category: 'religious',
+        circuit: 'casco-historico',
+        tag: 'unesco',
+        includeProvisional: true,
+      })
+      .subscribe();
 
-    const request = httpMock.expectOne('/api/locations?category=religious');
+    const request = httpMock.expectOne(
+      '/api/locations?category=religious&circuit=casco-historico&tag=unesco&includeProvisional=true',
+    );
     expect(request.request.method).toBe('GET');
     request.flush({
       data: [catedral],

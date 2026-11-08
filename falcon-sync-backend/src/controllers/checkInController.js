@@ -65,7 +65,12 @@ export async function createCheckIn(request, response) {
     );
   }
 
-  if (location.status !== 'published' || location.deletedAt) {
+  if (
+    location.status !== 'published' ||
+    location.deletedAt ||
+    location.isProvisional ||
+    location.isCatalogVisible === false
+  ) {
     throw new HttpError(
       409,
       'LOCATION_NOT_AVAILABLE',

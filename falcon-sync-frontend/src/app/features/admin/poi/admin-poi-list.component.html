@@ -42,6 +42,24 @@
       </select>
     </div>
 
+    <div class="admin-field">
+      <label for="poi-circuit">Circuito</label>
+      <select id="poi-circuit" formControlName="circuit">
+        @for (circuit of circuits; track circuit.value) {
+          <option [value]="circuit.value">{{ circuit.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="admin-field">
+      <label for="poi-tag">Etiqueta</label>
+      <select id="poi-tag" formControlName="tag">
+        @for (tag of tags; track tag.value) {
+          <option [value]="tag.value">{{ tag.label }}</option>
+        }
+      </select>
+    </div>
+
     <div class="admin-toolbar__actions">
       <button class="button button--primary" type="submit" [disabled]="loading()">Filtrar</button>
       <button class="button button--ghost" type="button" (click)="clearFilters()">Limpiar</button>

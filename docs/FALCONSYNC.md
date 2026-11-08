@@ -35,8 +35,9 @@ Fecha de verificación: 2026-11-06.
 ### Corte 1.5 — E2E permanente y CI
 
 - Playwright dentro del repositorio, con configuración `playwright.config.ts`.
-- Servidor E2E aislado en `scripts/e2eServer.js`: base de datos `falconsync_e2e`, seis POI,
-  un admin operativo y un admin pendiente de cambio de contraseña.
+- Servidor E2E aislado en `scripts/e2eServer.js`: base de datos `falconsync_e2e`,
+  6 POI publicados y 17 borradores provisionales, un admin operativo y un admin pendiente
+  de cambio de contraseña.
 - Servidores de prueba en puertos 3101 (API) y 4201 (frontend) para no chocar con el
   entorno de desarrollo.
 - Workflow de GitHub Actions creado en `.github/workflows/ci.yml` con MongoDB de servicio,
@@ -50,7 +51,20 @@ Fecha de verificación: 2026-11-06.
 - Layout administrativo con panel, listado de POI y auditoría.
 - Panel con usuarios, POI por estado y actividad reciente.
 - CRUD de POI con validación en cliente y servidor.
-- Estados `draft`, `published` y `archived`; el API público solo expone publicados.
+- Estados `draft`, `published` y `archived`; el API público solo expone publicados y
+  descarta los marcados como provisionales, salvo en la lista de mapa solicitada con
+  `includeProvisional=true`; esos registros siguen sin publicarse.
+- Ficha ampliada con dirección, circuitos, etiquetas, fuente y fecha de verificación de
+  coordenadas, nivel de verificación y créditos de imágenes.
+- Regla de publicación: un POI provisional o sin `coordinateVerifiedAt` no puede publicarse.
+- Filtros administrativos por categoría, circuito y etiqueta; el mapa público filtra solo
+  por categoría.
+- Catálogo de 23 POI en el seed: 6 publicados y 17 borradores provisionales.
+- Mapa público con 23 POI visibles, cada uno con imagen. Gelatería El Sol y la entrada
+  principal del Parque Nacional Médanos de Coro se incorporan al catálogo público como
+  borradores provisionales.
+- Clustering propio en píxeles y popups con etiquetas, verificación y créditos, sin avisos
+  de provisionalidad.
 - Borrado lógico y restauración como borrador.
 - Selector de ubicación con Leaflet limitado al rectángulo de Falcón.
 - Imágenes locales mediante `StorageAdapter`, con validación de firma binaria, límite de
@@ -59,7 +73,8 @@ Fecha de verificación: 2026-11-06.
 - Tabla responsive convertida en tarjetas por debajo de 700 px.
 
 El detalle de endpoints, permisos, validaciones y límites está en
-[`docs/ADMINISTRACION.md`](./ADMINISTRACION.md).
+[`docs/ADMINISTRACION.md`](./ADMINISTRACION.md). El catálogo, las reglas de publicación,
+las fuentes y el manifiesto de imágenes están en [`docs/POI.md`](./POI.md).
 
 ### Corte 3 — CoroAventura backend
 
@@ -140,7 +155,7 @@ FalconSYN/
 │   └── test/                  # locations, auth, adminLocations y adventures
 ├── falcon-sync-frontend/
 │   ├── e2e/                   # map, auth, admin-poi y coro-aventura
-│   ├── public/images/locations/
+│   ├── public/images/locations/ # imágenes y manifest.json de créditos
 │   ├── src/app/
 │   │   ├── core/              # guards, interceptor, modelos, servicios
 │   │   ├── features/
@@ -159,7 +174,8 @@ FalconSYN/
 │   ├── AUTENTICACION.md
 │   ├── AVENTURAS.md
 │   ├── COROAVENTURA-FRONTEND.md
-│   └── FALCONSYNC.md
+│   ├── FALCONSYNC.md
+│   └── POI.md
 └── .nvmrc
 ```
 
@@ -213,7 +229,9 @@ Backend:
 cd falcon-sync-backend
 npm install
 cp .env.example .env   # completar secretos de al menos 32 caracteres
-npm run seed
+npm run seed           # inserta los POI ausentes y elimina Mirador del Pueblo
+npm run seed:sync      # sincroniza fichas y elimina Mirador del Pueblo
+npm run seed:verify    # comprueba existencia, publicación, coordenadas y retiro del Mirador
 npm run create-admin   # requiere ADMIN_* en .env
 npm run dev
 ```
@@ -230,8 +248,12 @@ npm start
 - Aplicación: `http://localhost:4200`
 - El frontend usa `proxy.conf.json` para enviar `/api` al backend.
 - El backend se detiene si el puerto ya está ocupado; detén la instancia anterior antes de
-  iniciar otra. `npm run seed` también completa `status` y `deletedAt` en POI creados con
-  versiones anteriores.
+  iniciar otra. `npm run seed` es idempotente, inserta POI ausentes y elimina únicamente
+  Mirador del Pueblo. `npm run seed:sync` actualiza fichas existentes, sincroniza las
+  coordenadas solo de Parque Nacional Médanos de Coro sin modificar los demás puntos,
+  preserva estado y `isProvisional`, y elimina ese mismo POI retirado.
+  `npm run seed:verify` falla si falta un POI, si Mirador del Pueblo sigue presente o si un
+  publicado está provisional o sin fecha de verificación.
 
 En Windows, si no se dispone de `cp`, crear `.env` manualmente a partir de
 `.env.example`. No se deben usar los valores de ejemplo en producción.
@@ -241,7 +263,7 @@ En Windows, si no se dispone de `cp`, crear `.env` manualmente a partir de
 Públicos:
 
 - `GET /api/health`
-- `GET /api/locations?page=1&limit=50&category=religious`
+- `GET /api/locations?page=1&limit=50&category=religious&circuit=casco-historico&tag=unesco`
 - `GET /api/locations/near?lat=11.4075&lng=-69.6778&radius=500`
 - `GET /api/locations/:slug`
 - `GET /api/adventures?page=1&limit=20`
@@ -261,7 +283,7 @@ Autenticados:
 Administración (rol `admin`, cambio de contraseña completado):
 
 - `GET /api/admin/summary`
-- `GET /api/admin/locations?q=&status=&category=&page=&limit=`
+- `GET /api/admin/locations?q=&status=&category=&circuit=&tag=&page=&limit=`
 - `GET /api/admin/locations/:id`
 - `POST /api/admin/locations`
 - `PATCH /api/admin/locations/:id`
@@ -297,6 +319,9 @@ Formato de lista de lugares:
 
 ## Fuentes de los POI
 
+El catálogo completo, con los 6 publicados y los 17 borradores provisionales, está en
+[`docs/POI.md`](./POI.md). Esta tabla resume los publicados:
+
 | POI | Coordenadas `[lng, lat]` | Fuente |
 |---|---|---|
 | Catedral de Coro | `[-69.6778073, 11.4075246]` | OpenStreetMap way 370610638 |
@@ -306,52 +331,77 @@ Formato de lista de lugares:
 | Médanos de Coro | `[-69.6577925, 11.4384496]` | OpenStreetMap relation 3461483 |
 | Plaza Bolívar de Coro | `[-69.6782276, 11.4072929]` | OpenStreetMap way 370610469 |
 
+Los 17 borradores se incorporaron al seed con `status=draft`, `isProvisional=true` y
+`coordinateVerifiedAt=null`. El mapa muestra los 17 borradores junto a los 6 publicados. La
+Casa Museo Locos de la Vela tiene una discrepancia de unos 100 m entre fuentes y no debe
+publicarse sin verificación en campo.
+
 La **Cruz de los Enconchados** no se incluyó porque no se encontró una fuente cartográfica
 o documental confiable para su ubicación. No se inventaron coordenadas. Debe verificarse
 antes de agregarla.
 
-El estado de conservación se dejó como `unknown` en todos los POI: no hay una fuente de
+El estado de conservación se dejó como `unknown` en los 23 POI: no hay una fuente de
 conservación verificada en este corte.
 
 ## Imágenes de los POI
 
-| POI | Archivo público |
-|---|---|
-| Catedral de Coro | `/images/locations/catedral-de-coro.jpg` |
-| Casa de las Ventanas de Hierro | `/images/locations/casa-de-las-ventanas-de-hierro.jpg` |
-| Casa del Sol | `/images/locations/casa-del-sol.jpg` |
-| Arco de la Federación | `/images/locations/arco-de-la-federacion.jpg` |
-| Médanos de Coro | `/images/locations/medanos-de-coro.jpg` |
-| Plaza Bolívar de Coro | `/images/locations/plaza-bolivar-de-coro.jpg` |
+Hay 23 imágenes en `public/images/locations/`, con una imagen local asociada a cada POI que
+aparece en el mapa. El manifiesto legible por máquina está en
+`public/images/locations/manifest.json` y se sirve en `/images/locations/manifest.json`.
 
-Las imágenes fueron suministradas por el responsable del proyecto. La autoría y la licencia
-no están verificadas todavía y deben confirmarse antes de publicar el sitio.
-`Iglesia-San-Francisco.jpg` no se incorporó: no existe un POI con ese nombre en el seed ni
-se dispone de coordenadas y fuente verificables para agregarlo sin inventar datos.
+| POI | Archivo público | Crédito |
+|---|---|---|
+| Catedral de Coro | `/images/locations/catedral-de-coro.jpg` | Pendiente de verificar |
+| Casa de las Ventanas de Hierro | `/images/locations/casa-de-las-ventanas-de-hierro.jpg` | Pendiente de verificar |
+| Casa del Sol | `/images/locations/casa-del-sol.jpg` | Pendiente de verificar |
+| Arco de la Federación | `/images/locations/arco-de-la-federacion.jpg` | Pendiente de verificar |
+| Médanos de Coro | `/images/locations/medanos-de-coro.jpg` | Pendiente de verificar |
+| Plaza Bolívar de Coro | `/images/locations/plaza-bolivar-de-coro.jpg` | Pendiente de verificar |
+| Iglesia de San Francisco | `/images/locations/iglesia-de-san-francisco.jpg` | Janethrodri, CC BY-SA 4.0 |
+| Iglesia de San Clemente | `/images/locations/iglesia-de-san-clemente.jpg` | Janethrodri, CC BY-SA 4.0 |
+| Cruz de San Clemente | `/images/locations/cruz-de-san-clemente.jpg` | Zerojosefer, CC BY-SA 4.0 |
+| Casa Balcón de los Arcaya | `/images/locations/casa-balcon-de-los-arcaya.jpg` | Zerojosefer, CC BY-SA 4.0 |
+| Museo de Arte de Coro | `/images/locations/museo-de-arte-de-coro.jpg` | Janethrodri, CC BY-SA 4.0 |
+| Gelatería El Sol | `/images/locations/Gelateria-el-sol.jpeg` | Pendiente de verificar |
+| Parque Nacional Médanos de Coro | `/images/locations/parque-nacional-medanos-de-coro.jpg` | Pendiente de verificar |
+
+Las 18 imágenes suministradas por el responsable del proyecto tienen autoría y licencia
+**pendientes de verificar**. Las 5 imágenes restantes se tomaron de Wikimedia Commons,
+tienen autor, licencia y origen registrados en `imageCredits`, y el popup del mapa los muestra. El
+detalle está en [`docs/POI.md`](./POI.md).
 
 ## Verificación ejecutada
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm test` en `falcon-sync-backend` | 46/46 aprobadas (10 admin POI + 13 CoroAventura + 12 auth + 11 locations) |
-| Seed idempotente | `npm run seed` | 6 lugares sincronizados |
+| Pruebas backend | `npm run test:backend` | 58/58 aprobadas (12 admin POI + 18 CoroAventura + 12 auth + 14 locations + 2 seed) |
+| Seed idempotente | `test/seedLocations.test.js` | 23 insertados la primera vez y 0 la segunda |
+| Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada de Parque Nacional Médanos de Coro sincronizada y verificada |
+| Verificación del seed | `npm run seed:verify` | 23 POI sin desviaciones; Gelatería El Sol dentro del catálogo |
 | Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
-| Pruebas frontend | `npm test -- --watch=false` | 29 aprobadas (incluye servicios de aventuras, check-in y QR) |
+| Pruebas frontend | `npm run test:frontend` | 29/29 aprobadas |
 | Build producción | `npm run build` | Correcto, sin warnings |
-| E2E permanente | `npx playwright test --project=chromium` en `falcon-sync-frontend` | 13/13 con Edge y 13/13 con Chromium en modo CI |
+| E2E permanente | `npm run e2e` | 13/13 en Chromium |
 | Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
 | Workflow CI | `.github/workflows/ci.yml` | Creado, **no ejecutado** en remoto |
 
 La suite `test/adventures.test.js` cubre QR, rotación, hash no expuesto, check-in válido,
-duplicado, fuera de geocerca, token inválido, progreso en cualquier orden, siguiente parada,
-cierre, check-in global compartido, POI no publicado como parada, POI en uso, publicación,
-reordenamiento, permisos y auditoría.
+duplicado, fuera de geocerca, token inválido, check-in rechazado en POI provisional,
+progreso en cualquier orden, siguiente parada, cierre, check-in global compartido, POI no
+publicado o provisional como parada, POI en uso, publicación, reordenamiento, permisos y
+auditoría. `test/locations.test.js` cubre además los filtros públicos por circuito y
+etiqueta, el rechazo de valores desconocidos y la ocultación de un POI provisional aunque
+esté marcado como publicado. `test/adminLocations.test.js` cubre la regla de publicación
+con fecha de verificación y los filtros administrativos por circuito y etiqueta.
 
 La suite E2E comprueba:
 
 - límites reales de Leaflet (`maxBounds`, viscosidad, zoom mínimo, centro inicial);
+- mapa público con 23 tarjetas con imagen, 17 marcadores provisionales, clúster y filtro
+  únicamente por categoría, sin avisos de provisionalidad;
+- la lista lateral de POI se desplaza dentro de su panel sin mover la página;
 - que un `panTo` fuera del estado queda clavado dentro del rectángulo;
 - control “Ver todo Falcón” y ausencia de overflow horizontal a 390 px;
 - registro, persistencia de sesión tras recarga, logout y rechazo de credenciales;
@@ -414,7 +464,10 @@ GitHub Actions sigue pendiente. Las imágenes de la E2E se guardan en
 - El QR puede fotografiarse y compartirse y la ubicación del cliente puede simularse; la
   geocerca reduce el abuso, pero no elimina el fraude.
 - El slug de una aventura archivada no se reutiliza automáticamente.
-- La autoría y licencia de las imágenes siguen pendientes de verificación.
+- La autoría y licencia de 18 imágenes sigue pendiente de verificación; las otras 5 están
+  acreditadas con CC BY-SA 4.0.
+- Los 17 POI borradores necesitan verificación de coordenadas en campo antes de publicarse;
+  uno tiene discrepancia documentada.
 - No se creó configuración Docker porque Docker no está instalado en el entorno.
 - Los tiles de OpenStreetMap se usan con atribución visible. Para producción debe revisarse
   su política de uso y evaluarse un proveedor con cuota o autoalojado.

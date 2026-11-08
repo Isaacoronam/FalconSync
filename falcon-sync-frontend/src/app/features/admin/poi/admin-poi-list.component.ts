@@ -3,12 +3,20 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AdminLocation } from '../../../core/models/admin.model';
-import { LocationCategory, LocationStatus } from '../../../core/models/location.model';
+import {
+  LocationCategory,
+  LocationCircuit,
+  LocationStatus,
+  LocationTag,
+} from '../../../core/models/location.model';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import {
+  LOCATION_CATEGORY_FILTER_OPTIONS,
   LOCATION_CATEGORY_LABELS,
+  LOCATION_CIRCUIT_FILTER_OPTIONS,
   LOCATION_STATUS_LABELS,
+  LOCATION_TAG_FILTER_OPTIONS,
 } from '../../../core/utils/location-labels';
 
 interface ListMeta {
@@ -25,15 +33,6 @@ const STATUS_OPTIONS: Array<{ value: LocationStatus | 'all'; label: string }> = 
   { value: 'archived', label: 'Archivados' },
 ];
 
-const CATEGORY_OPTIONS: Array<{ value: LocationCategory | 'all'; label: string }> = [
-  { value: 'all', label: 'Todas las categorías' },
-  { value: 'architecture', label: 'Arquitectura civil' },
-  { value: 'monument', label: 'Monumentos' },
-  { value: 'religious', label: 'Religiosos' },
-  { value: 'nature', label: 'Naturaleza' },
-  { value: 'urban', label: 'Espacios urbanos' },
-];
-
 @Component({
   selector: 'app-admin-poi-list',
   imports: [ReactiveFormsModule, RouterLink],
@@ -47,11 +46,15 @@ export class AdminPoiListComponent implements OnInit {
   private readonly formBuilder = inject(NonNullableFormBuilder);
 
   protected readonly statuses = STATUS_OPTIONS;
-  protected readonly categories = CATEGORY_OPTIONS;
+  protected readonly categories = LOCATION_CATEGORY_FILTER_OPTIONS;
+  protected readonly circuits = LOCATION_CIRCUIT_FILTER_OPTIONS;
+  protected readonly tags = LOCATION_TAG_FILTER_OPTIONS;
   protected readonly filters = this.formBuilder.group({
     q: [''],
     status: ['all'],
     category: ['all'],
+    circuit: ['all'],
+    tag: ['all'],
   });
 
   protected readonly locations = signal<AdminLocation[]>([]);
@@ -78,6 +81,8 @@ export class AdminPoiListComponent implements OnInit {
         q: values.q.trim(),
         status: values.status as LocationStatus | 'all',
         category: values.category as LocationCategory | 'all',
+        circuit: values.circuit as LocationCircuit | 'all',
+        tag: values.tag as LocationTag | 'all',
         page,
         limit: 20,
       })
@@ -107,7 +112,13 @@ export class AdminPoiListComponent implements OnInit {
   }
 
   protected clearFilters(): void {
-    this.filters.reset({ q: '', status: 'all', category: 'all' });
+    this.filters.reset({
+      q: '',
+      status: 'all',
+      category: 'all',
+      circuit: 'all',
+      tag: 'all',
+    });
     this.notice.set(null);
     this.load(1);
   }
