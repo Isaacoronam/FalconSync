@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import CheckIn from '../models/CheckIn.js';
 import Location from '../models/Location.js';
 import { verifyCheckInToken } from '../services/checkInTokenService.js';
+import { storageAdapter } from '../services/storage/index.js';
 import { HttpError } from '../utils/HttpError.js';
 import { haversineDistanceMeters } from '../utils/geo.js';
 
@@ -107,6 +108,34 @@ export async function createCheckIn(request, response) {
     );
   }
 
+  const existingCheckIn = await CheckIn.exists({
+    user: request.user._id,
+    location: location._id,
+  });
+
+  if (existingCheckIn) {
+    throw new HttpError(
+      409,
+      'CHECK_IN_ALREADY_EXISTS',
+      'Ya registraste un check-in en este punto de interés',
+    );
+  }
+
+  let photo = null;
+
+  if (request.file) {
+    const saved = await storageAdapter.saveImage({
+      buffer: request.file.buffer,
+      folder: 'check-ins',
+    });
+
+    photo = {
+      filename: saved.filename,
+      mimeType: saved.mimeType,
+      size: saved.size,
+    };
+  }
+
   try {
     const checkIn = await CheckIn.create({
       user: request.user._id,
@@ -117,10 +146,17 @@ export async function createCheckIn(request, response) {
       },
       distanceMeters,
       tokenVersion: location.checkInTokenVersion ?? 0,
+      photo,
     });
 
     response.status(201).json({ data: checkIn });
   } catch (error) {
+    if (photo) {
+      await storageAdapter
+        .removeByFilename('check-ins', photo.filename)
+        .catch(() => undefined);
+    }
+
     if (error?.code === 11000) {
       throw new HttpError(
         409,

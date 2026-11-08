@@ -173,11 +173,11 @@ tarjetas en pantallas menores a 700 px para evitar desplazamiento horizontal.
 
 | Comprobación | Resultado |
 |---|---|
-| Pruebas backend | 58/58 aprobadas |
+| Pruebas backend | 67/67 aprobadas |
 | Pruebas frontend | 29/29 aprobadas |
 | Build de producción | Correcto, sin warnings |
-| E2E | 13/13 en Chromium |
-| Seed y verificación | 6 publicados + 17 borradores; Gelatería El Sol y la entrada del Parque Nacional Médanos de Coro visibles en el mapa |
+| E2E | 15/15 en Edge local y 15/15 con Chromium (`CI=1`) |
+| Seed y verificación | 23 POI publicados; Gelatería El Sol y la entrada del Parque Nacional Médanos de Coro visibles en el mapa |
 | `npm audit --omit=dev` | 0 vulnerabilidades en backend y frontend |
 
 La prueba E2E `admin-poi.spec.ts` crea un POI, sube una imagen, lo publica, comprueba que

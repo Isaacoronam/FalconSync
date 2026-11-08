@@ -3,6 +3,7 @@ export type UserRole = 'user' | 'moderator' | 'admin';
 export interface AuthUser {
   id: string;
   name: string;
+  username?: string | null;
   email: string;
   role: UserRole;
   isActive: boolean;

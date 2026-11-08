@@ -11,6 +11,7 @@ import {
   verifyPassword,
 } from '../services/authService.js';
 import { HttpError } from '../utils/HttpError.js';
+import { generateUniqueUsername } from '../services/usernameService.js';
 import {
   normalizeEmail,
   validateEmail,
@@ -94,9 +95,11 @@ export async function register(request, response) {
   }
 
   const passwordHash = await hashPassword(body.password);
+  const username = await generateUniqueUsername({ name, email });
   const user = await User.create({
     name,
     email,
+    username,
     passwordHash,
     role: 'user',
   });

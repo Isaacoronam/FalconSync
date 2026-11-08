@@ -35,6 +35,9 @@ npm start            # servidor normal
 npm run seed         # inserta los POI ausentes (23 publicados)
 npm run seed:sync    # actualiza fichas, verificación y radios; conserva estado e isProvisional
 npm run seed:verify  # comprueba existencia, publicación y desviación de coordenadas
+npm run seed:adventures        # crea o actualiza la Ruta del Casco Histórico
+npm run seed:adventures:verify # verifica publicación, orden y paradas disponibles
+npm run backfill:usernames     # asigna username a cuentas anteriores al perfil
 npm run publish:pois # publica los POI del seed que sigan en borrador; usa --apply para guardar
 npm run qr:generate  # rota QR de POI publicados sin token y guarda SVG en .qr-codes; usa --apply
 npm run create-admin # bootstrap idempotente del administrador
@@ -65,7 +68,16 @@ Autenticación:
 Aventuras y check-in (autenticado):
 
 - `GET /api/adventures/:slug/progress`
-- `POST /api/check-ins` (`{ locationId, token, latitude, longitude }`)
+- `POST /api/check-ins` (JSON o `multipart/form-data` con `image` opcional)
+
+Perfil privado (autenticado):
+
+- `GET /api/profile/me`
+- `PATCH /api/profile/me` (`{ name?, username?, bio? }`)
+- `GET /api/profile/avatar`
+- `POST /api/profile/avatar` (`multipart/form-data`, campo `image`)
+- `DELETE /api/profile/avatar`
+- `GET /api/profile/check-ins/:checkInId/photo`
 
 Administración (rol `admin`):
 
@@ -93,12 +105,16 @@ Administración (rol `admin`):
 - `PUT /api/admin/adventures/:id/stops/reorder` (`{ "order": ["stopId1", "stopId2"] }`)
 - `GET /api/admin/audit?page=&limit=&action=&entityId=`
 
-Las imágenes se sirven desde `/api/uploads/...`.
+Las imágenes públicas de POI se sirven desde `/api/uploads/...`. Los avatares y las fotos de
+check-in se guardan en `uploads-private/` y solo se sirven por los endpoints autenticados de
+perfil.
 
 El detalle de cookies, rotación de refresh, roles y límites está en
 [`../docs/AUTENTICACION.md`](../docs/AUTENTICACION.md). El CRUD de POI, imágenes y auditoría
 está documentado en [`../docs/ADMINISTRACION.md`](../docs/ADMINISTRACION.md). El diseño de
 aventuras, QR, geocercas y check-in está en [`../docs/AVENTURAS.md`](../docs/AVENTURAS.md).
+El perfil privado, avatar, fotos y seed de aventura están en
+[`../docs/PERFIL.md`](../docs/PERFIL.md).
 
 ## Seguridad
 
@@ -115,9 +131,13 @@ aventuras, QR, geocercas y check-in está en [`../docs/AVENTURAS.md`](../docs/AV
   hay borradores en el catálogo. Los 23 habilitan detalle, aventura y check-in.
 - Los QR de check-in se generan con `npm run qr:generate -- --apply` y quedan en
   `.qr-codes/`, fuera de Git porque contienen tokens.
-- Las imágenes se validan por firma binaria (JPEG/PNG/WebP), con límite de 5 MB y 8 por POI.
-  El adaptador local vive en `src/services/storage/` y puede sustituirse por otro
+- Las imágenes públicas se validan por firma binaria (JPEG/PNG/WebP), con límite de 5 MB y 8
+  por POI. El adaptador local vive en `src/services/storage/` y puede sustituirse por otro
   almacenamiento.
+- Los avatares y las fotos de check-in se validan por MIME y firma binaria, se limitan a 5 MB
+  y se guardan en `uploads-private/`, fuera del prefijo público.
+- Las fotos de check-in solo se sirven al dueño del check-in; otro usuario recibe `404`.
+- El perfil es privado: no hay rutas públicas por `username` ni directorio de usuarios.
 - El QR de check-in es opaco: token de 32 bytes, hash SHA-256 persistido con `select: false`,
   comparación en tiempo constante y rotación que invalida los QR anteriores.
 - La geocerca Haversine se valida solo en servidor; el radio por POI es configurable entre 10
@@ -139,6 +159,9 @@ por el responsable del proyecto y su autoría y licencia están pendientes de ve
 La **Cruz de los Enconchados** no se incluyó: no se encontró una fuente cartográfica o
 documental confiable que permita ubicarla sin inventar datos.
 
+El seed de aventura crea la «Ruta del Casco Histórico de Coro» con cinco paradas reales y es
+idempotente. Sus paradas deben estar publicadas, visibles y no provisionales.
+
 ## Variables de entorno
 
 Copia `.env.example` a `.env` y ajusta:
@@ -147,16 +170,18 @@ Copia `.env.example` a `.env` y ajusta:
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`.
 - `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS`, `BCRYPT_COST`.
 - `REFRESH_COOKIE_NAME`, `COOKIE_SECURE`.
-- `UPLOAD_DIR` y `UPLOAD_MAX_IMAGE_BYTES` para las imágenes locales.
+- `UPLOAD_DIR` para las imágenes públicas de POI.
+- `UPLOAD_PRIVATE_DIR` para avatares y fotos de check-in.
+- `UPLOAD_MAX_IMAGE_BYTES` para el límite de carga.
 - `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` para `create-admin`.
 
 No se incluyen secretos reales en el repositorio. `.env` está ignorado por Git.
 
 ## Pruebas
 
-`npm test` ejecuta las pruebas de ubicaciones, autenticación, administración de POI, seed y
-CoroAventura (aventuras, QR, check-in y progreso) con `node --test` y `supertest`, usando
-bases de datos locales de prueba.
+`npm test` ejecuta las pruebas de ubicaciones, autenticación, administración de POI, perfil,
+seed y CoroAventura (aventuras, QR, check-in y progreso) con `node --test` y `supertest`,
+usando bases de datos locales de prueba. Resultado de la última corrida: 67/67.
 
 La suite E2E permanente vive en `../falcon-sync-frontend/e2e` y arranca esta API con
 `scripts/e2eServer.js` sobre la base `falconsync_e2e`.

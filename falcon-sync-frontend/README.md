@@ -24,23 +24,26 @@ npm run e2e
 
 - `src/app/features/map/coro-map.component.ts`: mapa Leaflet, filtros y popups.
 - `src/app/features/aventuras/`: catálogo, detalle, progreso y check-in de aventuras.
+- `src/app/features/perfil/`: perfil privado, avatar, estadísticas, Chivito y fotos de check-in.
 - `src/app/features/admin/`: layout, panel, listado de POI, formulario, selector de mapa y
   auditoría.
 - `src/app/features/admin/aventuras/`: listado, creación/edición, paradas y QR de aventuras.
 - `src/app/core/services/location-api.service.ts`: cliente HTTP de lugares.
 - `src/app/core/services/admin-api.service.ts`: cliente HTTP del CRUD administrativo.
 - `src/app/core/services/adventure-api.service.ts`: cliente HTTP de aventuras y paradas.
-- `src/app/core/services/check-in-api.service.ts`: cliente HTTP de check-in.
+- `src/app/core/services/check-in-api.service.ts`: cliente HTTP de check-in; usa JSON o `multipart/form-data` según haya foto.
+- `src/app/core/services/profile-api.service.ts`: perfil, avatar y blobs privados.
 - `src/app/core/services/qr-admin-api.service.ts`: cliente HTTP de rotación de QR.
 - `src/app/core/models/location.model.ts`: contrato TypeScript de `Location`.
 - `src/app/core/models/admin.model.ts`: resumen, POI administrativo y auditoría.
 - `src/app/core/models/adventure.model.ts`: contratos TypeScript de aventuras, paradas,
   progreso, check-in y QR.
+- `src/app/core/models/profile.model.ts`: perfil, estadísticas, aventuras resumidas y check-in recientes.
 - `src/environments/environment.ts`: URL base de la API.
 - `proxy.conf.json`: proxy de desarrollo hacia el backend.
 - `public/images/locations/`: imágenes de los POI, referenciadas por el campo `images` de la API.
 - `public/favicon.ico`: favicon de FalconSync usado por `src/index.html`.
-- `e2e/`: suite Playwright de mapa, autenticación, administración de POI y aventuras.
+- `e2e/`: suite Playwright de mapa, autenticación, administración de POI, aventuras y perfil.
 
 ## Administración
 
@@ -61,13 +64,18 @@ Públicas:
 - `/aventuras`: catálogo de aventuras publicadas.
 - `/aventuras/:slug`: detalle de aventura con paradas ordenadas.
 - `/aventuras/:slug/progreso`: progreso del usuario autenticado.
-- `/checkin/:locationId?token=...`: check-in con geolocalización.
+- `/checkin/:locationId?token=...`: check-in con geolocalización y foto opcional.
+- `/perfil`: perfil privado del usuario autenticado, con avatar, estadísticas, Chivito y
+  últimos check-in.
 
-La tabla de POI se convierte en tarjetas por debajo de 700 px. Las imágenes se suben al
-backend y se sirven desde `/api/uploads/...`; el frontend no guarda archivos localmente.
+La tabla de POI se convierte en tarjetas por debajo de 700 px. Las imágenes públicas de POI se
+suben al backend y se sirven desde `/api/uploads/...`. Los avatares y las fotos de check-in se
+guardan en el almacenamiento privado y se solicitan como `Blob` autenticado; el frontend no
+guarda archivos localmente.
 
 El detalle funcional y de seguridad está en
-[`../docs/ADMINISTRACION.md`](../docs/ADMINISTRACION.md).
+[`../docs/ADMINISTRACION.md`](../docs/ADMINISTRACION.md) y
+[`../docs/PERFIL.md`](../docs/PERFIL.md).
 
 ## Cartografía
 

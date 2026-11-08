@@ -1,0 +1,249 @@
+@if (loading()) {
+  <p>Cargando tu perfil…</p>
+} @else if (error()) {
+  <h1>Mi perfil</h1>
+  <p class="form-error" role="alert">{{ error() }}</p>
+  <button type="button" class="button button--ghost" (click)="loadProfile()">
+    Reintentar
+  </button>
+} @else if (profile(); as user) {
+  <section class="perfil">
+    <header class="perfil__cabecera">
+      <div class="perfil__avatar" aria-hidden="true">
+        @if (avatarUrl(); as avatar) {
+          <img [src]="avatar" alt="" />
+        } @else {
+          <span>{{ initials() }}</span>
+        }
+      </div>
+
+      <div class="perfil__identidad">
+        <p class="perfil__eyebrow">Perfil privado</p>
+        <h1>{{ user.name }}</h1>
+        <p class="perfil__usuario">
+          <span aria-hidden="true">&#64;</span>{{ user.username ?? 'sin-usuario' }}
+        </p>
+        <p class="perfil__email">{{ user.email }}</p>
+      </div>
+
+      <div class="perfil__avatar-acciones">
+        <label class="button button--ghost" for="perfil-avatar">
+          {{ uploading() ? 'Subiendo…' : 'Cambiar avatar' }}
+        </label>
+        <input
+          id="perfil-avatar"
+          class="perfil__file-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          [disabled]="uploading()"
+          (change)="onAvatarSelected($event)"
+        />
+        @if (user.hasAvatar) {
+          <button
+            type="button"
+            class="button button--ghost"
+            [disabled]="uploading()"
+            (click)="removeAvatar()"
+          >
+            Quitar avatar
+          </button>
+        }
+      </div>
+    </header>
+
+    <p class="perfil__privacidad">
+      Este perfil y sus fotos solo son visibles para ti. Las imágenes se sirven
+      mediante endpoints autenticados.
+    </p>
+
+    @if (message()) {
+      <p
+        class="form-message"
+        [class.form-message--success]="messageType() === 'success'"
+        [class.form-message--error]="messageType() === 'error'"
+        role="alert"
+      >
+        {{ message() }}
+      </p>
+    }
+
+    <aside class="perfil__chivito" aria-label="Mensaje de Chivito">
+      <span class="perfil__chivito-nombre">Chivito</span>
+      <p>{{ chivitoMessage() }}</p>
+    </aside>
+
+    <section class="perfil__stats" aria-label="Resumen de tu actividad">
+      <article class="perfil__stat">
+        <span class="perfil__stat-etiqueta">Check-in</span>
+        <span class="perfil__stat-valor">{{ stats()?.totalCheckIns ?? 0 }}</span>
+      </article>
+      <article class="perfil__stat">
+        <span class="perfil__stat-etiqueta">Paradas visitadas</span>
+        <span class="perfil__stat-valor">
+          {{ stats()?.visitedStops ?? 0 }} / {{ stats()?.totalStops ?? 0 }}
+        </span>
+      </article>
+      <article class="perfil__stat">
+        <span class="perfil__stat-etiqueta">Aventuras iniciadas</span>
+        <span class="perfil__stat-valor">{{ stats()?.startedAdventures ?? 0 }}</span>
+      </article>
+      <article class="perfil__stat">
+        <span class="perfil__stat-etiqueta">Aventuras completadas</span>
+        <span class="perfil__stat-valor">{{ stats()?.completedAdventures ?? 0 }}</span>
+      </article>
+    </section>
+
+    <div class="perfil__columnas">
+      <section class="perfil__panel" aria-labelledby="perfil-datos">
+        <h2 id="perfil-datos">Datos personales</h2>
+
+        <form class="perfil__form" (ngSubmit)="saveProfile()" novalidate>
+          <div class="form-field">
+            <label for="perfil-nombre">Nombre</label>
+            <input
+              id="perfil-nombre"
+              name="name"
+              type="text"
+              autocomplete="name"
+              minlength="2"
+              maxlength="80"
+              required
+              [(ngModel)]="form.name"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="perfil-usuario">Nombre de usuario</label>
+            <input
+              id="perfil-usuario"
+              name="username"
+              type="text"
+              autocomplete="username"
+              minlength="3"
+              maxlength="30"
+              pattern="[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]"
+              required
+              [(ngModel)]="form.username"
+            />
+            <p class="form-field__help">
+              Minúsculas, números, puntos, guiones y guiones bajos. No se muestra
+              en un directorio público.
+            </p>
+          </div>
+
+          <div class="form-field">
+            <label for="perfil-bio">Biografía</label>
+            <textarea
+              id="perfil-bio"
+              name="bio"
+              rows="4"
+              maxlength="280"
+              [(ngModel)]="form.bio"
+            ></textarea>
+            <p class="form-field__help">{{ form.bio.length }} / 280 caracteres</p>
+          </div>
+
+          <div class="perfil__form-acciones">
+            <button
+              class="button button--primary"
+              type="submit"
+              [disabled]="saving()"
+            >
+              {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
+            <a class="button button--ghost" routerLink="/cambiar-contrasena">
+              Cambiar contraseña
+            </a>
+          </div>
+        </form>
+      </section>
+
+      <section class="perfil__panel" aria-labelledby="perfil-aventuras">
+        <h2 id="perfil-aventuras">Mis aventuras</h2>
+
+        @if (adventures().length === 0) {
+          <p class="perfil__vacio">
+            Todavía no hay aventuras publicadas. Cuando existan, aquí verás tu
+            progreso.
+          </p>
+        } @else {
+          <div class="perfil__aventuras">
+            @for (adventure of adventures(); track adventure.id) {
+              <article class="perfil__aventura">
+                <div class="perfil__aventura-cabecera">
+                  <h3>{{ adventure.title }}</h3>
+                  <span>{{ adventure.percentage }}%</span>
+                </div>
+                <div
+                  class="perfil__barra"
+                  role="progressbar"
+                  [attr.aria-valuenow]="adventure.percentage"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  [attr.aria-label]="'Progreso de ' + adventure.title"
+                >
+                  <div
+                    class="perfil__barra-relleno"
+                    [style.width.%]="adventure.percentage"
+                  ></div>
+                </div>
+                <p class="perfil__aventura-detalle">
+                  {{ adventure.visitedStops }} de {{ adventure.totalStops }}
+                  paradas ·
+                  {{ adventure.completed ? 'Completada' : 'En curso' }}
+                </p>
+                <a
+                  class="perfil__aventura-enlace"
+                  [routerLink]="['/aventuras', adventure.slug, 'progreso']"
+                >
+                  Ver progreso
+                </a>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    <section class="perfil__panel" aria-labelledby="perfil-checkins">
+      <h2 id="perfil-checkins">Últimos check-in</h2>
+
+      @if (recentCheckIns().length === 0) {
+        <p class="perfil__vacio">
+          Aún no has registrado visitas. Escanea un QR o abre el check-in de una
+          parada para empezar.
+        </p>
+      } @else {
+        <div class="perfil__checkins">
+          @for (checkIn of recentCheckIns(); track checkIn.id) {
+            <article class="perfil__checkin">
+              <div class="perfil__checkin-foto">
+                @if (photoUrl(checkIn.id); as photo) {
+                  <img
+                    [src]="photo"
+                    [alt]="'Foto de tu visita a ' + checkIn.location.title"
+                  />
+                } @else if (checkIn.location.images[0]; as image) {
+                  <img [src]="image" alt="" />
+                } @else {
+                  <span>Sin foto</span>
+                }
+              </div>
+              <div class="perfil__checkin-texto">
+                <h3>{{ checkIn.location.title }}</h3>
+                <p>{{ formatDate(checkIn.createdAt) }}</p>
+                @if (checkIn.photoAvailable) {
+                  <span class="perfil__checkin-foto-etiqueta">Con foto</span>
+                } @else {
+                  <span class="perfil__checkin-foto-etiqueta perfil__checkin-foto-etiqueta--vacia">
+                    Sin foto
+                  </span>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </section>
+}

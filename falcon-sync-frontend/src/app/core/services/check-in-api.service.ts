@@ -12,6 +12,17 @@ export class CheckInApiService {
   private readonly checkInsUrl = `${environment.apiUrl}/check-ins`;
 
   createCheckIn(payload: CheckInPayload): Observable<{ data: CheckIn }> {
-    return this.http.post<{ data: CheckIn }>(this.checkInsUrl, payload);
+    if (!payload.photo) {
+      return this.http.post<{ data: CheckIn }>(this.checkInsUrl, payload);
+    }
+
+    const formData = new FormData();
+    formData.append('locationId', payload.locationId);
+    formData.append('token', payload.token);
+    formData.append('latitude', String(payload.latitude));
+    formData.append('longitude', String(payload.longitude));
+    formData.append('image', payload.photo);
+
+    return this.http.post<{ data: CheckIn }>(this.checkInsUrl, formData);
   }
 }

@@ -250,10 +250,11 @@ el sitio.
 
 | Comprobación | Comando | Resultado real (2026-11-07) |
 |---|---|---|
-| Pruebas backend | `npm run test:backend` | 58/58 aprobadas |
+| Pruebas backend | `npm run test:backend` | 67/67 aprobadas |
 | Pruebas frontend | `npm run test:frontend` | 29/29 aprobadas |
 | Build de producción | `npm run build` | Correcto, sin warnings |
-| E2E Chromium | `npm run e2e` | 13/13 aprobadas |
+| E2E Edge local | `npm run e2e` | 15/15 aprobadas |
+| E2E Chromium (CI) | `$env:CI=1; npm run e2e` | 15/15 aprobadas |
 | Idempotencia del seed | `test/seedLocations.test.js` | 23 insertados la primera vez, 0 la segunda; verificación correcta |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada del Parque Nacional sincronizada; 23 POI verificados sin desviaciones |
 | Verificación del seed | `npm run seed:verify` | 23 POI sin desviaciones; Gelatería El Sol dentro del catálogo |

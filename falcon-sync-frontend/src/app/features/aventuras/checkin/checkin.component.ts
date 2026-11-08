@@ -2,11 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  OnDestroy,
   OnInit,
   inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LocationApiService } from '../../../core/services/location-api.service';
@@ -21,6 +23,9 @@ const GEOLOCATION_OPTIONS: PositionOptions = {
   maximumAge: 60000,
 };
 
+const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
 @Component({
   selector: 'app-checkin',
   imports: [FormsModule, RouterLink],
@@ -28,12 +33,13 @@ const GEOLOCATION_OPTIONS: PositionOptions = {
   styleUrl: './checkin.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CheckinComponent implements OnInit {
+export class CheckinComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly locationsApi = inject(LocationApiService);
   private readonly checkInApi = inject(CheckInApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly sanitizer = inject(DomSanitizer);
 
   protected readonly locationId = signal<string | null>(null);
   protected readonly token = signal<string | null>(null);
@@ -45,7 +51,11 @@ export class CheckinComponent implements OnInit {
   protected readonly messageType = signal<'success' | 'error' | null>(null);
   protected readonly distanceMeters = signal<number | null>(null);
   protected readonly radiusMeters = signal<number | null>(null);
+  protected readonly photoPreview = signal<SafeUrl | null>(null);
+  protected readonly photoName = signal<string | null>(null);
 
+  private photoFile: File | null = null;
+  private photoRawUrl: string | null = null;
   private watchId: number | null = null;
 
   ngOnInit(): void {
@@ -98,6 +108,58 @@ export class CheckinComponent implements OnInit {
     this.message.set(null);
   }
 
+  protected onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+
+    this.clearPhotoSelection();
+
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      this.finalizarError('La foto debe ser una imagen JPEG, PNG o WebP.');
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_BYTES) {
+      this.finalizarError('La foto no puede superar 5 MB.');
+      return;
+    }
+
+    this.photoFile = file;
+    this.photoName.set(file.name);
+    this.photoRawUrl = URL.createObjectURL(file);
+    this.photoPreview.set(
+      this.sanitizer.bypassSecurityTrustUrl(this.photoRawUrl),
+    );
+    this.message.set(null);
+    this.messageType.set(null);
+  }
+
+  protected removePhoto(): void {
+    this.clearPhotoSelection();
+    this.message.set(null);
+    this.messageType.set(null);
+  }
+
+  ngOnDestroy(): void {
+    this.clearPhotoSelection();
+  }
+
+  private clearPhotoSelection(): void {
+    this.photoFile = null;
+    this.photoName.set(null);
+    this.photoPreview.set(null);
+
+    if (this.photoRawUrl) {
+      URL.revokeObjectURL(this.photoRawUrl);
+      this.photoRawUrl = null;
+    }
+  }
+
   protected async realizarCheckIn(): Promise<void> {
     if (!this.locationId() || !this.token()) {
       this.message.set(this.tokenError() ?? 'Faltan datos para el check-in.');
@@ -134,13 +196,18 @@ export class CheckinComponent implements OnInit {
         token: this.token()!,
         latitude: coords.latitude,
         longitude: coords.longitude,
+        photo: this.photoFile ?? undefined,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.checking.set(false);
           this.stage.set('success');
-          this.message.set('Check-in registrado. Se actualizó tu progreso en la aventura.');
+          this.message.set(
+            this.photoFile
+              ? 'Check-in registrado con tu foto. Se actualizó tu progreso en la aventura.'
+              : 'Check-in registrado. Se actualizó tu progreso en la aventura.',
+          );
           this.messageType.set('success');
         },
         error: (error: unknown) => {

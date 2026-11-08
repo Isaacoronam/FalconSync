@@ -1,6 +1,6 @@
-# FalconSync — estado de los cortes 0 a 4
+# FalconSync — estado de los cortes 0 a 5
 
-Fecha de verificación: 2026-11-06.
+Fecha de verificación: 2026-11-07.
 
 ## Alcance implementado
 
@@ -43,7 +43,7 @@ Fecha de verificación: 2026-11-06.
   pruebas, build, Chromium y E2E.
 - El workflow **no fue ejecutado** todavía en GitHub: la rama se subió, pero no se abrió un
   PR ni existe una ejecución remota verificada. El YAML no se declara verde. La suite E2E sí
-  se ejecutó localmente con Chromium en modo CI (13/13).
+  se ejecutó localmente con Chromium en modo CI: 15/15 tras el Corte 5.
 
 ### Corte 2 — Administración y POI
 
@@ -102,6 +102,22 @@ El detalle está en [`docs/AVENTURAS.md`](./AVENTURAS.md).
 
 El detalle está en [`docs/COROAVENTURA-FRONTEND.md`](./COROAVENTURA-FRONTEND.md).
 
+### Corte 5 — Perfil privado, avatar y fotos
+
+- `User` con `username`, `bio` y metadatos privados de avatar; generación automática de
+  nombre de usuario y backfill para cuentas existentes.
+- Perfil visible solo para su dueño en `/perfil`; sin rutas públicas por `username`.
+- Edición de nombre, usuario y biografía, con actualización del header.
+- Avatar privado con carga, reemplazo y eliminación.
+- Foto opcional por check-in mediante `multipart/form-data`.
+- Avatares y fotos en `uploads-private/`, servidos solo por endpoints autenticados.
+- Estadísticas reales de check-in, aventuras iniciadas/completadas y paradas visitadas.
+- Bloque de Chivito derivado de esas estadísticas, sin servicios externos.
+- Seed idempotente de la «Ruta del Casco Histórico de Coro» con cinco paradas reales.
+- E2E de perfil, avatar y check-in con foto (`e2e/perfil.spec.ts`).
+
+El detalle está en [`docs/PERFIL.md`](./PERFIL.md).
+
 ## Stack verificado
 
 | Componente | Versión |
@@ -139,21 +155,26 @@ FalconSYN/
 ├── .github/workflows/ci.yml
 ├── falcon-sync-backend/
 │   ├── scripts/
+│   │   ├── backfillUsernames.js
 │   │   ├── createAdmin.js
 │   │   ├── e2eServer.js
+│   │   ├── generateCheckInQr.js
+│   │   ├── publishLocations.js
+│   │   ├── seedAdventures.js
 │   │   └── seedLocations.js
 │   ├── src/
 │   │   ├── config/            # entorno, Mongo y límites de Falcón
-│   │   ├── controllers/       # auth, admin, POI, aventuras, QR y check-in
+│   │   ├── controllers/       # auth, perfil, admin, POI, aventuras, QR y check-in
 │   │   ├── middlewares/       # auth, origin, rate limit, upload, errores
 │   │   ├── models/            # User, RefreshSession, Location, Adventure, AdventureStop, CheckIn, AuditLog
 │   │   ├── routes/
-│   │   ├── services/          # auth, auditoría, storage, QR, tokens, progreso
+│   │   ├── services/          # auth, usuarios, auditoría, storage, QR, tokens, progreso
 │   │   └── utils/             # HttpError, validaciones, distancia Haversine
-│   ├── uploads/               # imágenes locales, ignoradas por Git
-│   └── test/                  # locations, auth, adminLocations y adventures
+│   ├── uploads/               # imágenes públicas de POI, ignoradas por Git
+│   ├── uploads-private/       # avatares y fotos de check-in, ignorados por Git
+│   └── test/                  # locations, auth, adminLocations, adventures, profile y seeds
 ├── falcon-sync-frontend/
-│   ├── e2e/                   # map, auth, admin-poi y coro-aventura
+│   ├── e2e/                   # map, auth, admin-poi, coro-aventura y perfil
 │   ├── public/images/locations/ # imágenes y manifest.json de créditos
 │   ├── src/app/
 │   │   ├── core/              # guards, interceptor, modelos, servicios
@@ -162,7 +183,8 @@ FalconSYN/
 │   │   │   │   └── aventuras/ # listado, formulario, paradas y QR
 │   │   │   ├── aventuras/     # catálogo, detalle, progreso y check-in
 │   │   │   ├── auth/          # login, registro, cambio, 403
-│   │   │   └── map/
+│   │   │   ├── map/
+│   │   │   └── perfil/        # perfil privado, avatar, estadísticas y fotos
 │   │   ├── environments/
 │   │   └── styles/_admin.scss
 │   ├── playwright.config.ts
@@ -174,6 +196,7 @@ FalconSYN/
 │   ├── AVENTURAS.md
 │   ├── COROAVENTURA-FRONTEND.md
 │   ├── FALCONSYNC.md
+│   ├── PERFIL.md
 │   └── POI.md
 └── .nvmrc
 ```
@@ -215,8 +238,8 @@ Resumen operativo:
 - El script es idempotente: una segunda ejecución no modifica la contraseña existente.
 - El panel `/admin` ya permite gestionar POI, imágenes, auditoría y aventuras. El backend de
   aventuras, paradas, QR y check-in está implementado en el Corte 3 y su interfaz en el
-  Corte 4; la gestión de usuarios, la moderación y las rutas guiadas corresponden a cortes
-  siguientes.
+  Corte 4. El perfil privado, el avatar y las fotos de check-in se completaron en el Corte 5;
+  la gestión de usuarios, la moderación y las rutas guiadas corresponden a cortes siguientes.
 
 ## Comandos de arranque
 
@@ -231,6 +254,9 @@ cp .env.example .env   # completar secretos de al menos 32 caracteres
 npm run seed           # inserta los POI ausentes y elimina Mirador del Pueblo
 npm run seed:sync      # sincroniza fichas y elimina Mirador del Pueblo
 npm run seed:verify    # comprueba existencia, publicación, coordenadas y retiro del Mirador
+npm run seed:adventures        # crea o actualiza la Ruta del Casco Histórico
+npm run seed:adventures:verify # verifica publicación, orden y paradas disponibles
+npm run backfill:usernames     # asigna username a cuentas anteriores al Corte 5
 npm run create-admin   # requiere ADMIN_* en .env
 npm run dev
 ```
@@ -246,13 +272,17 @@ npm start
 - API: `http://localhost:3000`
 - Aplicación: `http://localhost:4200`
 - El frontend usa `proxy.conf.json` para enviar `/api` al backend.
+- Las imágenes públicas de POI se guardan en `uploads/` y se sirven en `/api/uploads/...`.
+- Los avatares y las fotos de check-in se guardan en `uploads-private/` y solo se sirven por
+  endpoints autenticados del perfil. Ambas carpetas están ignoradas por Git.
 - El backend se detiene si el puerto ya está ocupado; detén la instancia anterior antes de
   iniciar otra. `npm run seed` es idempotente, inserta POI ausentes y elimina únicamente
   Mirador del Pueblo. `npm run seed:sync` actualiza fichas existentes, sincroniza las
   coordenadas solo de Parque Nacional Médanos de Coro sin modificar los demás puntos,
   preserva estado y `isProvisional`, y elimina ese mismo POI retirado.
   `npm run seed:verify` falla si falta un POI, si Mirador del Pueblo sigue presente o si un
-  publicado está provisional o sin fecha de verificación.
+  publicado está provisional o sin fecha de verificación. `npm run seed:adventures` es
+  idempotente y exige que las cinco paradas estén publicadas y disponibles.
 
 En Windows, si no se dispone de `cp`, crear `.env` manualmente a partir de
 `.env.example`. No se deben usar los valores de ejemplo en producción.
@@ -277,7 +307,13 @@ Autenticados:
 - `GET /api/auth/me`
 - `POST /api/auth/change-password`
 - `GET /api/adventures/:slug/progress`
-- `POST /api/check-ins`
+- `POST /api/check-ins` (JSON o `multipart/form-data` con `image` opcional)
+- `GET /api/profile/me`
+- `PATCH /api/profile/me`
+- `GET /api/profile/avatar`
+- `POST /api/profile/avatar` (`multipart/form-data`, campo `image`)
+- `DELETE /api/profile/avatar`
+- `GET /api/profile/check-ins/:checkInId/photo`
 
 Administración (rol `admin`, cambio de contraseña completado):
 
@@ -305,7 +341,9 @@ Administración (rol `admin`, cambio de contraseña completado):
 - `PUT /api/admin/adventures/:id/stops/reorder`
 - `GET /api/admin/audit?page=&limit=&action=&entityId=`
 
-Las imágenes se sirven en `/api/uploads/...`.
+Las imágenes públicas de POI se sirven en `/api/uploads/...`. Los avatares y las fotos de
+check-in no tienen URL estática: se sirven solo por `/api/profile/avatar` y
+`/api/profile/check-ins/:checkInId/photo` con sesión del dueño.
 
 Formato de lista de lugares:
 
@@ -373,14 +411,16 @@ detalle está en [`docs/POI.md`](./POI.md).
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm run test:backend` | 58/58 aprobadas (12 admin POI + 18 CoroAventura + 12 auth + 14 locations + 2 seed) |
+| Pruebas backend | `npm test` en `falcon-sync-backend` | 67/67 aprobadas (12 admin POI + 18 CoroAventura + 12 auth + 14 locations + 6 perfil + 2 seed aventuras + 3 seed POI) |
 | Seed idempotente | `test/seedLocations.test.js` | 23 insertados la primera vez y 0 la segunda |
+| Seed de aventura | `npm run seed:adventures` + `--verify` | Aventura publicada con 5 paradas, orden y disponibilidad correctos |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada de Parque Nacional Médanos de Coro sincronizada y verificada |
 | Verificación del seed | `npm run seed:verify` | 23 POI sin desviaciones; Gelatería El Sol dentro del catálogo |
+| Backfill de usuarios | `npm run backfill:usernames` | 2 usuarios actualizados con `username` |
 | Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
-| Pruebas frontend | `npm run test:frontend` | 29/29 aprobadas |
+| Pruebas frontend | `npm test -- --watch=false` | 29/29 aprobadas |
 | Build producción | `npm run build` | Correcto, sin warnings |
-| E2E permanente | `npm run e2e` | 13/13 en Chromium |
+| E2E permanente | `npm run e2e` | 15/15 en Edge local y 15/15 con Chromium (`CI=1`) |
 | Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
@@ -390,10 +430,13 @@ La suite `test/adventures.test.js` cubre QR, rotación, hash no expuesto, check-
 duplicado, fuera de geocerca, token inválido, check-in rechazado en POI provisional,
 progreso en cualquier orden, siguiente parada, cierre, check-in global compartido, POI no
 publicado o provisional como parada, POI en uso, publicación, reordenamiento, permisos y
-auditoría. `test/locations.test.js` cubre además los filtros públicos por circuito y
-etiqueta, el rechazo de valores desconocidos y la ocultación de un POI provisional aunque
-esté marcado como publicado. `test/adminLocations.test.js` cubre la regla de publicación
-con fecha de verificación y los filtros administrativos por circuito y etiqueta.
+auditoría. `test/profile.test.js` cubre perfil privado, generación y edición de `username`,
+avatar privado, foto de check-in, acceso denegado a otros usuarios y estadísticas de
+aventura. `test/seedAdventures.test.js` comprueba que el seed usa paradas reales publicadas y
+rutas de imagen permitidas. `test/locations.test.js` cubre además los filtros públicos por
+circuito y etiqueta, el rechazo de valores desconocidos y la ocultación de un POI provisional
+aunque esté marcado como publicado. `test/adminLocations.test.js` cubre la regla de
+publicación con fecha de verificación y los filtros administrativos por circuito y etiqueta.
 
 La suite E2E comprueba:
 
@@ -413,12 +456,16 @@ La suite E2E comprueba:
 - escaneo de QR sin sesión: redirección a login con `returnUrl` completo y token conservado;
 - check-in con geolocalización simulada dentro del radio, progreso al 33 % y siguiente parada;
 - rechazo de check-in duplicado y de posición fuera de la geocerca;
-- recorrido completo de las tres paradas, cierre de ruta al 100 %, insignia y fecha.
+- recorrido completo de las tres paradas, cierre de ruta al 100 %, insignia y fecha;
+- perfil privado: edición de nombre, usuario y biografía, actualización del header, avatar,
+  check-in con foto y aparición de la foto en `/perfil`.
 
-La E2E local usa Microsoft Edge mediante el canal de Playwright. La misma suite se ejecutó
-con Chromium y `CI=1` para replicar el navegador del workflow: 13/13. La ejecución remota de
-GitHub Actions sigue pendiente. Las imágenes de la E2E se guardan en
-`test-results/e2e-uploads` y no contaminan la carpeta `uploads/` de desarrollo.
+La E2E local usa Microsoft Edge mediante el canal de Playwright. La suite completa se
+ejecutó localmente tras el Corte 5: 15/15. La misma suite se ejecutó con `CI=1`/Chromium:
+15/15, lo que replica el navegador configurado en GitHub Actions. La ejecución remota del
+workflow sigue pendiente. Las imágenes de la E2E se guardan en
+`test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan las carpetas
+de desarrollo.
 
 ## Seguridad y dependencias
 
@@ -430,8 +477,18 @@ GitHub Actions sigue pendiente. Las imágenes de la E2E se guardan en
   marcadores.
 - Las rutas `/api/admin/*` exigen rol `admin` y contraseña cambiada; el API público solo
   expone POI publicados y no serializa referencias internas de usuario.
-- Las imágenes se validan por firma binaria, se limitan a JPEG/PNG/WebP, 5 MB y 8 por POI.
-  La carpeta `uploads/` está ignorada por Git.
+- Las imágenes públicas se validan por firma binaria, se limitan a JPEG/PNG/WebP, 5 MB y 8
+  por POI. La carpeta `uploads/` está ignorada por Git.
+- Los avatares y las fotos de check-in se validan por MIME y firma binaria, se limitan a 5 MB
+  y se guardan en `uploads-private/`, también ignorada por Git.
+- El avatar y las fotos de check-in solo se sirven con sesión del dueño. No hay URL estática
+  ni acceso desde `/api/uploads/...`; otro usuario recibe `404`.
+- El perfil es privado: no existe directorio público ni búsqueda por `username`. El nombre de
+  usuario solo se muestra dentro de `/perfil`.
+- Las respuestas de imágenes privadas usan `Cache-Control: private, max-age=300,
+  must-revalidate`.
+- La sustitución de avatar elimina el archivo anterior; si falla la persistencia, elimina el
+  archivo nuevo. Si falla un check-in después de guardar la foto, también la elimina.
 - El QR de check-in usa un token opaco de 32 bytes; solo se persiste su hash SHA-256, la
   comparación es en tiempo constante y el hash nunca se serializa.
 - La geocerca se valida en servidor con Haversine, con radio configurable entre 10 y 500 m.
@@ -441,7 +498,8 @@ GitHub Actions sigue pendiente. Las imágenes de la E2E se guardan en
   token y las referencias de usuario no salen en las respuestas.
 - Un POI que es parada de una aventura publicada no puede archivarse ni despublicarse hasta
   retirar la parada o archivar la aventura (`409 LOCATION_IN_USE`).
-- El seed y los endpoints de lectura son públicos por diseño en este corte.
+- El seed y los endpoints de lectura son públicos por diseño en este corte. Los scripts de
+  seed y backfill se ejecutan manualmente con acceso a la base de datos.
 - El rate limit se desactiva en `NODE_ENV=test` para no interferir con las pruebas; sus
   umbrales no tienen una prueba automatizada propia.
 
@@ -456,10 +514,18 @@ GitHub Actions sigue pendiente. Las imágenes de la E2E se guardan en
 - El slug de un POI archivado no se reutiliza automáticamente; debe elegirse otro.
 - Las imágenes locales no generan miniaturas ni eliminan metadatos EXIF, no pasan por
   antivirus y no están replicadas. En producción deben incluirse en el respaldo.
+- El perfil privado no tiene directorio público por decisión de alcance. Si se agrega, exige
+  revisar privacidad, moderación y consentimiento.
+- No hay galería completa de fotos: `/perfil` muestra los últimos 8 check-in.
+- No existe endpoint para eliminar o reemplazar la foto de un check-in ya registrado.
+- Los avatares y las fotos privadas son locales, no están cifrados de extremo a extremo y
+  dependen del respaldo y control de acceso del servidor.
+- No hay lista de nombres de usuario reservados ni historial de cambios de `username`.
 - El backend de aventuras, paradas, QR y check-in está implementado y el frontend de
-  aventuras se completó en el Corte 4; faltan el escáner de QR, la moderación, los
-  artículos, los eventos y la agenda.
-- No hay seed de aventuras ni imágenes de QR almacenadas; el token solo se devuelve al rotar.
+  aventuras se completó en el Corte 4; el perfil privado y las fotos se completaron en el
+  Corte 5. Faltan el escáner de QR, la moderación, los artículos, los eventos y la agenda.
+- El seed de aventura cubre una ruta; las demás se crean por el API administrativo. No hay
+  imágenes de QR almacenadas; el token solo se devuelve al rotar.
 - El QR puede fotografiarse y compartirse y la ubicación del cliente puede simularse; la
   geocerca reduce el abuso, pero no elimina el fraude.
 - El slug de una aventura archivada no se reutiliza automáticamente.

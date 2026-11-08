@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import { hashPassword } from './authService.js';
+import { generateUniqueUsername } from './usernameService.js';
 import { HttpError } from '../utils/HttpError.js';
 import {
   normalizeEmail,
@@ -40,6 +41,15 @@ export async function ensureAdmin({ email, password, name }) {
       updated = true;
     }
 
+    if (!existing.username) {
+      existing.username = await generateUniqueUsername({
+        name: existing.name,
+        email: normalizedEmail,
+        excludeUserId: existing._id,
+      });
+      updated = true;
+    }
+
     if (updated) {
       await existing.save();
     }
@@ -50,6 +60,10 @@ export async function ensureAdmin({ email, password, name }) {
   const user = await User.create({
     name: name.trim(),
     email: normalizedEmail,
+    username: await generateUniqueUsername({
+      name: name.trim(),
+      email: normalizedEmail,
+    }),
     passwordHash: await hashPassword(password),
     role: 'admin',
     mustChangePassword: true,

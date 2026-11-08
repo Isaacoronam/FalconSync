@@ -43,6 +43,15 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'perfil',
+    title: 'Mi perfil | FALCONSYNC',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/perfil/perfil.component').then(
+        (module) => module.PerfilComponent,
+      ),
+  },
+  {
     path: 'login',
     title: 'Iniciar sesión | FALCONSYNC',
     canActivate: [guestGuard],

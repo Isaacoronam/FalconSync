@@ -46,9 +46,9 @@
         }
         <a
           class="site-nav__user"
-          routerLink="/cambiar-contrasena"
-          title="Cambiar contraseña"
-          [attr.aria-label]="'Cuenta de ' + (auth.currentUser()?.name ?? '') + '. Cambiar contraseña'"
+          routerLink="/perfil"
+          title="Mi perfil"
+          [attr.aria-label]="'Perfil de ' + (auth.currentUser()?.name ?? '')"
         >
           {{ auth.currentUser()?.name }}
         </a>

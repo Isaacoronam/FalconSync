@@ -17,6 +17,26 @@ function validateCoordinates(value) {
   );
 }
 
+const checkInPhotoSchema = new mongoose.Schema(
+  {
+    filename: {
+      type: String,
+      required: true,
+    },
+    mimeType: {
+      type: String,
+      enum: ['image/jpeg', 'image/png', 'image/webp'],
+      required: true,
+    },
+    size: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  { _id: false },
+);
+
 const checkInSchema = new mongoose.Schema(
   {
     user: {
@@ -57,6 +77,10 @@ const checkInSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: [0, 'La versión del token no puede ser negativa'],
+    },
+    photo: {
+      type: checkInPhotoSchema,
+      default: null,
     },
   },
   {

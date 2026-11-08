@@ -113,6 +113,14 @@ export class AuthService {
     return role !== undefined && roles.includes(role);
   }
 
+  updateCurrentUser(
+    patch: Partial<Pick<AuthUser, 'name' | 'username'>>,
+  ): void {
+    this.currentUserState.update((user) =>
+      user ? { ...user, ...patch } : user,
+    );
+  }
+
   clearSession(): void {
     this.accessTokenState.set(null);
     this.currentUserState.set(null);

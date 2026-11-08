@@ -21,6 +21,13 @@
 @if (stage() === 'success') {
   <div class="checkin-exito">
     <h2>Check-in confirmado</h2>
+    @if (photoPreview(); as preview) {
+      <img
+        class="checkin-exito__foto"
+        [src]="preview"
+        alt="Vista previa de la foto de tu visita"
+      />
+    }
     <p>Tu visita ha sido registrada y tu progreso se ha actualizado.</p>
     <a class="button button--ghost" routerLink="/aventuras">Ver otras aventuras</a>
   </div>
@@ -52,6 +59,40 @@
         Última intención: a {{ distanceMeters() }} m del punto (radio permitido: {{ radiusMeters() }} m).
       </p>
     }
+
+    <div class="form-field checkin__foto">
+      <label for="checkin-foto">
+        Foto de tu visita <span class="checkin__opcional">(opcional)</span>
+      </label>
+      <input
+        id="checkin-foto"
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        [disabled]="checking()"
+        (change)="onPhotoSelected($event)"
+      />
+      <p class="form-field__help">
+        JPEG, PNG o WebP de hasta 5 MB. La foto se guarda en tu perfil privado
+        y solo tú puedes verla.
+      </p>
+
+      @if (photoPreview(); as preview) {
+        <figure class="checkin__foto-preview">
+          <img [src]="preview" alt="Vista previa de la foto seleccionada" />
+          <figcaption>
+            <span>{{ photoName() }}</span>
+            <button
+              type="button"
+              class="checkin__foto-quitar"
+              [disabled]="checking()"
+              (click)="removePhoto()"
+            >
+              Quitar foto
+            </button>
+          </figcaption>
+        </figure>
+      }
+    </div>
 
     <button
       class="button button--primary button--block"

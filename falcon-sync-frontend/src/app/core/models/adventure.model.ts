@@ -75,6 +75,13 @@ export interface CheckInPayload {
   token: string;
   latitude: number;
   longitude: number;
+  photo?: File;
+}
+
+export interface CheckInPhoto {
+  filename: string;
+  mimeType: string;
+  size: number;
 }
 
 export interface CheckIn {
@@ -84,6 +91,7 @@ export interface CheckIn {
   coordinates: { type: 'Point'; coordinates: [number, number] };
   distanceMeters: number;
   tokenVersion: number;
+  photo?: CheckInPhoto | null;
   createdAt: string;
 }
 

@@ -11,6 +11,8 @@ const IMAGE_EXTENSIONS = {
 };
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const ALLOWED_FOLDERS = new Set(['locations', 'avatars', 'check-ins']);
+const SAFE_FILENAME_PATTERN = /^[A-Za-z0-9._-]+$/;
 
 function detectImageMime(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 12) {
@@ -35,11 +37,11 @@ function detectImageMime(buffer) {
   return null;
 }
 
-function resolveInsideUploads(relativePath) {
-  const absolutePath = path.resolve(config.uploads.dir, relativePath);
-  const relativeToUploads = path.relative(config.uploads.dir, absolutePath);
+function resolveInsideRoot(root, relativePath) {
+  const absolutePath = path.resolve(root, relativePath);
+  const relativeToRoot = path.relative(root, absolutePath);
 
-  if (relativeToUploads.startsWith('..') || path.isAbsolute(relativeToUploads)) {
+  if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot)) {
     throw new HttpError(
       400,
       'INVALID_IMAGE_PATH',
@@ -50,13 +52,31 @@ function resolveInsideUploads(relativePath) {
   return absolutePath;
 }
 
+function rootForFolder(folder) {
+  return folder === 'locations'
+    ? config.uploads.dir
+    : config.uploads.privateDir;
+}
+
+function normalizeFolder(folder) {
+  if (!ALLOWED_FOLDERS.has(folder)) {
+    throw new HttpError(
+      400,
+      'INVALID_IMAGE_FOLDER',
+      'El destino de la imagen no es válido',
+    );
+  }
+
+  return folder;
+}
+
 export const localStorageAdapter = {
   /**
-   * Guarda una imagen validada y devuelve su URL pública.
-   * La interfaz es intencionalmente mínima para poder sustituir el adaptador
-   * local por uno de objetos (S3, R2, etc.) sin tocar los controladores.
+   * Guarda una imagen validada y devuelve sus metadatos. El archivo queda
+   * fuera del prefijo público: solo se sirve mediante endpoints autenticados
+   * cuando corresponde a un avatar o a una foto de check-in.
    */
-  async saveLocationImage({ buffer }) {
+  async saveImage({ buffer, folder }) {
     const mimeType = detectImageMime(buffer);
 
     if (!mimeType) {
@@ -67,18 +87,60 @@ export const localStorageAdapter = {
       );
     }
 
-    const directory = resolveInsideUploads('locations');
+    const destination = normalizeFolder(folder);
+    const directory = resolveInsideRoot(rootForFolder(destination), destination);
     await mkdir(directory, { recursive: true });
 
     const filename = `${Date.now()}-${randomUUID()}.${IMAGE_EXTENSIONS[mimeType]}`;
     await writeFile(path.join(directory, filename), buffer, { flag: 'wx' });
 
     return {
-      url: `${config.uploads.publicPrefix}/locations/${filename}`,
       filename,
+      folder: destination,
       mimeType,
       size: buffer.length,
     };
+  },
+
+  async saveLocationImage({ buffer }) {
+    const image = await this.saveImage({ buffer, folder: 'locations' });
+
+    return {
+      ...image,
+      url: `${config.uploads.publicPrefix}/locations/${image.filename}`,
+    };
+  },
+
+  resolveImagePath(folder, filename) {
+    const destination = normalizeFolder(folder);
+
+    if (typeof filename !== 'string' || !SAFE_FILENAME_PATTERN.test(filename)) {
+      throw new HttpError(
+        400,
+        'INVALID_IMAGE_PATH',
+        'La ruta de la imagen no es válida',
+      );
+    }
+
+    return resolveInsideRoot(
+      rootForFolder(destination),
+      `${destination}/${filename}`,
+    );
+  },
+
+  async removeByFilename(folder, filename) {
+    const absolutePath = this.resolveImagePath(folder, filename);
+
+    try {
+      await unlink(absolutePath);
+      return true;
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        return false;
+      }
+
+      throw error;
+    }
   },
 
   async removeByUrl(url) {
@@ -89,7 +151,7 @@ export const localStorageAdapter = {
     }
 
     const relativePath = url.slice(prefix.length);
-    const absolutePath = resolveInsideUploads(relativePath);
+    const absolutePath = resolveInsideRoot(config.uploads.dir, relativePath);
 
     try {
       await unlink(absolutePath);

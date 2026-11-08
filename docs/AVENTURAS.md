@@ -16,9 +16,11 @@ repositorio y por buenas prácticas de ingeniería.
 - Gestión y reordenamiento de paradas.
 - Rotación de token QR por POI con salida SVG o PNG.
 - Check-in global por POI con validación de token y geocerca en servidor.
+- Foto opcional por check-in, almacenada de forma privada.
 - Progreso de aventura con paradas visitadas, siguiente parada y cierre.
 - Auditoría de cambios de aventura y rotaciones de QR.
 - Bloqueo de archivado de un POI que es parada activa de una aventura publicada.
+- Seed idempotente de la aventura «Ruta del Casco Histórico de Coro» con cinco paradas reales.
 
 Desde el 2026-11-07 los 23 POI del catálogo están publicados y habilitados para check-in.
 La publicación se hizo con revisión documental; la verificación en campo sigue pendiente.
@@ -127,6 +129,18 @@ contiene tokens. El manifiesto solo registra slug, título, versión y fecha de 
 - Para liberar el POI hay que retirar la parada o archivar la aventura.
 - Los POI archivados no pueden usarse como parada.
 
+### 6. Foto opcional y privacidad del check-in
+
+- `POST /api/check-ins` acepta JSON o `multipart/form-data`; el archivo opcional usa el
+  campo `image`.
+- La foto se valida por MIME y firma binaria (JPEG, PNG o WebP) y se limita a 5 MB.
+- Se guarda en `uploads-private/check-ins/`, fuera del prefijo público `/api/uploads`.
+- `CheckIn.photo` guarda solo `{ filename, mimeType, size }`; no hay URL pública.
+- La foto se sirve mediante `GET /api/profile/check-ins/:checkInId/photo` y solo al dueño
+  del check-in. Otro usuario recibe `404`.
+- Si la creación del check-in falla después de escribir el archivo, la foto se elimina.
+- El avatar y el resto del perfil privado se documentan en [`PERFIL.md`](./PERFIL.md).
+
 ## Modelos
 
 ### Adventure
@@ -165,6 +179,7 @@ contiene tokens. El manifiesto solo registra slug, título, versión y fecha de 
 | `coordinates` | `Point` GeoJSON con la ubicación enviada al hacer check-in. |
 | `distanceMeters` | Distancia Haversine calculada por el servidor. |
 | `tokenVersion` | Versión del token QR usada en el check-in. |
+| `photo` | Objeto opcional `{ filename, mimeType, size }`; el archivo vive en `uploads-private/check-ins/`. |
 
 Índice único: `(user, location)`. No se guarda el token en claro ni su hash.
 
@@ -194,9 +209,10 @@ pero nunca el hash ni el token.
 | Método | Ruta | Resultado |
 |---|---|---|
 | `GET` | `/api/adventures/:slug/progress` | Progreso del usuario autenticado. |
-| `POST` | `/api/check-ins` | Registra un check-in global por POI. |
+| `POST` | `/api/check-ins` | Registra un check-in global por POI; admite JSON o `multipart/form-data` con foto opcional. |
+| `GET` | `/api/profile/check-ins/:checkInId/photo` | Devuelve la foto privada del check-in al dueño. |
 
-Cuerpo de check-in:
+Cuerpo JSON de check-in:
 
 ```json
 {
@@ -206,6 +222,10 @@ Cuerpo de check-in:
   "longitude": -69.6778073
 }
 ```
+
+Para adjuntar una foto se envía `multipart/form-data` con los mismos campos de texto más
+`image` (JPEG, PNG o WebP, máximo 5 MB). El campo es opcional. La foto se guarda en
+`uploads-private/check-ins/` y solo se sirve al dueño mediante el endpoint de perfil.
 
 Respuesta `201`:
 
@@ -221,10 +241,17 @@ Respuesta `201`:
     },
     "distanceMeters": 0,
     "tokenVersion": 1,
+    "photo": {
+      "filename": "1762560000000-uuid.png",
+      "mimeType": "image/png",
+      "size": 70
+    },
     "createdAt": "2026-11-05T12:00:00.000Z"
   }
 }
 ```
+
+`photo` es `null` cuando el check-in no incluye imagen.
 
 ### Progreso
 
@@ -259,6 +286,29 @@ Respuesta `201`:
 Solo cuentan las paradas activas: POI existente, publicado y sin archivar. El porcentaje se
 redondea al entero más cercano. Una aventura publicada no puede quedarse sin paradas a través
 del API.
+
+### Seed de aventura
+
+El script `scripts/seedAdventures.js` crea o actualiza la aventura publicada «Ruta del Casco
+Histórico de Coro» con cinco paradas reales:
+
+1. `catedral-de-coro`.
+2. `casa-de-las-ventanas-de-hierro`.
+3. `casa-del-sol`.
+4. `plaza-bolivar-de-coro`.
+5. `arco-de-la-federacion`.
+
+```bash
+npm run seed:adventures
+npm run seed:adventures:verify
+```
+
+Es idempotente: resuelve las paradas por `slug`, exige que estén publicadas, visibles y no
+provisionales, reordena con valores temporales negativos para evitar colisiones y elimina
+paradas que ya no pertenecen al seed. Omite aventuras archivadas o con borrado lógico.
+`--verify` comprueba publicación, cantidad, orden y disponibilidad. Si falta un POI, falla y
+pide publicar primero el catálogo. El detalle del perfil y las fotos está en
+[`PERFIL.md`](./PERFIL.md).
 
 ### Administrativos
 
@@ -314,6 +364,9 @@ posiciones.
 - El hash tiene `select: false` y además se elimina en `toJSON`; no aparece en listados,
   detalles públicos, paradas pobladas ni respuestas administrativas.
 - La geocerca se valida exclusivamente en el servidor con Haversine.
+- La foto de check-in se valida por firma binaria, se limita a 5 MB y se guarda en
+  `uploads-private/`, fuera del prefijo público.
+- Las fotos de check-in solo se sirven al dueño; otro usuario recibe `404`.
 - Rate limit específico de check-in: 30 intentos por IP cada 15 minutos. Se desactiva en
   `NODE_ENV=test` siguiendo el patrón existente.
 - No se registran tokens ni hashes en logs ni en metadatos de auditoría.
@@ -340,8 +393,10 @@ Resultado real del 2026-11-07:
 | CoroAventura | 18 | Aprobadas |
 | Autenticación | 12 | Aprobadas |
 | API de lugares | 14 | Aprobadas |
-| Seed de POI | 2 | Aprobadas |
-| **Total** | **58** | **58/58 aprobadas** |
+| Perfil privado y fotos de check-in | 6 | Aprobadas |
+| Seed de aventuras | 2 | Aprobadas |
+| Seed de POI | 3 | Aprobadas |
+| **Total** | **67** | **67/67 aprobadas** |
 
 La suite `test/adventures.test.js` cubre:
 
@@ -366,6 +421,10 @@ La suite `test/adventures.test.js` cubre:
 19. Check-in rechazado en un POI provisional aunque tenga token vigente.
 20. POI provisional oculto del API público y rechazado como parada de aventura.
 21. POI excluido del catálogo rechazado como parada y check-in.
+22. Check-in con foto, metadatos persistidos y limpieza ante error.
+23. Foto servida solo al dueño; otro usuario recibe 404.
+24. Perfil privado, avatar, estadísticas y seed de aventura (suites `profile.test.js` y
+    `seedAdventures.test.js`).
 
 ## Gate del corte
 
@@ -377,13 +436,17 @@ La suite `test/adventures.test.js` cubre:
 | Fuera de geocerca rechazado | Cumplido | `400 CHECK_IN_OUTSIDE_GEOFENCE`. |
 | Token inválido rechazado | Cumplido | `400 INVALID_CHECK_IN_TOKEN`, incluido token rotado. |
 | Progreso correcto | Cumplido | Orden libre, siguiente parada, porcentaje y cierre. |
-| Pruebas backend verdes | Cumplido | `npm test`: 58/58. |
-| Documentación | Cumplido | Este documento y actualización de `FALCONSYNC.md`. |
+| Pruebas backend verdes | Cumplido | `npm test`: 67/67. |
+| Foto privada de check-in | Cumplido | `multipart/form-data`, `uploads-private/` y acceso solo al dueño. |
+| Documentación | Cumplido | Este documento, `PERFIL.md` y actualización de `FALCONSYNC.md`. |
 
 ## Límites y pendientes
 
 - El frontend de aventuras se completó en el Corte 4; el escáner de QR sigue pendiente.
-- No hay seed de aventuras; se crean por el API administrativo.
+- El seed de aventuras cubre una ruta; las demás aventuras se crean por el API administrativo.
+- Las fotos de check-in no se redimensionan, no eliminan EXIF y no pasan por antivirus.
+- No hay endpoint para eliminar o reemplazar la foto de un check-in ya registrado.
+- Las fotos privadas dependen del almacenamiento local y deben incluirse en respaldos.
 - No se almacenan imágenes de QR; el administrador debe descargar o imprimir la respuesta.
 - El QR puede fotografiarse y compartirse: la geocerca reduce el abuso, pero no sustituye
   controles anti-fraude más fuertes.
