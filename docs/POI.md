@@ -55,10 +55,11 @@ La regla se aplica en tres capas:
 - **Controlador administrativo:** validación previa con mensajes de error legibles.
 - **Formulario Angular:** bloqueo antes de enviar la petición.
 
-Los 17 POI del seed que todavía no tienen coordenadas verificadas se cargan como
-`draft` y `isProvisional=true`. No se publican hasta completar la verificación en campo.
-El mapa puede mostrarlos como referencias provisionales; eso no los convierte en publicados
-ni habilita check-in o paradas de aventura.
+Los 23 POI del seed se publicaron el 2026-11-07 tras una revisión documental. La fecha
+`coordinateVerifiedAt` registra esa revisión, no una verificación en campo. Quince POI
+tienen nivel `single-source`; el Parque Nacional Médanos de Coro queda como `unverified`
+porque su coordenada es aproximada. La verificación en campo sigue pendiente para todo el
+catálogo.
 
 La lista pública normal, el detalle, la búsqueda cercana y las aventuras aplican:
 
@@ -105,27 +106,35 @@ etiqueta.
 
 ## Seed
 
-El seed contiene 23 POI: **6 publicados y 17 borradores provisionales**. El mapa muestra
-los 23: los 6 publicados y los 17 borradores provisionales visibles.
+El seed contiene 23 POI: **23 publicados y 0 borradores**. El mapa muestra los 23.
 
 | Comando | Comportamiento |
 |---|---|
 | `npm run seed` | Inserta los POI ausentes y elimina el registro retirado de Mirador del Pueblo; no sobrescribe el resto. |
-| `npm run seed:sync` | Actualiza fichas y visibilidad, sincroniza las coordenadas del Parque Nacional Médanos de Coro y elimina Mirador del Pueblo; no inserta POI ausentes ni cambia el estado o `isProvisional`. Conserva las coordenadas editadas del resto del catálogo. |
+| `npm run seed:sync` | Actualiza fichas, visibilidad, metadatos de verificación y radios de check-in, sincroniza las coordenadas del Parque Nacional Médanos de Coro y elimina Mirador del Pueblo; no inserta POI ausentes ni cambia el estado o `isProvisional`. Conserva las coordenadas editadas del resto del catálogo. |
 | `npm run seed:verify` | Comprueba existencia, estado, fecha de verificación en publicados, desviación de coordenadas y ausencia de Mirador del Pueblo. |
+| `npm run publish:pois` | Publica los POI del seed que sigan en borrador. Sin `--apply` simula; con `--apply` guarda. Omite archivados. |
+| `npm run qr:generate` | Rota tokens QR de POI publicados sin token vigente y guarda los SVG en `.qr-codes/`. Sin `--apply` simula; `--force` invalida los QR existentes. |
 
-El 2026-11-07 se sincronizaron imágenes para los POI del catálogo y se eliminó de la base
-local Mirador del Pueblo. Después del ajuste de coordenadas de Parque Nacional Médanos de
-Coro, la sincronización local se ejecutó y la verificación confirmó los 23 POI:
+El 2026-11-07 se publicaron los 17 POI restantes y se generaron los 23 QR de check-in. La
+publicación y la generación de QR se ejecutaron con los scripts nuevos:
 
 ```text
-[seed:sync] 23 actualizados, 0 sin cambios, 0 ausentes. Solo se sincronizaron las coordenadas del Parque Nacional Médanos de Coro; estado e isProvisional se preservan.
-[seed:verify] parque-nacional-medanos-de-coro: draft (provisional), unverified, distancia 0 m
+[publish:pois] 17 publicados, 6 ya publicados, 0 omitidos, 0 ausentes.
+[seed:sync] 23 actualizados, 0 sin cambios, 0 ausentes.
+[seed:verify] parque-nacional-medanos-de-coro: published, unverified, distancia 0 m
 [seed:verify] 23 POI revisados sin desviaciones ni publicaciones inválidas.
+[qr:generate] 23 generados, 0 omitidos por tener QR vigente.
 ```
 
+Los 23 POI tienen token QR en versión 1. Los SVG se guardaron en
+`falcon-sync-backend/.qr-codes/`, fuera de Git.
+
 La sincronización de coordenadas está limitada a `parque-nacional-medanos-de-coro`;
-los demás puntos conservan las coordenadas que ya tengan en la base de datos.
+los demás puntos conservan las coordenadas que ya tengan en la base de datos. La
+sincronización sí actualiza `coordinateVerifiedAt`, `verificationLevel`,
+`coordinateSource` y `checkInRadiusMeters` para que el seed siga siendo la fuente de
+verdad.
 
 ## Catálogo
 
@@ -145,7 +154,7 @@ Coordenadas en formato `[longitud, latitud]`, tal como se guardan en MongoDB.
 Los 6 tienen `coordinateVerifiedAt=2026-11-06T00:00:00.000Z`,
 `isProvisional=false` y una imagen con crédito pendiente de confirmar.
 
-### Borradores provisionales
+### Publicados el 2026-11-07
 
 | POI | Categoría | Circuitos | Coordenadas | Fuente | Imagen |
 |---|---|---|---|---|---|
@@ -167,13 +176,19 @@ Los 6 tienen `coordinateVerifiedAt=2026-11-06T00:00:00.000Z`,
 | Ciudad Deportiva | `service` | `espacios-urbanos`, `comercio-servicios` | `[-69.660002, 11.4208232]` | Google Maps Plus Code `C8CQ+8XH` | `ciudad-deportiva-coro.jpg` |
 | Plaza Antillana | `urban` | `la-vela`, `espacios-urbanos` | `[-69.5702697, 11.4593277]` | Google Maps, consulta directa | `plaza-antillana-coro.jpg` |
 
-Todos los borradores tienen `isProvisional=true`, `verificationLevel=unverified` y
-`coordinateVerifiedAt=null`.
+Todos tienen `coordinateVerifiedAt=2026-11-07T00:00:00.000Z` e `isProvisional=false`.
+Quince son `single-source`. El Parque Nacional Médanos de Coro es `unverified` por
+coordenada aproximada y usa un radio de check-in de 200 m; Casa Museo Locos de la Vela
+usa 100 m por la discrepancia documentada.
 
 ### Discrepancias conocidas
 
 - **Casa Museo Locos de la Vela:** la ficha consultada y el Plus Code difieren en unos
-  100 m. Debe resolverse con verificación en campo antes de publicar.
+  100 m. Se publicó con radio de check-in de 100 m; debe resolverse con verificación en
+  campo.
+- **Parque Nacional Médanos de Coro:** la referencia OpenStreetMap way 573233913
+  corresponde a la vía Antigua Carretera, no a la entrada del parque. La coordenada es
+  aproximada y se publicó con nivel `unverified` y radio de check-in de 200 m.
 - **Conservación:** los 23 POI tienen `conservationStatus=unknown`; no se encontró una
   fuente verificada de estado de conservación.
 - **Cruz de los Enconchados:** no se incluyó porque no se encontró una fuente
@@ -219,12 +234,9 @@ el sitio.
 
 ## Mapa público y clustering
 
-- El mapa consume `/api/locations?includeProvisional=true` y recibe 23 POI: 6 publicados y
-  17 borradores provisionales visibles.
-- El mapa permite filtrar únicamente por categoría. Los marcadores provisionales conservan
-  un estilo visual diferenciado, sin avisos de provisionalidad en la ficha pública.
-- La vista provisional no permite publicar, consultar el detalle individual, buscar como
-  cercano, añadir a aventuras ni hacer check-in.
+- El mapa consume `/api/locations?includeProvisional=true` y recibe 23 POI publicados.
+- El mapa permite filtrar únicamente por categoría. Ya no hay marcadores provisionales.
+- Los 23 POI permiten detalle, búsqueda cercana, aventuras y check-in.
 - Los marcadores se agrupan en píxeles con un radio de 52 px y se recalculan al mover el
   mapa. No se añadió una dependencia externa de clustering.
 - Al seleccionar una ficha de la lista, el POI elegido se separa del clúster, se centra y
@@ -261,10 +273,14 @@ Las pruebas nuevas cubren:
 
 ## Límites y pendientes
 
-- Los 17 borradores necesitan verificación de coordenadas en campo antes de publicarse.
-- Una ubicación tiene discrepancias documentadas y no debe publicarse sin resolverlas.
+- La verificación en campo de los 23 POI sigue pendiente; `coordinateVerifiedAt` registra
+  revisión documental, no visita al lugar.
+- El Parque Nacional Médanos de Coro tiene una coordenada aproximada y nivel `unverified`;
+  Casa Museo Locos de la Vela mantiene una discrepancia documentada de unos 100 m.
 - La autoría y licencia de 18 imágenes sigue pendiente de verificación.
 - No se generan miniaturas ni se eliminan metadatos EXIF de las imágenes.
+- Los SVG de `.qr-codes/` no se versionan porque contienen tokens de check-in. Si se
+  pierden, deben rotarse de nuevo y los QR anteriores dejan de funcionar.
 - El estado de conservación no está verificado para ningún POI.
 - El catálogo de circuitos y etiquetas es cerrado; agregar uno nuevo exige actualizar el
   modelo, el seed, las pruebas y las etiquetas del frontend.
@@ -273,4 +289,5 @@ Las pruebas nuevas cubren:
 
 El contenido de este documento es de ingeniería y se basa en el código, el seed y las
 pruebas ejecutadas. No se atribuye a una unidad académica porque las transcripciones de
-las Unidades 2 a 7 todavía no existen en `.opencode/knowledge/`.
+las Unidades 2 a 7 todavía no están incorporadas; las fuentes PDF están en
+`.opencode/knowledge/fuentes/`.

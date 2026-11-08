@@ -94,9 +94,39 @@ describe("Seed de POI", () => {
       slug: "catedral-de-coro",
     });
     assert.deepEqual(syncedPark.location.coordinates, [-69.6677, 11.437]);
-    assert.equal(syncedPark.status, "draft");
-    assert.equal(syncedPark.isProvisional, true);
+    assert.equal(syncedPark.status, "published");
+    assert.equal(syncedPark.isProvisional, false);
+    assert.equal(syncedPark.verificationLevel, "unverified");
+    assert.equal(syncedPark.checkInRadiusMeters, 200);
     assert.deepEqual(unchangedCathedral.location.coordinates, [-69.6777, 11.4076]);
+  });
+
+  it("mantiene los 23 POI publicados y con metadatos de publicación coherentes", () => {
+    assert.equal(locations.length, 23);
+    assert.equal(
+      locations.filter((location) => location.status === "published").length,
+      23,
+    );
+    assert.equal(
+      locations.filter((location) => location.isProvisional).length,
+      0,
+    );
+
+    for (const location of locations) {
+      assert.ok(
+        location.coordinateVerifiedAt,
+        `${location.title} debe tener fecha de revisión de coordenadas`,
+      );
+      assert.ok(
+        ["single-source", "unverified"].includes(location.verificationLevel),
+        `${location.title} debe declarar un nivel de verificación`,
+      );
+    }
+
+    const casaMuseo = locations.find(
+      (location) => location.slug === "casa-museo-locos-de-la-vela",
+    );
+    assert.equal(casaMuseo.checkInRadiusMeters, 100);
   });
 
   it("incluye imágenes locales para todos los POI del catálogo y excluye Mirador del Pueblo", () => {

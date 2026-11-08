@@ -17,6 +17,9 @@ blob-report/
 # Medios subidos por usuarios (futuro)
 uploads/
 
+# QR de check-in generados localmente (contienen tokens)
+.qr-codes/
+
 # Logs y archivos del sistema
 *.log
 .DS_Store

@@ -38,17 +38,19 @@ test('el popup del punto aparece al pasar el cursor y permanece al recorrer su f
 
     map.closePopup();
   });
+  await expect(page.locator('.leaflet-popup')).toHaveCount(0);
 
   await page
     .locator('.heritage-marker[title="Iglesia de San Francisco"]')
     .hover();
-  await expect(page.locator('.heritage-popup__title')).toHaveText(
+  const visiblePopup = page.locator('.leaflet-popup:visible');
+  await expect(visiblePopup.locator('.heritage-popup__title')).toHaveText(
     'Iglesia de San Francisco',
   );
 
-  await page.locator('.leaflet-popup-content').hover();
-  await expect(page.locator('.heritage-popup__title')).toBeVisible();
+  await visiblePopup.locator('.leaflet-popup-content').hover();
+  await expect(visiblePopup.locator('.heritage-popup__title')).toBeVisible();
 
   await page.getByRole('button', { name: 'Ver todo Falcón' }).hover();
-  await expect(page.locator('.leaflet-popup')).toHaveCount(0);
+  await expect(page.locator('.leaflet-popup:visible')).toHaveCount(0);
 });

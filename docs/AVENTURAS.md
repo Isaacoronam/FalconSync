@@ -20,6 +20,9 @@ repositorio y por buenas prácticas de ingeniería.
 - Auditoría de cambios de aventura y rotaciones de QR.
 - Bloqueo de archivado de un POI que es parada activa de una aventura publicada.
 
+Desde el 2026-11-07 los 23 POI del catálogo están publicados y habilitados para check-in.
+La publicación se hizo con revisión documental; la verificación en campo sigue pendiente.
+
 El frontend de aventuras se implementó en el Corte 4 (`docs/COROAVENTURA-FRONTEND.md`). El escáner de QR y la moderación siguen pendientes.
 
 ## Decisiones de diseño
@@ -83,6 +86,15 @@ Authorization: Bearer <access-token>
 `format` admite `svg` (por defecto) o `png`. La respuesta usa `Cache-Control: no-store`.
 El token no se guarda en disco ni en la base de datos en claro. Si se pierde, debe rotarse
 otra vez; el QR anterior dejará de funcionar.
+
+Para generar los QR de todo el catálogo local se usa:
+
+```bash
+npm run qr:generate -- --apply
+```
+
+Los SVG se guardan en `falcon-sync-backend/.qr-codes/`, que está fuera de Git porque
+contiene tokens. El manifiesto solo registra slug, título, versión y fecha de rotación.
 
 ### 3. Geocerca validada en servidor
 

@@ -13,6 +13,8 @@
     "seed": "node scripts/seedLocations.js",
     "seed:sync": "node scripts/seedLocations.js --sync",
     "seed:verify": "node scripts/seedLocations.js --verify",
+    "publish:pois": "node scripts/publishLocations.js",
+    "qr:generate": "node scripts/generateCheckInQr.js",
     "create-admin": "node scripts/createAdmin.js",
     "test": "node --test --test-concurrency=1",
     "test:watch": "node --test --watch --test-concurrency=1"

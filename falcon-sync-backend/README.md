@@ -32,9 +32,11 @@ arranque incluye el PID de la instancia que queda escuchando.
 ```bash
 npm run dev          # servidor con recarga
 npm start            # servidor normal
-npm run seed         # inserta los POI ausentes (23: 6 publicados y 17 borradores)
-npm run seed:sync    # actualiza fichas/visibilidad sin tocar coordenadas, estado ni isProvisional
+npm run seed         # inserta los POI ausentes (23 publicados)
+npm run seed:sync    # actualiza fichas, verificación y radios; conserva estado e isProvisional
 npm run seed:verify  # comprueba existencia, publicación y desviación de coordenadas
+npm run publish:pois # publica los POI del seed que sigan en borrador; usa --apply para guardar
+npm run qr:generate  # rota QR de POI publicados sin token y guarda SVG en .qr-codes; usa --apply
 npm run create-admin # bootstrap idempotente del administrador
 npm test             # suite de backend
 ```
@@ -45,7 +47,7 @@ Lectura pública:
 
 - `GET /api/health`
 - `GET /api/locations?page=1&limit=50&category=religious&circuit=casco-historico&tag=unesco`
-- `GET /api/locations?includeProvisional=true` (mapa: agrega provisionales visibles y rotulados)
+- `GET /api/locations?includeProvisional=true` (compatibilidad del mapa; ya no hay borradores)
 - `GET /api/locations/near?lat=11.4075&lng=-69.6778&radius=500`
 - `GET /api/locations/:slug`
 - `GET /api/adventures?page=1&limit=20`
@@ -108,9 +110,11 @@ aventuras, QR, geocercas y check-in está en [`../docs/AVENTURAS.md`](../docs/AV
 - Rate limit en registro, login, refresh y cambio de contraseña.
 - `CORS` con credenciales y comprobación de origen en endpoints con cookie.
 - El administrador creado por bootstrap debe cambiar la contraseña en el primer acceso.
-- El CRUD administrativo exige rol `admin`; la lista y el detalle normal solo devuelven POI
-  publicados. La lista del mapa puede solicitar borradores provisionales visibles con
-  `includeProvisional=true`; nunca habilita detalle individual, aventura ni check-in.
+- El CRUD administrativo exige rol `admin`; la lista y el detalle normal devuelven los 23
+  POI publicados. `includeProvisional=true` sigue disponible por compatibilidad, pero ya no
+  hay borradores en el catálogo. Los 23 habilitan detalle, aventura y check-in.
+- Los QR de check-in se generan con `npm run qr:generate -- --apply` y quedan en
+  `.qr-codes/`, fuera de Git porque contienen tokens.
 - Las imágenes se validan por firma binaria (JPEG/PNG/WebP), con límite de 5 MB y 8 por POI.
   El adaptador local vive en `src/services/storage/` y puede sustituirse por otro
   almacenamiento.

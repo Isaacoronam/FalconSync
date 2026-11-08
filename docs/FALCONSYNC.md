@@ -36,8 +36,7 @@ Fecha de verificación: 2026-11-06.
 
 - Playwright dentro del repositorio, con configuración `playwright.config.ts`.
 - Servidor E2E aislado en `scripts/e2eServer.js`: base de datos `falconsync_e2e`,
-  6 POI publicados y 17 borradores provisionales, un admin operativo y un admin pendiente
-  de cambio de contraseña.
+  23 POI publicados, un admin operativo y un admin pendiente de cambio de contraseña.
 - Servidores de prueba en puertos 3101 (API) y 4201 (frontend) para no chocar con el
   entorno de desarrollo.
 - Workflow de GitHub Actions creado en `.github/workflows/ci.yml` con MongoDB de servicio,
@@ -52,17 +51,17 @@ Fecha de verificación: 2026-11-06.
 - Panel con usuarios, POI por estado y actividad reciente.
 - CRUD de POI con validación en cliente y servidor.
 - Estados `draft`, `published` y `archived`; el API público solo expone publicados y
-  descarta los marcados como provisionales, salvo en la lista de mapa solicitada con
-  `includeProvisional=true`; esos registros siguen sin publicarse.
+  descarta los marcados como provisionales. `includeProvisional=true` sigue disponible
+  para el mapa, pero ya no hay borradores en el catálogo.
 - Ficha ampliada con dirección, circuitos, etiquetas, fuente y fecha de verificación de
   coordenadas, nivel de verificación y créditos de imágenes.
 - Regla de publicación: un POI provisional o sin `coordinateVerifiedAt` no puede publicarse.
 - Filtros administrativos por categoría, circuito y etiqueta; el mapa público filtra solo
   por categoría.
-- Catálogo de 23 POI en el seed: 6 publicados y 17 borradores provisionales.
-- Mapa público con 23 POI visibles, cada uno con imagen. Gelatería El Sol y la entrada
-  principal del Parque Nacional Médanos de Coro se incorporan al catálogo público como
-  borradores provisionales.
+- Catálogo de 23 POI en el seed: 23 publicados y 0 borradores.
+- Mapa público con 23 POI visibles, cada uno con imagen. Los 17 POI restantes se publicaron
+  el 2026-11-07 con revisión documental; el Parque Nacional Médanos de Coro queda
+  `unverified` y Casa Museo Locos de la Vela mantiene su discrepancia documentada.
 - Clustering propio en píxeles y popups con etiquetas, verificación y créditos, sin avisos
   de provisionalidad.
 - Borrado lógico y restauración como borrador.
@@ -319,8 +318,8 @@ Formato de lista de lugares:
 
 ## Fuentes de los POI
 
-El catálogo completo, con los 6 publicados y los 17 borradores provisionales, está en
-[`docs/POI.md`](./POI.md). Esta tabla resume los publicados:
+El catálogo completo, con los 23 POI publicados, está en
+[`docs/POI.md`](./POI.md). Esta tabla resume los 6 que se publicaron primero:
 
 | POI | Coordenadas `[lng, lat]` | Fuente |
 |---|---|---|
@@ -331,10 +330,10 @@ El catálogo completo, con los 6 publicados y los 17 borradores provisionales, e
 | Médanos de Coro | `[-69.6577925, 11.4384496]` | OpenStreetMap relation 3461483 |
 | Plaza Bolívar de Coro | `[-69.6782276, 11.4072929]` | OpenStreetMap way 370610469 |
 
-Los 17 borradores se incorporaron al seed con `status=draft`, `isProvisional=true` y
-`coordinateVerifiedAt=null`. El mapa muestra los 17 borradores junto a los 6 publicados. La
-Casa Museo Locos de la Vela tiene una discrepancia de unos 100 m entre fuentes y no debe
-publicarse sin verificación en campo.
+Los 17 POI restantes se publicaron el 2026-11-07 con `coordinateVerifiedAt` como fecha de
+revisión documental, no de visita en campo. Quince son `single-source`; el Parque Nacional
+Médanos de Coro es `unverified` por coordenada aproximada y Casa Museo Locos de la Vela
+mantiene una discrepancia de unos 100 m entre fuentes.
 
 La **Cruz de los Enconchados** no se incluyó porque no se encontró una fuente cartográfica
 o documental confiable para su ubicación. No se inventaron coordenadas. Debe verificarse
@@ -399,8 +398,8 @@ con fecha de verificación y los filtros administrativos por circuito y etiqueta
 La suite E2E comprueba:
 
 - límites reales de Leaflet (`maxBounds`, viscosidad, zoom mínimo, centro inicial);
-- mapa público con 23 tarjetas con imagen, 17 marcadores provisionales, clúster y filtro
-  únicamente por categoría, sin avisos de provisionalidad;
+- mapa público con 23 tarjetas con imagen, sin marcadores provisionales, clúster y filtro
+  únicamente por categoría;
 - la lista lateral de POI se desplaza dentro de su panel sin mover la página;
 - que un `panTo` fuera del estado queda clavado dentro del rectángulo;
 - control “Ver todo Falcón” y ausencia de overflow horizontal a 390 px;
@@ -466,8 +465,9 @@ GitHub Actions sigue pendiente. Las imágenes de la E2E se guardan en
 - El slug de una aventura archivada no se reutiliza automáticamente.
 - La autoría y licencia de 18 imágenes sigue pendiente de verificación; las otras 5 están
   acreditadas con CC BY-SA 4.0.
-- Los 17 POI borradores necesitan verificación de coordenadas en campo antes de publicarse;
-  uno tiene discrepancia documentada.
+- La verificación en campo de los 23 POI sigue pendiente; `coordinateVerifiedAt` registra
+  revisión documental. El Parque Nacional Médanos de Coro es `unverified` por coordenada
+  aproximada y Casa Museo Locos de la Vela mantiene una discrepancia de unos 100 m.
 - No se creó configuración Docker porque Docker no está instalado en el entorno.
 - Los tiles de OpenStreetMap se usan con atribución visible. Para producción debe revisarse
   su política de uso y evaluarse un proveedor con cuota o autoalojado.
