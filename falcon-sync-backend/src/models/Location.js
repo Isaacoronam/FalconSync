@@ -172,6 +172,45 @@ const locationSchema = new mongoose.Schema(
       trim: true,
       maxlength: 120,
     },
+    historicalStory: {
+      type: String,
+      trim: true,
+      maxlength: [10000, 'La historia no puede superar 10000 caracteres'],
+    },
+    interestingFacts: {
+      type: [
+        {
+          type: String,
+          trim: true,
+          maxlength: [280, 'Cada dato de interés no puede superar 280 caracteres'],
+        },
+      ],
+      default: [],
+      validate: {
+        validator: (value) => value.length <= 8,
+        message: 'No se pueden registrar más de 8 datos de interés',
+      },
+    },
+    visitorInfo: {
+      type: String,
+      trim: true,
+      maxlength: [2000, 'La información para visitantes no puede superar 2000 caracteres'],
+    },
+    contentSources: {
+      type: [
+        {
+          type: String,
+          trim: true,
+          maxlength: 500,
+          match: [/^https?:\/\/[^\s]+$/i, 'Cada fuente debe ser una URL http(s)'],
+        },
+      ],
+      default: [],
+      validate: {
+        validator: (value) => value.length <= 10,
+        message: 'No se pueden registrar más de 10 fuentes complementarias',
+      },
+    },
     location: {
       type: {
         type: String,

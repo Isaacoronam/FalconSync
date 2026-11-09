@@ -1,0 +1,137 @@
+@if (loading()) {
+  <p class="lugar-state" role="status">Cargando la ficha del lugar…</p>
+} @else if (error() || !location()) {
+  <section class="lugar-state lugar-state--error" role="alert">
+    <h1>No se pudo encontrar este lugar</h1>
+    <p>{{ error() }}</p>
+    <a class="button button--ghost" routerLink="/lugares">Volver a los lugares</a>
+  </section>
+} @else {
+  @let place = location()!;
+  <article class="lugar-article">
+    <a class="lugar-article__back" routerLink="/lugares">← Explorar otros lugares</a>
+    <header class="lugar-article__header">
+      <p class="lugar-article__eyebrow">
+        {{ locationLabel(place) }}
+        @if (place.historicalPeriod) {
+          · {{ place.historicalPeriod }}
+        }
+      </p>
+      <h1>{{ place.title }}</h1>
+      <p class="lugar-article__summary">{{ place.description }}</p>
+      @if (place.address) {
+        <p class="lugar-article__address">{{ place.address }}</p>
+      }
+    </header>
+
+    @if (place.images.length > 0) {
+      <figure class="lugar-article__figure">
+        <img
+          [src]="place.images[0]"
+          [alt]="'Imagen de ' + place.title"
+          fetchpriority="high"
+          (error)="onImageError($event)"
+        />
+        @if (coverCredit(place); as imageCredit) {
+          <figcaption>
+            @if (imageCredit.author) {
+              {{ imageCredit.author }}
+            } @else {
+              Autoría pendiente de confirmar
+            }
+            @if (imageCredit.license) {
+              · {{ imageCredit.license }}
+            }
+            @if (imageCredit.sourceUrl) {
+              · <a [href]="imageCredit.sourceUrl" target="_blank" rel="noopener noreferrer">Ver imagen original</a>
+            }
+          </figcaption>
+        }
+      </figure>
+    }
+
+    <div class="lugar-article__layout">
+      <div class="lugar-article__story">
+        @if (place.historicalStory) {
+          <section aria-labelledby="lugar-historia">
+            <h2 id="lugar-historia">Historia</h2>
+            <p class="lugar-article__prose">{{ place.historicalStory }}</p>
+          </section>
+        } @else {
+          <section aria-labelledby="lugar-historia">
+            <h2 id="lugar-historia">Sobre este lugar</h2>
+            <p class="lugar-article__prose">
+              La reseña histórica ampliada está pendiente de incorporar fuentes verificadas.
+              {{ place.description }}
+            </p>
+          </section>
+        }
+
+        @if (place.interestingFacts?.length) {
+          <section aria-labelledby="lugar-interes">
+            <h2 id="lugar-interes">Detalles de interés</h2>
+            <ul class="lugar-article__facts">
+              @for (fact of place.interestingFacts; track $index) {
+                <li>{{ fact }}</li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (place.visitorInfo) {
+          <section aria-labelledby="lugar-visita">
+            <h2 id="lugar-visita">Información para tu visita</h2>
+            <p class="lugar-article__prose">{{ place.visitorInfo }}</p>
+          </section>
+        }
+
+        @if (place.audioGuideUrl) {
+          <a class="button button--ghost" [href]="place.audioGuideUrl" target="_blank" rel="noopener noreferrer">
+            Escuchar audioguía
+          </a>
+        }
+
+        @if (place.contentSources?.length) {
+          <section class="lugar-article__sources" aria-labelledby="lugar-fuentes">
+            <h2 id="lugar-fuentes">Fuentes históricas y lecturas</h2>
+            <ul>
+              @for (source of place.contentSources ?? []; track source) {
+                <li><a [href]="source" target="_blank" rel="noopener noreferrer">{{ source }}</a></li>
+              }
+            </ul>
+          </section>
+        }
+      </div>
+
+      <aside class="lugar-article__aside" aria-label="Datos del lugar">
+        <h2>Datos del lugar</h2>
+        @if (place.historicalPeriod) {
+          <p><strong>Periodo:</strong> {{ place.historicalPeriod }}</p>
+        }
+        <p><strong>Conservación:</strong> {{ conservationLabels[place.conservationStatus] }}</p>
+        @if (place.tags.length > 0) {
+          <div class="lugar-article__tags" aria-label="Temas">
+            @for (tag of place.tags; track tag) {
+              <span>{{ tagLabels[tag] }}</span>
+            }
+          </div>
+        }
+        <p class="lugar-article__aside-note">
+          La información histórica se muestra con sus fuentes para que puedas seguir explorando.
+        </p>
+        @if (place.checkInTokenConfigured) {
+          <a class="button button--primary button--block" routerLink="/checkin">
+            Estoy aquí: escanear el QR
+          </a>
+          <p class="lugar-article__aside-note">
+            El check-in se confirma al escanear el QR instalado en este lugar.
+          </p>
+        } @else {
+          <p class="lugar-article__aside-note">
+            El registro de visitas por QR todavía no está habilitado para este lugar.
+          </p>
+        }
+      </aside>
+    </div>
+  </article>
+}

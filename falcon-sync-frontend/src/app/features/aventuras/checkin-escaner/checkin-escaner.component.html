@@ -1,0 +1,94 @@
+<h1>Escanear QR de una parada</h1>
+<p class="lead">
+  Escanea el código del punto de interés para registrar tu visita. La cámara se procesa
+  en tu dispositivo: los fotogramas no se envían al servidor.
+</p>
+
+<section class="escaner" aria-labelledby="escaner-camara">
+  <h2 id="escaner-camara">Cámara</h2>
+
+  @if (!detectorAvailable) {
+    <p class="escaner__aviso" role="status">
+      Este navegador no admite la lectura automática de QR. Usa la entrada manual que
+      aparece más abajo.
+    </p>
+  } @else if (!cameraAvailable) {
+    <p class="escaner__aviso" role="status">
+      Este navegador no permite usar la cámara. Usa la entrada manual.
+    </p>
+  }
+
+  <div class="escaner__camara" [class.escaner__camara--activa]="scanning()">
+    <video #video playsinline muted aria-label="Vista de la cámara para escanear el QR"></video>
+    @if (!scanning()) {
+      <p class="escaner__camara-placeholder">La cámara está apagada.</p>
+    }
+  </div>
+
+  <div class="escaner__acciones">
+    @if (scanning()) {
+      <button type="button" class="button button--ghost" (click)="stopCamera()">
+        Detener cámara
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="button button--primary"
+        [disabled]="!detectorAvailable || !cameraAvailable"
+        (click)="startCamera()"
+      >
+        Abrir cámara y escanear
+      </button>
+    }
+  </div>
+
+  @if (scanError()) {
+    <p class="form-message form-message--error" role="alert">
+      {{ scanError() }}
+      <button type="button" class="escaner__descartar" (click)="dismissScanError()">
+        Descartar
+      </button>
+    </p>
+  }
+
+  @if (cameraError()) {
+    <p class="form-message form-message--error" role="alert">{{ cameraError() }}</p>
+  }
+</section>
+
+<section class="escaner__manual" aria-labelledby="escaner-manual">
+  <h2 id="escaner-manual">Entrada manual</h2>
+  <p class="escaner__ayuda">
+    Si la cámara no funciona, pega el contenido del QR o el enlace que abre la parada.
+    El token se guarda solo en memoria y se elimina de la dirección.
+  </p>
+
+  <form (ngSubmit)="submitManual()" novalidate>
+    <div class="form-field">
+      <label for="escaner-contenido">Contenido del QR</label>
+      <textarea
+        id="escaner-contenido"
+        rows="3"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder='{"type":"falconsync-check-in","locationId":"…","token":"…"}'
+        [value]="manualValue()"
+        [attr.aria-invalid]="manualError() ? 'true' : null"
+        [attr.aria-describedby]="manualError() ? 'escaner-manual-error' : null"
+        (input)="onManualInput($event)"
+      ></textarea>
+    </div>
+
+    @if (manualError()) {
+      <p id="escaner-manual-error" class="form-message form-message--error" role="alert">
+        {{ manualError() }}
+      </p>
+    }
+
+    <button type="submit" class="button button--primary" [disabled]="!manualValue().trim()">
+      Abrir check-in
+    </button>
+  </form>
+</section>
+
+<a class="button button--ghost" routerLink="/aventuras">Volver a los recorridos</a>

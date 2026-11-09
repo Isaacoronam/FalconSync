@@ -10,6 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
 import * as L from 'leaflet';
 import {
   CORO_INITIAL_ZOOM,
@@ -48,6 +49,7 @@ const CLUSTER_RADIUS_PX = 52;
 
 @Component({
   selector: 'app-coro-map',
+  imports: [RouterLink],
   templateUrl: './coro-map.component.html',
   styleUrl: './coro-map.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +57,7 @@ const CLUSTER_RADIUS_PX = 52;
 export class CoroMapComponent implements AfterViewInit, OnDestroy {
   private readonly locationsApi = inject(LocationApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   private map?: L.Map;
   private markerLayer?: L.LayerGroup;
@@ -565,6 +568,16 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     );
 
     container.append(description, meta);
+
+    const detail = document.createElement('a');
+    detail.className = 'heritage-popup__detail';
+    detail.href = `/lugares/${encodeURIComponent(location.slug)}`;
+    detail.textContent = 'Leer la historia y los detalles del lugar';
+    detail.addEventListener('click', (event) => {
+      event.preventDefault();
+      void this.router.navigate(['/lugares', location.slug]);
+    });
+    container.append(detail);
 
     if (location.sourceUrl) {
       const source = document.createElement('a');

@@ -121,6 +121,15 @@
                       {{ busy() === location.id ? 'Restaurando…' : 'Restaurar' }}
                     </button>
                   } @else {
+                    @if (location.status === 'published') {
+                      <a
+                        class="button button--ghost button--small"
+                        [routerLink]="['/admin/locations', location.id, 'qr']"
+                        [attr.aria-label]="'Generar QR para ' + location.title"
+                      >
+                        QR
+                      </a>
+                    }
                     <a
                       class="button button--ghost button--small"
                       [routerLink]="['/admin/poi', location.id, 'editar']"

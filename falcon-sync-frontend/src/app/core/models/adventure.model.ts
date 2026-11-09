@@ -1,3 +1,5 @@
+import type { UserAchievement } from './achievement.model';
+
 export type AdventureDifficulty = 'easy' | 'moderate' | 'challenging';
 export type AdventureStatus = 'draft' | 'published' | 'archived';
 
@@ -68,6 +70,7 @@ export interface AdventureProgress {
   nextStop: AdventureProgressStop | null;
   completed: boolean;
   completedAt: string | null;
+  achievement?: UserAchievement | null;
 }
 
 export interface CheckInPayload {
@@ -82,6 +85,9 @@ export interface CheckInPhoto {
   filename: string;
   mimeType: string;
   size: number;
+  updatedAt?: string;
+  visibility?: 'private' | 'public';
+  moderationStatus?: 'not_required' | 'pending' | 'approved' | 'rejected';
 }
 
 export interface CheckIn {
@@ -93,6 +99,11 @@ export interface CheckIn {
   tokenVersion: number;
   photo?: CheckInPhoto | null;
   createdAt: string;
+}
+
+export interface CheckInResponse {
+  data: CheckIn;
+  achievementsAwarded: UserAchievement[];
 }
 
 export interface QrRotateResponse {

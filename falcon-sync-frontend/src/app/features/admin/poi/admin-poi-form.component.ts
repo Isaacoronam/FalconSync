@@ -70,6 +70,10 @@ export class AdminPoiFormComponent implements OnInit {
     ],
     address: ['', [Validators.maxLength(240)]],
     historicalPeriod: ['', [Validators.maxLength(120)]],
+    historicalStory: ['', [Validators.maxLength(10000)]],
+    interestingFactsText: ['', [Validators.maxLength(2300)]],
+    visitorInfo: ['', [Validators.maxLength(2000)]],
+    contentSourcesText: ['', [Validators.maxLength(5000)]],
     conservationStatus: ['unknown', [Validators.required]],
     status: ['draft', [Validators.required]],
     sourceUrl: ['', [Validators.pattern(/^https?:\/\/[^\s]+$/i)]],
@@ -134,6 +138,10 @@ export class AdminPoiFormComponent implements OnInit {
             description: data.description,
             address: data.address ?? '',
             historicalPeriod: data.historicalPeriod ?? '',
+            historicalStory: data.historicalStory ?? '',
+            interestingFactsText: (data.interestingFacts ?? []).join('\n'),
+            visitorInfo: data.visitorInfo ?? '',
+            contentSourcesText: (data.contentSources ?? []).join('\n'),
             conservationStatus: data.conservationStatus,
             status: data.status === 'archived' ? 'draft' : data.status,
             sourceUrl: data.sourceUrl ?? '',
@@ -219,6 +227,16 @@ export class AdminPoiFormComponent implements OnInit {
       circuits: this.selectedCircuits(),
       tags: this.selectedTags(),
       historicalPeriod: values.historicalPeriod.trim() || undefined,
+      historicalStory: values.historicalStory.trim() || undefined,
+      interestingFacts: values.interestingFactsText
+        .split(/\r?\n/)
+        .map((fact) => fact.trim())
+        .filter(Boolean),
+      visitorInfo: values.visitorInfo.trim() || undefined,
+      contentSources: values.contentSourcesText
+        .split(/\r?\n/)
+        .map((source) => source.trim())
+        .filter(Boolean),
       conservationStatus: values.conservationStatus as ConservationStatus,
       status: values.status as Exclude<LocationStatus, 'archived'>,
       sourceUrl: values.sourceUrl.trim() || undefined,

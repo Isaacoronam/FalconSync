@@ -15,6 +15,7 @@ export interface LocationListFilters {
   circuit?: LocationCircuit | 'all';
   tag?: LocationTag | 'all';
   includeProvisional?: boolean;
+  limit?: number;
 }
 
 @Injectable({
@@ -26,6 +27,10 @@ export class LocationApiService {
 
   list(filters: LocationListFilters = {}): Observable<LocationsResponse> {
     let params = new HttpParams();
+
+    if (filters.limit) {
+      params = params.set('limit', String(filters.limit));
+    }
 
     if (filters.category && filters.category !== 'all') {
       params = params.set('category', filters.category);

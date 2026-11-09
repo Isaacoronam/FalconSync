@@ -1,5 +1,6 @@
 import Adventure from '../models/Adventure.js';
 import AdventureStop from '../models/AdventureStop.js';
+import UserAchievement from '../models/UserAchievement.js';
 import { buildAdventureProgress } from '../services/adventureProgressService.js';
 import { HttpError } from '../utils/HttpError.js';
 
@@ -119,6 +120,16 @@ export async function getAdventureProgress(request, response) {
   }
 
   const progress = await buildAdventureProgress(adventure, request.user._id);
+  const achievement = await UserAchievement.findOne({
+    user: request.user._id,
+    type: 'adventure',
+    sourceId: adventure._id,
+  });
 
-  response.json({ data: progress });
+  response.json({
+    data: {
+      ...progress,
+      achievement: achievement ? achievement.toJSON() : null,
+    },
+  });
 }

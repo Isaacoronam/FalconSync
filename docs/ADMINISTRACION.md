@@ -13,12 +13,14 @@ Unidades 2 a 7 todavía no están incorporadas en `.opencode/knowledge/`.
 - Listado de POI con búsqueda, filtros por estado, categoría, circuito y etiqueta,
   paginación y acciones.
 - Creación y edición de POI con validación en cliente y servidor.
-- Ficha con dirección, circuitos, etiquetas, fuente y fecha de verificación de coordenadas,
-  nivel de verificación y créditos de imágenes.
+- Ficha editorial con descripción, historia, datos de interés, información para visitantes,
+  fuentes editoriales, dirección, circuitos, etiquetas, verificación cartográfica y créditos
+  de imágenes.
 - Regla de publicación: no se publica un POI provisional ni uno sin fecha de verificación.
 - Selector de ubicación sobre un mapa limitado a Falcón.
 - Borrado lógico con archivo y restauración.
 - Carga de imágenes con adaptador de almacenamiento local.
+- Acceso a impresión/descarga del QR desde el listado de POI publicados.
 - Registro de auditoría para cada acción administrativa.
 - Pruebas de backend, frontend y E2E.
 
@@ -163,20 +165,21 @@ Rutas:
 - `/admin/auditoria`: historial.
 
 El formulario usa validación reactiva, un selector Leaflet limitado a Falcón y gestión de
-imágenes en la misma pantalla de edición. Incluye dirección, circuitos, etiquetas, fuente y
-fecha de verificación de coordenadas, nivel de verificación y aviso de publicación. El
-bloqueo de publicación provisional o sin fecha se aplica en cliente además de servidor. El
-listado permite filtrar por categoría, circuito y etiqueta. La tabla se convierte en
-tarjetas en pantallas menores a 700 px para evitar desplazamiento horizontal.
+imágenes en la misma pantalla de edición. Incluye descripción, historia, hechos de interés,
+información para visitantes, fuentes editoriales y los metadatos de publicación y ubicación.
+El bloqueo de publicación provisional o sin fecha se aplica en cliente además de servidor.
+El listado permite filtrar por categoría, circuito y etiqueta, e imprimir o descargar el QR
+de los POI publicados. La tabla se convierte en tarjetas en pantallas menores a 700 px para
+evitar desplazamiento horizontal.
 
 ## Verificación
 
 | Comprobación | Resultado |
 |---|---|
-| Pruebas backend | 67/67 aprobadas |
-| Pruebas frontend | 29/29 aprobadas |
-| Build de producción | Correcto, sin warnings |
-| E2E | 15/15 en Edge local y 15/15 con Chromium (`CI=1`) |
+| Pruebas backend | 75/75 aprobadas |
+| Pruebas frontend | 51/51 aprobadas |
+| Build de producción | Correcto, sin advertencias |
+| E2E | 16/16 en Edge local; corrida Chromium/CI pendiente de repetir |
 | Seed y verificación | 23 POI publicados; Gelatería El Sol y la entrada del Parque Nacional Médanos de Coro visibles en el mapa |
 | `npm audit --omit=dev` | 0 vulnerabilidades en backend y frontend |
 

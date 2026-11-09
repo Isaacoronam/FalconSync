@@ -33,6 +33,20 @@ const checkInPhotoSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    visibility: {
+      type: String,
+      enum: ['private', 'public'],
+      default: 'private',
+    },
+    moderationStatus: {
+      type: String,
+      enum: ['not_required', 'pending', 'approved', 'rejected'],
+      default: 'not_required',
+    },
   },
   { _id: false },
 );

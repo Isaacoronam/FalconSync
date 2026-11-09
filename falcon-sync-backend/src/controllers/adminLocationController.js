@@ -263,6 +263,60 @@ function readEnumArray(body, key, allowed, issues) {
   return values;
 }
 
+function readContentArray(
+  body,
+  key,
+  issues,
+  { maxItems, maxLength, urls = false },
+) {
+  if (!hasOwn(body, key)) {
+    return undefined;
+  }
+
+  if (!Array.isArray(body[key])) {
+    issues.push(`El campo ${key} debe enviarse como una lista`);
+    return undefined;
+  }
+
+  if (body[key].length > maxItems) {
+    issues.push(`El campo ${key} no puede tener más de ${maxItems} elementos`);
+  }
+
+  const values = [];
+
+  for (const entry of body[key]) {
+    if (typeof entry !== 'string') {
+      issues.push(`Todos los elementos de ${key} deben ser texto`);
+      continue;
+    }
+
+    const value = entry.trim();
+
+    if (!value) {
+      continue;
+    }
+
+    if (value.length > maxLength) {
+      issues.push(`Cada elemento de ${key} no puede superar ${maxLength} caracteres`);
+      continue;
+    }
+
+    if (urls && !HTTP_URL_PATTERN.test(value)) {
+      issues.push(`Cada elemento de ${key} debe ser una URL http o https`);
+      continue;
+    }
+
+    if (values.includes(value)) {
+      issues.push(`El campo ${key} no puede repetir valores`);
+      continue;
+    }
+
+    values.push(value);
+  }
+
+  return values;
+}
+
 function readVerificationLevel(body, issues) {
   if (!hasOwn(body, 'verificationLevel')) {
     return undefined;
@@ -398,6 +452,39 @@ function buildPayload(body, { partial = false } = {}) {
 
   if (historicalPeriod !== undefined) {
     payload.historicalPeriod = historicalPeriod;
+  }
+
+  const historicalStory = readText(body, 'historicalStory', issues, {
+    max: 10000,
+  });
+
+  if (historicalStory !== undefined) {
+    payload.historicalStory = historicalStory;
+  }
+
+  const interestingFacts = readContentArray(body, 'interestingFacts', issues, {
+    maxItems: 8,
+    maxLength: 280,
+  });
+
+  if (interestingFacts !== undefined) {
+    payload.interestingFacts = interestingFacts;
+  }
+
+  const visitorInfo = readText(body, 'visitorInfo', issues, { max: 2000 });
+
+  if (visitorInfo !== undefined) {
+    payload.visitorInfo = visitorInfo;
+  }
+
+  const contentSources = readContentArray(body, 'contentSources', issues, {
+    maxItems: 10,
+    maxLength: 500,
+    urls: true,
+  });
+
+  if (contentSources !== undefined) {
+    payload.contentSources = contentSources;
   }
 
   const coordinates = readCoordinates(body, issues, { required: !partial });

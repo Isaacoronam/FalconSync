@@ -180,8 +180,9 @@ No se incluyen secretos reales en el repositorio. `.env` está ignorado por Git.
 ## Pruebas
 
 `npm test` ejecuta las pruebas de ubicaciones, autenticación, administración de POI, perfil,
-seed y CoroAventura (aventuras, QR, check-in y progreso) con `node --test` y `supertest`,
-usando bases de datos locales de prueba. Resultado de la última corrida: 67/67.
+insignias, galería, seed y CoroAventura (aventuras, QR, check-in y progreso) con `node --test`
+y `supertest`, usando bases de datos locales de prueba. Resultado de la última corrida:
+73/73.
 
 La suite E2E permanente vive en `../falcon-sync-frontend/e2e` y arranca esta API con
 `scripts/e2eServer.js` sobre la base `falconsync_e2e`.

@@ -4,6 +4,7 @@ import AdventureStop from '../models/AdventureStop.js';
 import CheckIn from '../models/CheckIn.js';
 import Location from '../models/Location.js';
 import User from '../models/User.js';
+import { listUserAchievements } from '../services/achievementService.js';
 import { storageAdapter } from '../services/storage/index.js';
 import { generateUniqueUsername } from '../services/usernameService.js';
 import { HttpError } from '../utils/HttpError.js';
@@ -16,6 +17,29 @@ import {
 const PROFILE_FIELDS =
   'name username email bio role isActive mustChangePassword lastLoginAt createdAt updatedAt +avatarFilename +avatarMimeType +avatarSize +avatarUpdatedAt';
 const RECENT_CHECKINS_LIMIT = 8;
+const DEFAULT_GALLERY_PAGE_SIZE = 9;
+const MAX_GALLERY_PAGE_SIZE = 48;
+
+function parsePositiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parsePhotoFilter(value) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === 'true') {
+    return true;
+  }
+
+  if (value === 'false') {
+    return false;
+  }
+
+  throw validationError(['hasPhoto solo admite true o false']);
+}
 
 function hasOwn(target, key) {
   return Object.prototype.hasOwnProperty.call(target, key);
@@ -53,14 +77,18 @@ function serializeProfile(user) {
 }
 
 function serializeRecentCheckIn(checkIn) {
+  const photo = checkIn.photo;
+  const version = photo?.updatedAt ?? checkIn.createdAt;
+
   return {
     id: checkIn._id.toString(),
     createdAt: checkIn.createdAt,
     distanceMeters: Math.round(checkIn.distanceMeters),
-    photoAvailable: Boolean(checkIn.photo?.filename),
-    photoUrl: checkIn.photo?.filename
-      ? `/api/profile/check-ins/${checkIn._id.toString()}/photo`
+    photoAvailable: Boolean(photo?.filename),
+    photoUrl: photo?.filename
+      ? `/api/profile/check-ins/${checkIn._id.toString()}/photo?v=${new Date(version).getTime()}`
       : null,
+    photoUpdatedAt: photo?.updatedAt ?? null,
     location: {
       id: checkIn.location._id.toString(),
       title: checkIn.location.title,
@@ -204,17 +232,26 @@ async function loadProfileUser(userId, selectedFields = PROFILE_FIELDS) {
 export async function getMyProfile(request, response) {
   const user = await loadProfileUser(request.user._id);
 
-  const [totalCheckIns, overview, recentCheckIns] = await Promise.all([
-    CheckIn.countDocuments({ user: user._id }),
-    buildAdventureOverview(user._id),
-    CheckIn.find({ user: user._id })
-      .sort({ createdAt: -1 })
-      .limit(RECENT_CHECKINS_LIMIT)
-      .populate({
-        path: 'location',
-        select: 'title slug images location',
-      }),
-  ]);
+  const [totalCheckIns, overview, recentCheckIns, achievements] =
+    await Promise.all([
+      CheckIn.countDocuments({ user: user._id }),
+      buildAdventureOverview(user._id),
+      CheckIn.find({ user: user._id })
+        .sort({ createdAt: -1 })
+        .limit(RECENT_CHECKINS_LIMIT)
+        .populate({
+          path: 'location',
+          select: 'title slug images location',
+        }),
+      listUserAchievements(user._id),
+    ]);
+
+  const adventureAchievements = achievements.filter(
+    (achievement) => achievement.type === 'adventure',
+  ).length;
+  const locationAchievements = achievements.filter(
+    (achievement) => achievement.type === 'location',
+  ).length;
 
   response.json({
     data: {
@@ -223,8 +260,13 @@ export async function getMyProfile(request, response) {
         totalCheckIns,
         uniqueLocations: totalCheckIns,
         ...overview.stats,
+        completedAdventures: adventureAchievements,
+        totalAchievements: achievements.length,
+        locationAchievements,
+        adventureAchievements,
       },
       adventures: overview.adventures,
+      achievements,
       recentCheckIns: recentCheckIns
         .filter((checkIn) => checkIn.location)
         .map((checkIn) => serializeRecentCheckIn(checkIn)),
@@ -390,6 +432,162 @@ export async function getMyAvatar(request, response) {
   response.set('Cache-Control', 'private, max-age=300, must-revalidate');
   response.type(user.avatarMimeType ?? 'application/octet-stream');
   response.sendFile(absolutePath);
+}
+
+async function loadOwnedCheckIn({ checkInId, userId, populate = false }) {
+  if (!mongoose.isValidObjectId(checkInId)) {
+    throw new HttpError(
+      404,
+      'CHECK_IN_NOT_FOUND',
+      'No se encontró el check-in solicitado',
+    );
+  }
+
+  const query = CheckIn.findOne({
+    _id: checkInId,
+    user: userId,
+  });
+
+  if (populate) {
+    query.populate({
+      path: 'location',
+      select: 'title slug images location',
+    });
+  }
+
+  const checkIn = await query;
+
+  if (!checkIn) {
+    throw new HttpError(
+      404,
+      'CHECK_IN_NOT_FOUND',
+      'No se encontró el check-in solicitado',
+    );
+  }
+
+  return checkIn;
+}
+
+export async function getMyCheckIns(request, response) {
+  const page = parsePositiveInteger(request.query.page, 1);
+  const limit = Math.min(
+    parsePositiveInteger(
+      request.query.limit,
+      DEFAULT_GALLERY_PAGE_SIZE,
+    ),
+    MAX_GALLERY_PAGE_SIZE,
+  );
+  const hasPhoto = parsePhotoFilter(request.query.hasPhoto);
+  const filter = { user: request.user._id };
+
+  if (hasPhoto === true) {
+    filter['photo.filename'] = { $type: 'string' };
+  } else if (hasPhoto === false) {
+    filter['photo.filename'] = null;
+  }
+
+  const [checkIns, total] = await Promise.all([
+    CheckIn.find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate({
+        path: 'location',
+        select: 'title slug images location',
+      }),
+    CheckIn.countDocuments(filter),
+  ]);
+
+  response.json({
+    data: checkIns
+      .filter((checkIn) => checkIn.location)
+      .map((checkIn) => serializeRecentCheckIn(checkIn)),
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
+}
+
+export async function uploadMyCheckInPhoto(request, response) {
+  if (!request.file) {
+    throw new HttpError(
+      400,
+      'IMAGE_REQUIRED',
+      'Selecciona una imagen para la foto del check-in',
+    );
+  }
+
+  const checkIn = await loadOwnedCheckIn({
+    checkInId: request.params.checkInId,
+    userId: request.user._id,
+  });
+  const previousFilename = checkIn.photo?.filename ?? null;
+  const saved = await storageAdapter.saveImage({
+    buffer: request.file.buffer,
+    folder: 'check-ins',
+  });
+
+  checkIn.photo = {
+    filename: saved.filename,
+    mimeType: saved.mimeType,
+    size: saved.size,
+    updatedAt: new Date(),
+    visibility: 'private',
+    moderationStatus: 'not_required',
+  };
+
+  try {
+    await checkIn.save();
+  } catch (error) {
+    await storageAdapter
+      .removeByFilename('check-ins', saved.filename)
+      .catch(() => undefined);
+    throw error;
+  }
+
+  if (previousFilename && previousFilename !== saved.filename) {
+    await storageAdapter
+      .removeByFilename('check-ins', previousFilename)
+      .catch(() => undefined);
+  }
+
+  await checkIn.populate({
+    path: 'location',
+    select: 'title slug images location',
+  });
+
+  response.json({
+    data: { checkIn: serializeRecentCheckIn(checkIn) },
+  });
+}
+
+export async function deleteMyCheckInPhoto(request, response) {
+  const checkIn = await loadOwnedCheckIn({
+    checkInId: request.params.checkInId,
+    userId: request.user._id,
+  });
+  const previousFilename = checkIn.photo?.filename ?? null;
+
+  if (previousFilename) {
+    checkIn.photo = null;
+    await checkIn.save();
+
+    await storageAdapter
+      .removeByFilename('check-ins', previousFilename)
+      .catch(() => undefined);
+  }
+
+  await checkIn.populate({
+    path: 'location',
+    select: 'title slug images location',
+  });
+
+  response.json({
+    data: { checkIn: serializeRecentCheckIn(checkIn) },
+  });
 }
 
 export async function getMyCheckInPhoto(request, response) {

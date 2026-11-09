@@ -62,21 +62,32 @@ async function abrirCheckIn(
     accuracy: 10,
   });
 
-  await page.goto(
-    `/checkin/${ubicacion.locationId}?token=${encodeURIComponent(ubicacion.token)}`,
+  await page.goto('/checkin');
+  await expect(page.locator('h1')).toContainText('Escanear QR');
+  await page.locator('#escaner-contenido').fill(
+    JSON.stringify({
+      type: 'falconsync-check-in',
+      locationId: ubicacion.locationId,
+      token: ubicacion.token,
+    }),
   );
-  await expect(page).toHaveURL(/\/checkin\//);
-  await expect(page.locator('.checkin__token-precargado')).toBeVisible();
+  await page.getByRole('button', { name: 'Abrir check-in' }).click();
+
+  await expect(page).toHaveURL(
+    new RegExp(`/checkin/${ubicacion.locationId}$`),
+  );
+  await expect(page.locator('.checkin__token')).toContainText('QR verificado');
 }
 
 async function registrarCheckIn(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Registrar check-in' }).click();
-  await expect(page.locator('.form-message--success')).toContainText(
-    'Check-in registrado',
+  await expect(page.locator('.checkin-exito')).toBeVisible();
+  await expect(page.locator('.form-message--success').first()).toContainText(
+    'Visita confirmada',
   );
 }
 
-async function visitarParada(
+async function visitarLugar(
   page: Page,
   ubicacion: Ubicacion,
 ): Promise<void> {
@@ -85,10 +96,8 @@ async function visitarParada(
 }
 
 async function configurarEntorno(request: APIRequestContext): Promise<{
-  slug: string;
   cathedral: Ubicacion;
   ventanas: Ubicacion;
-  plaza: Ubicacion;
 }> {
   const loginAdmin = await request.post(`${BACKEND_URL}/api/auth/login`, {
     data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
@@ -98,31 +107,6 @@ async function configurarEntorno(request: APIRequestContext): Promise<{
   const token = (await loginAdmin.json()).data.accessToken;
   const headers = { Authorization: `Bearer ${token}` };
 
-  const slug = `ruta-historica-${Date.now()}`;
-
-  const aventura = await request.post(
-    `${BACKEND_URL}/api/admin/adventures`,
-    {
-      headers,
-      data: {
-        title: 'Ruta Histórica de Coro',
-        slug,
-        summary: 'Recorrido por el casco histórico de Coro y sus puntos emblemáticos.',
-        description:
-          'Aventura patrimonial para recorrer el centro histórico de Santa Ana de Coro, Patrimonio Mundial.',
-        difficulty: 'easy',
-        estimatedMinutes: 60,
-        badge: {
-          name: 'Explorador de Coro',
-          description: 'Obtenida al completar la ruta histórica del centro.',
-          image: '',
-        },
-      },
-    },
-  );
-  expect(aventura.ok(), 'crear aventura').toBeTruthy();
-  const adventureId = (await aventura.json()).data.id;
-
   const locations = (
     await (await request.get(`${BACKEND_URL}/api/locations`)).json()
   ).data as LocationApi[];
@@ -130,54 +114,9 @@ async function configurarEntorno(request: APIRequestContext): Promise<{
 
   const catedralLoc = porSlug('catedral-de-coro');
   const ventanasLoc = porSlug('casa-de-las-ventanas-de-hierro');
-  const plazaLoc = porSlug('plaza-bolivar-de-coro');
 
   expect(catedralLoc).toBeDefined();
   expect(ventanasLoc).toBeDefined();
-  expect(plazaLoc).toBeDefined();
-
-  await request.post(
-    `${BACKEND_URL}/api/admin/adventures/${adventureId}/stops`,
-    {
-      headers,
-      data: {
-        locationId: catedralLoc.id,
-        order: 1,
-        didacticText: 'Texto didáctico de la catedral.',
-        instructions: 'Llega a la entrada principal.',
-      },
-    },
-  );
-  await request.post(
-    `${BACKEND_URL}/api/admin/adventures/${adventureId}/stops`,
-    {
-      headers,
-      data: {
-        locationId: ventanasLoc.id,
-        order: 2,
-        didacticText: 'Texto didáctico de las ventanas de hierro.',
-        instructions: 'Observa el portal colonial.',
-      },
-    },
-  );
-  await request.post(
-    `${BACKEND_URL}/api/admin/adventures/${adventureId}/stops`,
-    {
-      headers,
-      data: {
-        locationId: plazaLoc.id,
-        order: 3,
-        didacticText: 'Texto didáctico de la plaza.',
-        instructions: 'Camina hacia el centro de la plaza.',
-      },
-    },
-  );
-
-  const publicado = await request.post(
-    `${BACKEND_URL}/api/admin/adventures/${adventureId}/publish`,
-    { headers },
-  );
-  expect(publicado.ok(), 'publicar aventura').toBeTruthy();
 
   const rotarQR = async (locationId: string): Promise<string> => {
     const respuesta = await request.post(
@@ -197,37 +136,76 @@ async function configurarEntorno(request: APIRequestContext): Promise<{
   });
 
   return {
-    slug,
     cathedral: await aUbicacion(catedralLoc),
     ventanas: await aUbicacion(ventanasLoc),
-    plaza: await aUbicacion(plazaLoc),
   };
 }
 
-test('escaneo abre login y conserva la URL completa con returnUrl', async ({
+test('el escáner manual abre login sin exponer el token en la URL', async ({
   page,
   request,
 }) => {
   const { cathedral } = await configurarEntorno(request);
+  const usuario = await crearUsuario(request);
+
+  await page.goto('/checkin');
+  await expect(page.locator('h1')).toContainText('Escanear QR');
+  await page.locator('#escaner-contenido').fill(
+    JSON.stringify({
+      type: 'falconsync-check-in',
+      locationId: cathedral.locationId,
+      token: cathedral.token,
+    }),
+  );
+  await page.getByRole('button', { name: 'Abrir check-in' }).click();
+
+  await expect(page).toHaveURL(/\/login/);
+  const loginUrl = new URL(page.url());
+  expect(loginUrl.searchParams.get('returnUrl')).toBe(
+    `/checkin/${cathedral.locationId}`,
+  );
+  expect(page.url()).not.toContain(cathedral.token);
+  await expect(page.locator('#login-title')).toContainText('Inicia sesión');
+
+  await page.locator('#login-email').fill(usuario.email);
+  await page.locator('#login-password').fill(usuario.password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+
+  await expect(page).toHaveURL(
+    new RegExp(`/checkin/${cathedral.locationId}$`),
+  );
+  await expect(page.locator('.checkin__token')).toContainText('QR verificado');
+});
+
+test('un enlace heredado con token se limpia y conserva el acceso tras el login', async ({
+  page,
+  request,
+}) => {
+  const { cathedral } = await configurarEntorno(request);
+  const usuario = await crearUsuario(request);
 
   await page.goto(
     `/checkin/${cathedral.locationId}?token=${encodeURIComponent(cathedral.token)}`,
   );
   await expect(page).toHaveURL(/\/login/);
 
-  const loginUrl = page.url();
-  expect(loginUrl).toContain('returnUrl=');
-
-  const returnUrlEncoded = loginUrl.split('returnUrl=')[1].split('&')[0];
-  const returnUrl = decodeURIComponent(returnUrlEncoded);
-  expect(returnUrl).toBe(
-    `/checkin/${cathedral.locationId}?token=${encodeURIComponent(cathedral.token)}`,
+  const loginUrl = new URL(page.url());
+  expect(loginUrl.searchParams.get('returnUrl')).toBe(
+    `/checkin/${cathedral.locationId}`,
   );
+  expect(page.url()).not.toContain(cathedral.token);
 
-  await expect(page.locator('#login-title')).toContainText('Inicia sesión');
+  await page.locator('#login-email').fill(usuario.email);
+  await page.locator('#login-password').fill(usuario.password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+
+  await expect(page).toHaveURL(
+    new RegExp(`/checkin/${cathedral.locationId}$`),
+  );
+  await expect(page.locator('.checkin__token')).toContainText('QR verificado');
 });
 
-test('login vuelve al check-in con el token conservado', async ({
+test('login vuelve al check-in con el token conservado en memoria', async ({
   page,
   request,
 }) => {
@@ -237,35 +215,27 @@ test('login vuelve al check-in con el token conservado', async ({
   await login(page, usuario.email, usuario.password);
   await abrirCheckIn(page, cathedral);
 
-  await expect(page.locator('h1')).toContainText('Check-in en punto de interés');
-  await expect(page.locator('.checkin__token-precargado')).toContainText(
-    'Token del QR precargado',
-  );
+  await expect(page.locator('h1')).toContainText('Registrar visita');
+  await expect(page.locator('.checkin__token')).toContainText('QR verificado');
+  await expect(page).not.toHaveURL(/token=/);
 });
 
-test('check-in dentro del radio aceptado y progreso actualizado', async ({
+test('check-in válido felicita, otorga insignia y enlaza la ficha del lugar', async ({
   page,
   request,
 }) => {
-  const { slug, cathedral } = await configurarEntorno(request);
+  const { cathedral } = await configurarEntorno(request);
   const usuario = await crearUsuario(request);
 
   await login(page, usuario.email, usuario.password);
-  await visitarParada(page, cathedral);
-
-  await page.goto(`/aventuras/${slug}/progreso`);
-  await expect(page.locator('h1')).toContainText(
-    'Progreso de Ruta Histórica de Coro',
-  );
+  await visitarLugar(page, cathedral);
   await expect(
-    page.locator('.progreso-item').filter({ hasText: 'Catedral de Coro' }),
-  ).toContainText('Visitada');
-  await expect(page.locator('.progreso-tarjeta__valor').first()).toContainText(
-    '33%',
-  );
-  await expect(page.locator('.progreso-siguiente__lugar')).toContainText(
-    'Casa de las Ventanas de Hierro',
-  );
+    page.locator('.checkin-logro').filter({ hasText: 'Catedral de Coro' }),
+  ).toBeVisible();
+  await expect(page.locator('.checkin-chivito')).toContainText('Catedral de Coro');
+  await page.getByRole('link', { name: 'Volver a la historia del lugar' }).click();
+  await expect(page).toHaveURL(/\/lugares\/catedral-de-coro$/);
+  await expect(page.locator('h1')).toContainText('Catedral de Coro');
 });
 
 test('check-in duplicado y fuera de radio rechazados', async ({
@@ -276,7 +246,7 @@ test('check-in duplicado y fuera de radio rechazados', async ({
   const usuario = await crearUsuario(request);
 
   await login(page, usuario.email, usuario.password);
-  await visitarParada(page, cathedral);
+  await visitarLugar(page, cathedral);
 
   await abrirCheckIn(page, cathedral);
   await page.getByRole('button', { name: 'Registrar check-in' }).click();
@@ -284,42 +254,28 @@ test('check-in duplicado y fuera de radio rechazados', async ({
     'Ya registraste un check-in en este punto de interés.',
   );
 
+  await abrirCheckIn(page, ventanas);
   await page.context().setGeolocation({
     latitude: 0,
     longitude: 0,
     accuracy: 10,
   });
-  await page.goto(
-    `/checkin/${ventanas.locationId}?token=${encodeURIComponent(ventanas.token)}`,
-  );
-  await expect(page.locator('.checkin__token-precargado')).toBeVisible();
   await page.getByRole('button', { name: 'Registrar check-in' }).click();
   await expect(page.locator('.form-message--error')).toContainText(
     'demasiado lejos del punto de interés',
   );
 });
 
-test('ruta completada muestra cierre con insignia y fecha', async ({
+test('catálogo muestra lugares y las URL heredadas de rutas vuelven al catálogo', async ({
   page,
-  request,
 }) => {
-  const { slug, cathedral, ventanas, plaza } = await configurarEntorno(request);
-  const usuario = await crearUsuario(request);
-
-  await login(page, usuario.email, usuario.password);
-  await visitarParada(page, cathedral);
-  await visitarParada(page, ventanas);
-  await visitarParada(page, plaza);
-
-  await page.goto(`/aventuras/${slug}/progreso`);
-  await expect(page.locator('.progreso-tarjeta__valor').first()).toContainText(
-    '100%',
-  );
+  await page.goto('/lugares');
+  await expect(page.locator('h1')).toContainText('Explora los lugares de Coro');
   await expect(
-    page.locator('h2', { hasText: '¡Ruta completada!' }),
+    page.getByRole('heading', { name: 'Catedral de Coro', exact: true }),
   ).toBeVisible();
-  await expect(page.locator('.progreso-insignia__nombre')).toContainText(
-    'Explorador de Coro',
-  );
-  await expect(page.locator('.progreso-cierre__fecha')).toBeVisible();
+
+  await page.goto('/aventuras/una-ruta-antigua/progreso');
+  await expect(page).toHaveURL(/\/lugares$/);
+  await expect(page.locator('h1')).toContainText('Explora los lugares de Coro');
 });

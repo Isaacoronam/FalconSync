@@ -1,4 +1,5 @@
 import type { Adventure } from './adventure.model';
+import type { UserAchievement } from './achievement.model';
 
 export interface Profile {
   id: string;
@@ -23,6 +24,9 @@ export interface ProfileStats {
   completedAdventures: number;
   totalStops: number;
   visitedStops: number;
+  totalAchievements: number;
+  locationAchievements: number;
+  adventureAchievements: number;
 }
 
 export interface ProfileAdventure extends Adventure {
@@ -39,6 +43,7 @@ export interface ProfileCheckIn {
   distanceMeters: number;
   photoAvailable: boolean;
   photoUrl: string | null;
+  photoUpdatedAt: string | null;
   location: {
     id: string;
     title: string;
@@ -48,13 +53,26 @@ export interface ProfileCheckIn {
   };
 }
 
+export interface GalleryMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface ProfileResponse {
   data: {
     profile: Profile;
     stats: ProfileStats;
     adventures: ProfileAdventure[];
+    achievements: UserAchievement[];
     recentCheckIns: ProfileCheckIn[];
   };
+}
+
+export interface GalleryResponse {
+  data: ProfileCheckIn[];
+  meta: GalleryMeta;
 }
 
 export interface ProfileUpdatePayload {
@@ -66,5 +84,11 @@ export interface ProfileUpdatePayload {
 export interface ProfileUpdateResponse {
   data: {
     profile: Profile;
+  };
+}
+
+export interface CheckInPhotoResponse {
+  data: {
+    checkIn: ProfileCheckIn;
   };
 }

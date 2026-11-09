@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import CheckIn from '../models/CheckIn.js';
 import Location from '../models/Location.js';
+import { reconcileAchievementsForLocation } from '../services/achievementService.js';
 import { verifyCheckInToken } from '../services/checkInTokenService.js';
 import { storageAdapter } from '../services/storage/index.js';
 import { HttpError } from '../utils/HttpError.js';
@@ -47,6 +48,30 @@ function readCheckInBody(body) {
     latitude,
     longitude,
   };
+}
+
+function serializeAwards(awards) {
+  return awards.map((award) =>
+    typeof award.toJSON === 'function' ? award.toJSON() : award,
+  );
+}
+
+async function awardAchievementsSafely({ userId, location, checkInId }) {
+  try {
+    return await reconcileAchievementsForLocation({
+      userId,
+      location,
+      checkInId,
+    });
+  } catch (error) {
+    // La visita ya quedó registrada. La reconciliación y el backfill pueden
+    // reparar la insignia sin revertir el check-in.
+    console.error(
+      '[FalconSync] No se pudieron otorgar las insignias del check-in:',
+      error,
+    );
+    return [];
+  }
 }
 
 export async function createCheckIn(request, response) {
@@ -108,12 +133,20 @@ export async function createCheckIn(request, response) {
     );
   }
 
-  const existingCheckIn = await CheckIn.exists({
+  const existingCheckIn = await CheckIn.findOne({
     user: request.user._id,
     location: location._id,
-  });
+  }).select('_id');
 
   if (existingCheckIn) {
+    // Un reintento del cliente no debe dejar la insignia pendiente para
+    // siempre si el primer otorgamiento falló.
+    await awardAchievementsSafely({
+      userId: request.user._id,
+      location,
+      checkInId: existingCheckIn._id,
+    });
+
     throw new HttpError(
       409,
       'CHECK_IN_ALREADY_EXISTS',
@@ -133,11 +166,14 @@ export async function createCheckIn(request, response) {
       filename: saved.filename,
       mimeType: saved.mimeType,
       size: saved.size,
+      updatedAt: new Date(),
     };
   }
 
+  let checkIn;
+
   try {
-    const checkIn = await CheckIn.create({
+    checkIn = await CheckIn.create({
       user: request.user._id,
       location: location._id,
       coordinates: {
@@ -148,8 +184,6 @@ export async function createCheckIn(request, response) {
       tokenVersion: location.checkInTokenVersion ?? 0,
       photo,
     });
-
-    response.status(201).json({ data: checkIn });
   } catch (error) {
     if (photo) {
       await storageAdapter
@@ -158,6 +192,19 @@ export async function createCheckIn(request, response) {
     }
 
     if (error?.code === 11000) {
+      const duplicate = await CheckIn.findOne({
+        user: request.user._id,
+        location: location._id,
+      }).select('_id');
+
+      if (duplicate) {
+        await awardAchievementsSafely({
+          userId: request.user._id,
+          location,
+          checkInId: duplicate._id,
+        });
+      }
+
       throw new HttpError(
         409,
         'CHECK_IN_ALREADY_EXISTS',
@@ -167,4 +214,15 @@ export async function createCheckIn(request, response) {
 
     throw error;
   }
+
+  const achievementsAwarded = await awardAchievementsSafely({
+    userId: request.user._id,
+    location,
+    checkInId: checkIn._id,
+  });
+
+  response.status(201).json({
+    data: checkIn,
+    achievementsAwarded: serializeAwards(achievementsAwarded),
+  });
 }

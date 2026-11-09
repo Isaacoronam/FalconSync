@@ -1,11 +1,16 @@
-# Puntos de interés (POI) — catálogo y verificación
+# Puntos de interés (POI) — catálogo editorial, visitas y verificación
 
-Fecha de verificación: 2026-11-07.
+Fecha de verificación: 2026-11-08.
 
-Este documento describe el modelo de puntos de interés, las reglas de publicación, los
-filtros públicos y administrativos, el catálogo cargado por el seed y el estado de las
-imágenes. No atribuye el diseño a una unidad académica: las transcripciones de las
-Unidades 2 a 7 todavía no están incorporadas en `.opencode/knowledge/`.
+Este documento describe las fichas turísticas de cada punto de interés (POI), las reglas
+de publicación, los filtros públicos y administrativos, el catálogo cargado por el seed y
+el estado de las imágenes. La experiencia pública se organiza por lugares, no por rutas:
+`/lugares` muestra el catálogo y `/lugares/:slug` presenta la historia y los detalles de
+interés. El QR registra la visita al POI y otorga su insignia; la información editorial y
+sus fuentes deben revisarse antes de publicar.
+
+No atribuye el diseño a una unidad académica: las transcripciones de las Unidades 2 a 7
+todavía no están incorporadas en `.opencode/knowledge/`.
 
 La fuente de verdad del catálogo es
 [`falcon-sync-backend/scripts/seedLocations.js`](../falcon-sync-backend/scripts/seedLocations.js).
@@ -20,12 +25,40 @@ El modelo `Location` incorpora, además de los campos del CRUD administrativo:
 | `address` | texto, hasta 240 caracteres | Dirección o referencia legible. |
 | `circuits` | lista de circuitos | Agrupación temática para filtros y recorridos. |
 | `tags` | lista de etiquetas | Características del lugar para filtros y fichas. |
+| `historicalStory` | texto, hasta 10000 caracteres | Historia editorial del lugar. |
+| `interestingFacts` | hasta 8 textos de 280 caracteres | Datos breves de interés para turistas. |
+| `visitorInfo` | texto, hasta 2000 caracteres | Información práctica para planificar la visita. |
+| `contentSources` | hasta 10 URL http(s) | Referencias de la historia y el contenido editorial. |
 | `imageCredits` | lista de créditos | Autor, licencia, enlace a la licencia y origen de cada imagen. |
 | `coordinateSource` | texto, hasta 500 caracteres | Fuente cartográfica o documental de las coordenadas. |
 | `coordinateVerifiedAt` | fecha o `null` | Fecha de verificación de coordenadas. Obligatoria para publicar. |
 | `verificationLevel` | `unverified`, `single-source`, `verified` | Nivel de confianza de la ubicación. |
 | `isProvisional` | booleano | Marca ubicaciones o datos pendientes de verificación. |
 | `isCatalogVisible` | booleano | Control editorial de inclusión en el catálogo y el mapa públicos. |
+
+El formulario administrativo edita la historia, los datos de interés, la información para
+visitantes y las fuentes editoriales por separado de la fuente cartográfica. Las fuentes
+editoriales no se inventan ni se deducen de `sourceUrl` o `coordinateSource`. Los campos
+son opcionales durante esta transición para no invalidar POI ya publicados; una ficha sin
+`historicalStory` muestra explícitamente que la reseña ampliada está pendiente de fuentes
+verificadas.
+
+### Criterio editorial del catálogo inicial
+
+Las reseñas ampliadas del catálogo se incorporan al seed y se sincronizan con la base
+existente mediante `npm run seed:editorial`, un comando que solo llena los cuatro campos
+editoriales y se aborta si encuentra contenido previo; no elimina POI ni modifica otros
+campos. Se usó la ficha oficial de UNESCO para el contexto urbano de Coro y La Vela; esta
+fuente describe sus técnicas constructivas y advierte que la Catedral y la Plaza Bolívar,
+aunque son atributos relevantes, no están dentro de los límites actuales del bien inscrito.
+La ficha de los Médanos usa una referencia secundaria para contexto general del parque.
+
+El material recibido para varios POI contiene detalles que no se pudieron corroborar en una
+fuente patrimonial o institucional accesible (por ejemplo, fechas exactas, autorías,
+dimensiones, procedencia de piezas, colecciones y servicios actuales). Esos datos no se
+presentan como hechos confirmados: se excluyeron o quedaron señalados en la reseña para
+verificación posterior. Los horarios, tarifas, actividades y accesos deben confirmarse con
+cada lugar antes de la visita.
 
 ### Categorías
 
@@ -61,7 +94,7 @@ tienen nivel `single-source`; el Parque Nacional Médanos de Coro queda como `un
 porque su coordenada es aproximada. La verificación en campo sigue pendiente para todo el
 catálogo.
 
-La lista pública normal, el detalle, la búsqueda cercana y las aventuras aplican:
+La lista pública, el detalle, la búsqueda cercana y la API heredada de aventuras aplican:
 
 ```js
 {
@@ -236,7 +269,7 @@ el sitio.
 
 - El mapa consume `/api/locations?includeProvisional=true` y recibe 23 POI publicados.
 - El mapa permite filtrar únicamente por categoría. Ya no hay marcadores provisionales.
-- Los 23 POI permiten detalle, búsqueda cercana, aventuras y check-in.
+- Los 23 POI permiten detalle, búsqueda cercana y check-in por QR.
 - Los marcadores se agrupan en píxeles con un radio de 52 px y se recalculan al mover el
   mapa. No se añadió una dependencia externa de clustering.
 - Al seleccionar una ficha de la lista, el POI elegido se separa del clúster, se centra y
@@ -248,14 +281,16 @@ el sitio.
 
 ## Verificación ejecutada en la sesión actual
 
-| Comprobación | Comando | Resultado real (2026-11-07) |
+| Comprobación | Comando | Resultado real (2026-11-08) |
 |---|---|---|
-| Pruebas backend | `npm run test:backend` | 67/67 aprobadas |
-| Pruebas frontend | `npm run test:frontend` | 29/29 aprobadas |
-| Build de producción | `npm run build` | Correcto, sin warnings |
-| E2E Edge local | `npm run e2e` | 15/15 aprobadas |
-| E2E Chromium (CI) | `$env:CI=1; npm run e2e` | 15/15 aprobadas |
+| Pruebas backend | `npm run test:backend` | 75/75 aprobadas |
+| Pruebas frontend | `npm run test:frontend` | 51/51 aprobadas |
+| Build de producción | `npm run build` | Correcto, sin advertencias |
+| E2E Edge local | `npm run e2e` | 16/16 aprobadas |
+| E2E Chromium (CI) | `$env:CI=1; npm run e2e` | Pendiente de repetir tras los cambios de insignias y galería |
 | Idempotencia del seed | `test/seedLocations.test.js` | 23 insertados la primera vez, 0 la segunda; verificación correcta |
+| Contenido editorial del seed | `node --test test/seedLocations.test.js` | 4/4 aprobadas; las 23 fichas incluyen historia, datos de interés e información para visitantes |
+| Sincronización editorial | `npm run seed:editorial` | Actualiza solo los campos editoriales; aborta si ya hay contenido para no sobrescribirlo |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada del Parque Nacional sincronizada; 23 POI verificados sin desviaciones |
 | Verificación del seed | `npm run seed:verify` | 23 POI sin desviaciones; Gelatería El Sol dentro del catálogo |
 

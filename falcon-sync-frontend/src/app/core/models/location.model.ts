@@ -71,6 +71,10 @@ export interface FalconLocation {
   circuits: LocationCircuit[];
   tags: LocationTag[];
   historicalPeriod?: string;
+  historicalStory?: string;
+  interestingFacts?: string[];
+  visitorInfo?: string;
+  contentSources?: string[];
   location: {
     type: 'Point';
     coordinates: [number, number];
@@ -85,6 +89,7 @@ export interface FalconLocation {
   verificationLevel: LocationVerificationLevel;
   isProvisional: boolean;
   isCatalogVisible?: boolean;
+  checkInTokenConfigured?: boolean;
   status?: LocationStatus;
   deletedAt?: string | null;
   createdAt: string;

@@ -61,12 +61,14 @@ npm run e2e
 
 Públicas:
 
-- `/aventuras`: catálogo de aventuras publicadas.
-- `/aventuras/:slug`: detalle de aventura con paradas ordenadas.
+- `/aventuras`: catálogo de recorridos publicados.
+- `/aventuras/:slug`: detalle de recorrido con paradas ordenadas.
 - `/aventuras/:slug/progreso`: progreso del usuario autenticado.
-- `/checkin/:locationId?token=...`: check-in con geolocalización y foto opcional.
-- `/perfil`: perfil privado del usuario autenticado, con avatar, estadísticas, Chivito y
-  últimos check-in.
+- `/checkin`: escáner QR con cámara (`BarcodeDetector`) y entrada manual; el token se guarda
+  solo en memoria y no se añade a la URL.
+- `/checkin/:locationId`: check-in con geolocalización y foto posterior opcional.
+- `/perfil`: perfil privado del usuario autenticado, con avatar, estadísticas, insignias,
+  Chivito y galería paginada de visitas.
 
 La tabla de POI se convierte en tarjetas por debajo de 700 px. Las imágenes públicas de POI se
 suben al backend y se sirven desde `/api/uploads/...`. Los avatares y las fotos de check-in se

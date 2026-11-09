@@ -86,7 +86,31 @@ async function tokenQrDeCatedral(
   };
 }
 
-test('perfil privado: edita datos, sube avatar y registra check-in con foto', async ({
+async function abrirCheckIn(
+  page: import('@playwright/test').Page,
+  ubicacion: { id: string; token: string; latitude: number; longitude: number },
+): Promise<void> {
+  await page.context().setGeolocation({
+    latitude: ubicacion.latitude,
+    longitude: ubicacion.longitude,
+    accuracy: 10,
+  });
+
+  await page.goto('/checkin');
+  await page.locator('#escaner-contenido').fill(
+    JSON.stringify({
+      type: 'falconsync-check-in',
+      locationId: ubicacion.id,
+      token: ubicacion.token,
+    }),
+  );
+  await page.getByRole('button', { name: 'Abrir check-in' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/checkin/${ubicacion.id}$`));
+  await expect(page.locator('.checkin__token')).toContainText('QR verificado');
+}
+
+test('perfil privado: edita datos, sube avatar, registra check-in con foto e insignia', async ({
   page,
   request,
 }) => {
@@ -129,14 +153,8 @@ test('perfil privado: edita datos, sube avatar y registra check-in con foto', as
   ).toBeVisible();
 
   const catedral = await tokenQrDeCatedral(request);
-  await page.context().setGeolocation({
-    latitude: catedral.latitude,
-    longitude: catedral.longitude,
-    accuracy: 10,
-  });
-  await page.goto(
-    `/checkin/${catedral.id}?token=${encodeURIComponent(catedral.token)}`,
-  );
+  await abrirCheckIn(page, catedral);
+
   await page.locator('#checkin-foto').setInputFiles({
     name: 'visita-e2e.png',
     mimeType: 'image/png',
@@ -146,16 +164,65 @@ test('perfil privado: edita datos, sube avatar y registra check-in con foto', as
   await page.getByRole('button', { name: 'Registrar check-in' }).click();
 
   await expect(page.locator('.checkin-exito')).toBeVisible();
-  await expect(page.locator('.form-message--success')).toContainText('con tu foto');
+  await expect(page.locator('.form-message--success').first()).toContainText(
+    'Visita confirmada',
+  );
+  await expect(
+    page.locator('.checkin-logro').filter({ hasText: 'Catedral de Coro' }),
+  ).toBeVisible();
+  await expect(page.locator('.checkin-foto-gestion__estado--ok')).toContainText(
+    'Foto guardada',
+  );
   await expect(page.locator('.checkin-exito__foto')).toBeVisible();
 
   await page.goto('/perfil');
-  await expect(page.locator('.perfil__checkin')).toContainText(
-    'Catedral de Coro',
-  );
-  await expect(page.locator('.perfil__checkin')).toContainText('Con foto');
-  await expect(page.locator('.perfil__checkin-foto img').first()).toBeVisible();
+
+  const visita = page
+    .locator('.perfil__visita')
+    .filter({ hasText: 'Catedral de Coro' });
+  await expect(visita).toBeVisible();
+  await expect(visita.locator('.perfil__foto-boton img')).toBeVisible();
+  await expect(
+    page.locator('.perfil__insignia').filter({ hasText: 'Catedral de Coro' }),
+  ).toBeVisible();
   await expect(
     page.locator('.perfil__stat').filter({ hasText: 'Check-in' }),
   ).toContainText('1');
+  await expect(
+    page.locator('.perfil__stat').filter({ hasText: 'Insignias' }),
+  ).toContainText('1');
+
+  await visita.locator('.perfil__foto-boton').click();
+  const visor = page.getByRole('dialog');
+  await expect(visor).toBeVisible();
+  await expect(visor).toContainText('Foto 1 de 1');
+  await page.keyboard.press('Escape');
+  await expect(visor).toBeHidden();
+
+  await visita.locator('input[type="file"]').setInputFiles({
+    name: 'visita-reemplazo.png',
+    mimeType: 'image/png',
+    buffer: PNG_PIXEL,
+  });
+  await expect(page.locator('.form-message--success')).toContainText(
+    'Foto guardada',
+  );
+  await expect(visita.getByRole('button', { name: 'Cambiar foto' })).toBeVisible();
+
+  await visita.getByRole('button', { name: 'Quitar foto' }).click();
+  await visita.getByRole('button', { name: 'Sí, quitar' }).click();
+  await expect(page.locator('.form-message--success')).toContainText(
+    'Foto eliminada',
+  );
+  await expect(visita.getByRole('button', { name: 'Añadir foto' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Con foto', exact: true }).click();
+  await expect(page.locator('.perfil__vacio')).toContainText(
+    'Todavía no has guardado fotos',
+  );
+
+  await page.getByRole('button', { name: 'Sin foto', exact: true }).click();
+  await expect(
+    page.locator('.perfil__visita').filter({ hasText: 'Catedral de Coro' }),
+  ).toBeVisible();
 });

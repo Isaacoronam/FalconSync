@@ -39,6 +39,28 @@
   text-align: center;
 }
 
+.checkin-chivito {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  max-width: 34rem;
+  margin: 0 auto 1.2rem;
+  text-align: left;
+}
+
+.checkin-chivito__mascot {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px solid #d6bd89;
+  border-radius: 50%;
+  background: #fff7df;
+  font-size: 2.7rem;
+}
+
 .checkin-exito h2 {
   margin: 0 0 0.5rem;
   font-family: var(--font-display);
@@ -47,9 +69,147 @@
   color: var(--ink);
 }
 
-.checkin-exito p {
+.checkin-exito > p {
   margin: 0 0 1.2rem;
   color: var(--ink-soft);
+}
+
+.checkin-chivito p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.checkin-exito__nota {
+  margin: 0 0 1.2rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: #fbf6ec;
+  font-size: 0.85rem;
+}
+
+.checkin-logros {
+  margin: 0 0 1.2rem;
+  text-align: left;
+}
+
+.checkin-logros h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.checkin-logros__lista {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkin-logro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdf8;
+}
+
+.checkin-logro__icono {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #3b2a12;
+  font-size: 1.15rem;
+}
+
+.checkin-logro__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.checkin-logro__texto strong {
+  font-size: 0.92rem;
+}
+
+.checkin-logro__tipo {
+  color: var(--terracotta-dark);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.checkin-logro__descripcion {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.checkin-foto-gestion {
+  margin: 0 0 1.2rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdf8;
+  text-align: left;
+}
+
+.checkin-foto-gestion h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+}
+
+.checkin-exito__foto {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  max-height: 16rem;
+  margin: 0 auto 0.8rem;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.checkin-foto-gestion__estado {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.checkin-foto-gestion__estado--ok {
+  color: #395c33;
+  font-weight: 700;
+}
+
+.checkin-foto-gestion__nota {
+  margin: 0.4rem 0 0.7rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.checkin-foto-gestion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.checkin-exito__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
 }
 
 .checkin-form {
@@ -58,13 +218,40 @@
   gap: 1rem;
 }
 
-.checkin__token-precargado {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--muted);
+.checkin__token {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
   background: #f3eadb;
-  padding: 0.5rem 0.8rem;
-  border-radius: 10px;
+}
+
+.checkin__token p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.checkin__token--falta {
+  flex-direction: column;
+  align-items: flex-start;
+  background: #fae9e2;
+}
+
+.checkin__token-cambiar {
+  flex-shrink: 0;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffdf8;
+  color: var(--terracotta-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .checkin__distancia {
@@ -137,16 +324,6 @@
 .checkin__foto-quitar:disabled {
   opacity: 0.62;
   cursor: wait;
-}
-
-.checkin-exito__foto {
-  display: block;
-  width: 100%;
-  max-width: 22rem;
-  max-height: 16rem;
-  margin: 0 auto 1rem;
-  object-fit: cover;
-  border-radius: 12px;
 }
 
 .checkin__aviso {

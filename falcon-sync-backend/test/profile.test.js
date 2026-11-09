@@ -247,7 +247,10 @@ describe('Perfil privado y fotos de check-in', () => {
     const recent = profileResponse.body.data.recentCheckIns[0];
     assert.equal(recent.photoAvailable, true);
     assert.equal(recent.location.slug, 'poi-de-perfil');
-    assert.match(recent.photoUrl, /^\/api\/profile\/check-ins\/[a-f0-9]+\/photo$/);
+    assert.match(
+      recent.photoUrl,
+      /^\/api\/profile\/check-ins\/[a-f0-9]+\/photo\?v=\d+$/,
+    );
 
     const photo = await asUser(owner.token, request(app).get(recent.photoUrl));
     assert.equal(photo.status, 200);
@@ -264,7 +267,7 @@ describe('Perfil privado y fotos de check-in', () => {
     assert.equal(anonymousPhoto.status, 401);
   });
 
-  it('calcula el progreso de aventuras desde los check-in globales', async () => {
+  it('conserva el resumen de progreso legado sin generar insignias de recorrido', async () => {
     const { token } = await registerUser('aventura');
 
     const adventure = await Adventure.create({
@@ -302,7 +305,7 @@ describe('Perfil privado y fotos de check-in', () => {
     assert.equal(stats.totalCheckIns, 1);
     assert.equal(stats.totalAdventures, 1);
     assert.equal(stats.startedAdventures, 1);
-    assert.equal(stats.completedAdventures, 1);
+    assert.equal(stats.completedAdventures, 0);
     assert.equal(stats.totalStops, 1);
     assert.equal(stats.visitedStops, 1);
 

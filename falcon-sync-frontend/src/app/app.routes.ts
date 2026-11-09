@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guard';
+import { checkInTokenGuard } from './core/guards/check-in-token.guard';
 
 export const routes: Routes = [
   {
@@ -9,33 +10,47 @@ export const routes: Routes = [
       import('./features/map/coro-map.component').then((module) => module.CoroMapComponent),
   },
   {
-    path: 'aventuras',
-    title: 'Catálogo de aventuras | FALCONSYNC',
+    path: 'lugares',
+    title: 'Explora los lugares | FALCONSYNC',
     loadComponent: () =>
-      import('./features/aventuras/aventura-list/aventura-list.component').then(
-        (module) => module.AventuraListComponent,
+      import('./features/lugares/lugar-list/lugar-list.component').then(
+        (module) => module.LugarListComponent,
       ),
   },
   {
-    path: 'aventuras/:slug',
-    title: 'Aventura | FALCONSYNC',
+    path: 'lugares/:slug',
+    title: 'Historia del lugar | FALCONSYNC',
     loadComponent: () =>
-      import('./features/aventuras/aventura-detail/aventura-detail.component').then(
-        (module) => module.AventuraDetailComponent,
+      import('./features/lugares/lugar-detail/lugar-detail.component').then(
+        (module) => module.LugarDetailComponent,
       ),
   },
   {
     path: 'aventuras/:slug/progreso',
-    canActivate: [authGuard],
-    title: 'Progreso de la aventura | FALCONSYNC',
+    redirectTo: '/lugares',
+    pathMatch: 'full',
+  },
+  {
+    path: 'aventuras/:slug',
+    redirectTo: '/lugares',
+    pathMatch: 'full',
+  },
+  {
+    path: 'aventuras',
+    redirectTo: '/lugares',
+    pathMatch: 'full',
+  },
+  {
+    path: 'checkin',
+    title: 'Escanear QR | FALCONSYNC',
     loadComponent: () =>
       import(
-        './features/aventuras/aventura-progreso/aventura-progreso.component'
-      ).then((module) => module.AventuraProgresoComponent),
+        './features/aventuras/checkin-escaner/checkin-escaner.component'
+      ).then((module) => module.CheckinEscanerComponent),
   },
   {
     path: 'checkin/:locationId',
-    canActivate: [authGuard],
+    canActivate: [checkInTokenGuard, authGuard],
     title: 'Check-in | FALCONSYNC',
     loadComponent: () =>
       import('./features/aventuras/checkin/checkin.component').then(
@@ -126,35 +141,23 @@ export const routes: Routes = [
       },
       {
         path: 'aventuras',
-        title: 'Aventuras | FALCONSYNC',
-        loadComponent: () =>
-          import(
-            './features/admin/aventuras/admin-aventura-list/admin-aventura-list.component'
-          ).then((module) => module.AdminAventuraListComponent),
+        redirectTo: 'poi',
+        pathMatch: 'full',
       },
       {
         path: 'aventuras/nuevo',
-        title: 'Nueva aventura | FALCONSYNC',
-        loadComponent: () =>
-          import(
-            './features/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
-          ).then((module) => module.AdminAventuraFormComponent),
+        redirectTo: 'poi',
+        pathMatch: 'full',
       },
       {
         path: 'aventuras/:id/editar',
-        title: 'Editar aventura | FALCONSYNC',
-        loadComponent: () =>
-          import(
-            './features/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
-          ).then((module) => module.AdminAventuraFormComponent),
+        redirectTo: 'poi',
+        pathMatch: 'full',
       },
       {
         path: 'aventuras/:id/paradas',
-        title: 'Paradas de la aventura | FALCONSYNC',
-        loadComponent: () =>
-          import(
-            './features/admin/aventuras/admin-aventura-stops/admin-aventura-stops.component'
-          ).then((module) => module.AdminAventuraStopsComponent),
+        redirectTo: 'poi',
+        pathMatch: 'full',
       },
       {
         path: 'locations/:id/qr',

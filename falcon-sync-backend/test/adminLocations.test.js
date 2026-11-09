@@ -193,6 +193,53 @@ describe('Administración de POI', () => {
     assert.equal(audit.body.data[0].entityId, location.id);
   });
 
+  it('guarda y publica contenido editorial y valida sus fuentes', async () => {
+    const location = await createLocation({
+      historicalStory: 'Relato histórico con referencias documentadas.',
+      interestingFacts: ['Primer dato de interés.', 'Segundo dato de interés.'],
+      visitorInfo: 'El acceso está sujeto al horario del recinto.',
+      contentSources: ['https://example.org/historia-del-lugar'],
+    });
+
+    const publicDetail = await request(app).get(
+      `/api/locations/${location.slug}`,
+    );
+
+    assert.equal(publicDetail.status, 200);
+    assert.equal(
+      publicDetail.body.data.historicalStory,
+      'Relato histórico con referencias documentadas.',
+    );
+    assert.deepEqual(publicDetail.body.data.interestingFacts, [
+      'Primer dato de interés.',
+      'Segundo dato de interés.',
+    ]);
+    assert.equal(
+      publicDetail.body.data.visitorInfo,
+      'El acceso está sujeto al horario del recinto.',
+    );
+    assert.deepEqual(publicDetail.body.data.contentSources, [
+      'https://example.org/historia-del-lugar',
+    ]);
+
+    const invalid = await asAdmin(
+      request(app).post('/api/admin/locations'),
+    ).send(
+      poiPayload({
+        title: 'Fuentes Inválidas',
+        contentSources: ['javascript:alert(1)'],
+      }),
+    );
+
+    assert.equal(invalid.status, 400);
+    assert.equal(invalid.body.error.code, 'VALIDATION_ERROR');
+    assert.ok(
+      invalid.body.error.details.some((detail) =>
+        detail.includes('URL http o https'),
+      ),
+    );
+  });
+
   it('permite excluir un POI del catálogo público sin archivarlo', async () => {
     const hidden = await createLocation({
       title: 'Comercio Interno',

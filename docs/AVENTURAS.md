@@ -1,23 +1,33 @@
-# CoroAventura — aventuras, QR y check-in (Corte 3, backend)
+# CoroAventura — infraestructura heredada de recorridos, QR e insignias
 
-Fecha de verificación: 2026-11-06.
+Fecha de verificación: 2026-11-08.
 
-Este documento describe el backend de aventuras patrimoniales de FalconSync. No atribuye el
-diseño a una unidad académica: las transcripciones de las Unidades 2 a 7 todavía no están
-incorporadas en `.opencode/knowledge/`. Las decisiones se justifican por el estado real del
-repositorio y por buenas prácticas de ingeniería.
+Este documento conserva la referencia técnica del backend de recorridos que existía antes
+del cambio de producto. Los datos y las APIs se mantienen temporalmente por compatibilidad,
+pero las rutas, el progreso y las paradas ya no forman parte de la experiencia turística.
+La navegación pública `/aventuras` redirige al catálogo de lugares; la administración de
+rutas también se retiró de la interfaz. La experiencia vigente se describe en
+[`POI.md`](./POI.md). QR, check-in global por POI e insignias por lugar siguen activos.
+Las secciones siguientes documentan el comportamiento histórico de las APIs; actualmente
+los check-ins y el backfill solo otorgan insignias por POI, y los logros antiguos de rutas se
+conservan sin mostrarse en el perfil.
+
+No atribuye el diseño a una unidad académica: las transcripciones de las Unidades 2 a 7
+todavía no están incorporadas en `.opencode/knowledge/`. Las decisiones se justifican por
+el estado real del repositorio y por buenas prácticas de ingeniería.
 
 ## Alcance implementado
 
-- Modelos `Adventure`, `AdventureStop` y `CheckIn`.
+- Modelos `Adventure`, `AdventureStop`, `CheckIn` y `UserAchievement`.
 - Extensión de `Location` con hash de token QR, versión, fecha de rotación y radio de
   check-in.
 - CRUD administrativo de aventuras, publicación, archivo y restauración.
 - Gestión y reordenamiento de paradas.
 - Rotación de token QR por POI con salida SVG o PNG.
 - Check-in global por POI con validación de token y geocerca en servidor.
-- Foto opcional por check-in, almacenada de forma privada.
-- Progreso de aventura con paradas visitadas, siguiente parada y cierre.
+- Insignias persistentes por parada y por recorrido, idempotentes y con backfill.
+- Foto opcional por check-in, almacenada de forma privada y gestionable después del check-in.
+- Progreso de aventura con paradas visitadas, siguiente parada, cierre e insignia persistida.
 - Auditoría de cambios de aventura y rotaciones de QR.
 - Bloqueo de archivado de un POI que es parada activa de una aventura publicada.
 - Seed idempotente de la aventura «Ruta del Casco Histórico de Coro» con cinco paradas reales.
@@ -25,7 +35,9 @@ repositorio y por buenas prácticas de ingeniería.
 Desde el 2026-11-07 los 23 POI del catálogo están publicados y habilitados para check-in.
 La publicación se hizo con revisión documental; la verificación en campo sigue pendiente.
 
-El frontend de aventuras se implementó en el Corte 4 (`docs/COROAVENTURA-FRONTEND.md`). El escáner de QR y la moderación siguen pendientes.
+El frontend de aventuras se implementó en el Corte 4 (`docs/COROAVENTURA-FRONTEND.md`),
+incluido el escáner QR con cámara y entrada manual. La moderación de contenido sigue
+pendiente.
 
 ## Decisiones de diseño
 
@@ -129,17 +141,43 @@ contiene tokens. El manifiesto solo registra slug, título, versión y fecha de 
 - Para liberar el POI hay que retirar la parada o archivar la aventura.
 - Los POI archivados no pueden usarse como parada.
 
-### 6. Foto opcional y privacidad del check-in
+### 6. Foto opcional, dos fases y privacidad del check-in
 
-- `POST /api/check-ins` acepta JSON o `multipart/form-data`; el archivo opcional usa el
-  campo `image`.
+- El check-in se registra primero con `POST /api/check-ins` en JSON. La foto se sube
+  después con `PUT /api/profile/check-ins/:checkInId/photo`.
+- Un fallo al subir la foto no revierte la visita ni las insignias; el cliente puede
+  reintentar o descartar la imagen.
+- `POST /api/check-ins` conserva temporalmente la compatibilidad con
+  `multipart/form-data` y el campo `image` para clientes anteriores.
 - La foto se valida por MIME y firma binaria (JPEG, PNG o WebP) y se limita a 5 MB.
 - Se guarda en `uploads-private/check-ins/`, fuera del prefijo público `/api/uploads`.
-- `CheckIn.photo` guarda solo `{ filename, mimeType, size }`; no hay URL pública.
+- `CheckIn.photo` guarda `{ filename, mimeType, size, updatedAt, visibility, moderationStatus }`;
+  no hay URL pública. Los dos últimos campos quedan reservados para moderación.
 - La foto se sirve mediante `GET /api/profile/check-ins/:checkInId/photo` y solo al dueño
   del check-in. Otro usuario recibe `404`.
-- Si la creación del check-in falla después de escribir el archivo, la foto se elimina.
+- `PUT` reemplaza la foto y elimina el archivo anterior; `DELETE` elimina la foto sin borrar
+  el check-in.
+- Si la creación del check-in falla después de escribir el archivo en el modo multipart, la
+  foto se elimina.
 - El avatar y el resto del perfil privado se documentan en [`PERFIL.md`](./PERFIL.md).
+
+### 7. Insignias persistentes e idempotentes
+
+- `UserAchievement` guarda una instantánea de la insignia y el origen que la otorgó.
+- El índice único `(user, type, sourceId)` impide duplicados. El otorgamiento usa
+  `$setOnInsert` y trata el error `11000` como «ya otorgada».
+- Cada check-in otorga la insignia del POI.
+- Completar todas las paradas activas de un recorrido publicado otorga la insignia del
+  recorrido. Si la aventura no define `badge`, se usa un nombre genérico derivado del título.
+- Una aventura archivada no otorga insignias nuevas; las ya obtenidas se conservan y se
+  marcan con `sourceActive: false` al listarlas.
+- El progreso de una aventura incluye `achievement` con la insignia persistida del recorrido
+  o `null` si todavía no se otorgó.
+- Si un check-in duplicado llega después de un fallo previo de otorgamiento, el controlador
+  reconcilia las insignias del check-in existente antes de responder `409`.
+- `npm run backfill:achievements` reconstruye las insignias desde los check-in y el progreso.
+  Es una simulación por defecto; `--apply` escribe, `--user=` limita a una cuenta y
+  `--allow-production` es obligatorio en producción.
 
 ## Modelos
 
@@ -179,9 +217,27 @@ contiene tokens. El manifiesto solo registra slug, título, versión y fecha de 
 | `coordinates` | `Point` GeoJSON con la ubicación enviada al hacer check-in. |
 | `distanceMeters` | Distancia Haversine calculada por el servidor. |
 | `tokenVersion` | Versión del token QR usada en el check-in. |
-| `photo` | Objeto opcional `{ filename, mimeType, size }`; el archivo vive en `uploads-private/check-ins/`. |
+| `photo` | Objeto opcional `{ filename, mimeType, size, updatedAt, visibility, moderationStatus }`; el archivo vive en `uploads-private/check-ins/`. |
 
 Índice único: `(user, location)`. No se guarda el token en claro ni su hash.
+
+### UserAchievement
+
+| Campo | Tipo / regla |
+|---|---|
+| `user` | Referencia al usuario que obtuvo la insignia. |
+| `type` | `location` o `adventure`. |
+| `sourceId` | Referencia al POI o al recorrido de origen. |
+| `sourceSlug` | Slug del origen; permite enlazar el progreso sin depender del estado actual. |
+| `name` | Nombre visible de la insignia. |
+| `description` | Descripción breve. |
+| `image` | Imagen opcional de la insignia del recorrido. |
+| `category` | Categoría del POI en las insignias de lugar; `null` en las de recorrido. |
+| `awardedAt` | Fecha de otorgamiento. |
+| `sourceCheckIn` | Check-in que disparó el otorgamiento; puede ser `null` en un backfill. |
+
+Índice único: `(user, type, sourceId)`. La insignia es una instantánea: si el POI o el
+recorrido se archivan, el nombre, la descripción y la fecha se conservan.
 
 ### Cambios en Location
 
@@ -208,9 +264,12 @@ pero nunca el hash ni el token.
 
 | Método | Ruta | Resultado |
 |---|---|---|
-| `GET` | `/api/adventures/:slug/progress` | Progreso del usuario autenticado. |
-| `POST` | `/api/check-ins` | Registra un check-in global por POI; admite JSON o `multipart/form-data` con foto opcional. |
+| `GET` | `/api/adventures/:slug/progress` | Progreso del usuario autenticado, con la insignia persistida del recorrido. |
+| `POST` | `/api/check-ins` | Registra un check-in global por POI en JSON; conserva compatibilidad multipart. Devuelve `achievementsAwarded`. |
+| `GET` | `/api/profile/check-ins` | Galería paginada de visitas del usuario. |
 | `GET` | `/api/profile/check-ins/:checkInId/photo` | Devuelve la foto privada del check-in al dueño. |
+| `PUT` | `/api/profile/check-ins/:checkInId/photo` | Añade o reemplaza la foto de un check-in propio. |
+| `DELETE` | `/api/profile/check-ins/:checkInId/photo` | Elimina la foto sin borrar la visita ni las insignias. |
 
 Cuerpo JSON de check-in:
 
@@ -223,9 +282,11 @@ Cuerpo JSON de check-in:
 }
 ```
 
-Para adjuntar una foto se envía `multipart/form-data` con los mismos campos de texto más
-`image` (JPEG, PNG o WebP, máximo 5 MB). El campo es opcional. La foto se guarda en
-`uploads-private/check-ins/` y solo se sirve al dueño mediante el endpoint de perfil.
+El frontend actual usa este cuerpo JSON y sube la foto después con
+`PUT /api/profile/check-ins/:checkInId/photo` (`multipart/form-data`, campo `image`). Si se
+necesita compatibilidad con clientes anteriores, `POST /api/check-ins` también acepta
+`multipart/form-data` con los mismos campos de texto más `image` opcional. La foto se guarda
+en `uploads-private/check-ins/` y solo se sirve al dueño.
 
 Respuesta `201`:
 
@@ -241,17 +302,29 @@ Respuesta `201`:
     },
     "distanceMeters": 0,
     "tokenVersion": 1,
-    "photo": {
-      "filename": "1762560000000-uuid.png",
-      "mimeType": "image/png",
-      "size": 70
-    },
+    "photo": null,
     "createdAt": "2026-11-05T12:00:00.000Z"
-  }
+  },
+  "achievementsAwarded": [
+    {
+      "id": "...",
+      "type": "location",
+      "sourceId": "...",
+      "sourceSlug": "catedral-de-coro",
+      "name": "Catedral de Coro",
+      "description": "Sello de visita al patrimonio de Santa Ana de Coro.",
+      "image": null,
+      "category": "religious",
+      "awardedAt": "2026-11-08T10:00:00.000Z",
+      "sourceCheckIn": "..."
+    }
+  ]
 }
 ```
 
-`photo` es `null` cuando el check-in no incluye imagen.
+`achievementsAwarded` contiene solo las insignias nuevas; puede ser un arreglo vacío cuando
+la visita no desbloquea ninguna. Un error al otorgar insignias no revierte el check-in: se
+registra y la respuesta sigue siendo válida.
 
 ### Progreso
 
@@ -278,14 +351,16 @@ Respuesta `201`:
     "percentage": 67,
     "nextStop": { "order": 3, "visited": false, "location": { "...": "..." } },
     "completed": false,
-    "completedAt": null
+    "completedAt": null,
+    "achievement": null
   }
 }
 ```
 
 Solo cuentan las paradas activas: POI existente, publicado y sin archivar. El porcentaje se
 redondea al entero más cercano. Una aventura publicada no puede quedarse sin paradas a través
-del API.
+del API. `achievement` contiene la insignia persistida del recorrido cuando todas las paradas
+activas están visitadas; si aún no se otorgó, es `null`.
 
 ### Seed de aventura
 
@@ -367,6 +442,11 @@ posiciones.
 - La foto de check-in se valida por firma binaria, se limita a 5 MB y se guarda en
   `uploads-private/`, fuera del prefijo público.
 - Las fotos de check-in solo se sirven al dueño; otro usuario recibe `404`.
+- La foto se carga después del check-in; un fallo de imagen no revierte la visita ni las
+  insignias.
+- Las insignias se otorgan con un índice único por usuario y origen; el backfill es
+  idempotente y no duplica registros.
+- El modo `--apply` del backfill exige `--allow-production` cuando `NODE_ENV=production`.
 - Rate limit específico de check-in: 30 intentos por IP cada 15 minutos. Se desactiva en
   `NODE_ENV=test` siguiendo el patrón existente.
 - No se registran tokens ni hashes en logs ni en metadatos de auditoría.
@@ -385,18 +465,19 @@ cd falcon-sync-backend
 npm test
 ```
 
-Resultado real del 2026-11-07:
+Resultado real del 2026-11-08:
 
 | Suite | Pruebas | Resultado |
 |---|---|---|
-| Administración de POI | 12 | Aprobadas |
-| CoroAventura | 18 | Aprobadas |
+| Administración de POI | 13 | Aprobadas |
+| CoroAventura | 17 | Aprobadas |
 | Autenticación | 12 | Aprobadas |
-| API de lugares | 14 | Aprobadas |
+| API de lugares | 15 | Aprobadas |
 | Perfil privado y fotos de check-in | 6 | Aprobadas |
+| Insignias, galería y foto posterior | 6 | Aprobadas |
 | Seed de aventuras | 2 | Aprobadas |
-| Seed de POI | 3 | Aprobadas |
-| **Total** | **67** | **67/67 aprobadas** |
+| Seed de POI | 4 | Aprobadas |
+| **Total** | **75** | **75/75 aprobadas** |
 
 La suite `test/adventures.test.js` cubre:
 
@@ -421,9 +502,15 @@ La suite `test/adventures.test.js` cubre:
 19. Check-in rechazado en un POI provisional aunque tenga token vigente.
 20. POI provisional oculto del API público y rechazado como parada de aventura.
 21. POI excluido del catálogo rechazado como parada y check-in.
-22. Check-in con foto, metadatos persistidos y limpieza ante error.
+22. Check-in con foto en modo multipart, metadatos persistidos y limpieza ante error.
 23. Foto servida solo al dueño; otro usuario recibe 404.
-24. Perfil privado, avatar, estadísticas y seed de aventura (suites `profile.test.js` y
+24. Insignia de lugar otorgada en el check-in y devuelta en `achievementsAwarded`.
+25. Check-in que completa una ruta heredada no genera una insignia de recorrido nueva.
+26. Otorgamiento idempotente y reconciliación de un check-in duplicado.
+27. Insignia conservada con `sourceActive: false` cuando el origen se archiva.
+28. Foto añadida, reemplazada y eliminada después del check-in sin borrar la visita.
+29. Galería paginada y filtro `hasPhoto`.
+30. Perfil privado, avatar, estadísticas y seed de aventura (suites `profile.test.js` y
     `seedAdventures.test.js`).
 
 ## Gate del corte
@@ -436,25 +523,28 @@ La suite `test/adventures.test.js` cubre:
 | Fuera de geocerca rechazado | Cumplido | `400 CHECK_IN_OUTSIDE_GEOFENCE`. |
 | Token inválido rechazado | Cumplido | `400 INVALID_CHECK_IN_TOKEN`, incluido token rotado. |
 | Progreso correcto | Cumplido | Orden libre, siguiente parada, porcentaje y cierre. |
-| Pruebas backend verdes | Cumplido | `npm test`: 67/67. |
-| Foto privada de check-in | Cumplido | `multipart/form-data`, `uploads-private/` y acceso solo al dueño. |
+| Pruebas backend verdes | Cumplido | `npm test`: 75/75. |
+| Foto privada de check-in | Cumplido | Carga posterior con `PUT`, reemplazo/eliminación y acceso solo al dueño. |
+| Insignias persistentes | Cumplido | `UserAchievement`, índice único, backfill y reconciliación. |
 | Documentación | Cumplido | Este documento, `PERFIL.md` y actualización de `FALCONSYNC.md`. |
 
 ## Límites y pendientes
 
-- El frontend de aventuras se completó en el Corte 4; el escáner de QR sigue pendiente.
+- El frontend de aventuras y el escáner QR están implementados en el Corte 4; la verificación
+  física de los QR impresos en campo sigue pendiente.
 - El seed de aventuras cubre una ruta; las demás aventuras se crean por el API administrativo.
 - Las fotos de check-in no se redimensionan, no eliminan EXIF y no pasan por antivirus.
-- No hay endpoint para eliminar o reemplazar la foto de un check-in ya registrado.
+- No existe todavía un flujo de moderación; `visibility` y `moderationStatus` están
+  reservados en el modelo.
 - Las fotos privadas dependen del almacenamiento local y deben incluirse en respaldos.
 - No se almacenan imágenes de QR; el administrador debe descargar o imprimir la respuesta.
 - El QR puede fotografiarse y compartirse: la geocerca reduce el abuso, pero no sustituye
   controles anti-fraude más fuertes.
 - La ubicación del cliente puede ser simulada; el servidor solo valida coordenadas y radio.
-- No existe revocación sin rotación ni fecha de expiración del token.
+- No existe revocación sin rotación ni fecha de expiración del token; el token se guarda solo
+  en memoria en el frontend y nunca se añade a la URL de la aplicación.
 - El rate limit de check-in se aplica por IP, no por usuario.
-- No hay notificaciones, insignias otorgadas automáticamente ni gamificación persistida más
-  allá de la definición de la insignia en la aventura.
+- Las insignias son privadas; no hay notificaciones, tablas públicas ni compartición social.
 - No hay moderación de contenido ni revisión por un segundo usuario.
 - El slug de una aventura archivada no se reutiliza automáticamente.
 - No se implementó retención, exportación ni firma de auditoría.

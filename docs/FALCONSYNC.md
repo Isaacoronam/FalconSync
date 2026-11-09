@@ -1,6 +1,6 @@
 # FalconSync — estado de los cortes 0 a 5
 
-Fecha de verificación: 2026-11-07.
+Fecha de verificación: 2026-11-08.
 
 ## Alcance implementado
 
@@ -42,8 +42,9 @@ Fecha de verificación: 2026-11-07.
 - Workflow de GitHub Actions creado en `.github/workflows/ci.yml` con MongoDB de servicio,
   pruebas, build, Chromium y E2E.
 - El workflow **no fue ejecutado** todavía en GitHub: la rama se subió, pero no se abrió un
-  PR ni existe una ejecución remota verificada. El YAML no se declara verde. La suite E2E sí
-  se ejecutó localmente con Chromium en modo CI: 15/15 tras el Corte 5.
+  PR ni existe una ejecución remota verificada. El YAML no se declara verde. La suite E2E se
+  ejecutó localmente con Chromium en modo CI (15/15 tras el Corte 5); la corrida Chromium
+  posterior a los cambios de insignias y galería queda pendiente.
 
 ### Corte 2 — Administración y POI
 
@@ -75,46 +76,55 @@ El detalle de endpoints, permisos, validaciones y límites está en
 [`docs/ADMINISTRACION.md`](./ADMINISTRACION.md). El catálogo, las reglas de publicación,
 las fuentes y el manifiesto de imágenes están en [`docs/POI.md`](./POI.md).
 
-### Corte 3 — CoroAventura backend
+### Corte 3 — backend legado de recorridos y servicios de visita
 
-- Modelos `Adventure`, `AdventureStop` y `CheckIn`.
+- Modelos `Adventure` y `AdventureStop` se conservan temporalmente para compatibilidad;
+  `CheckIn` y `UserAchievement` soportan visitas e insignias por POI.
 - Check-in global por POI, con índice único `(user, location)`.
 - QR opaco por POI: token de 32 bytes, hash SHA-256 persistido y rotación que invalida los
   QR anteriores.
 - Geocerca Haversine validada en servidor, con radio configurable entre 10 y 500 m.
-- Progreso en cualquier orden, siguiente parada sugerida y cierre de ruta.
-- CRUD administrativo de aventuras, publicación, archivo, restauración y reordenamiento de
-  paradas.
-- Bloqueo de archivado o despublicación de un POI usado por una aventura publicada.
-- Auditoría de cambios de aventura y rotaciones de QR.
+- APIs de recorrido y progreso se conservan temporalmente, fuera del flujo turístico.
+- Las visitas nuevas y el backfill otorgan insignias por POI, no por recorrido.
 
-El detalle está en [`docs/AVENTURAS.md`](./AVENTURAS.md).
+La referencia histórica está en [`docs/AVENTURAS.md`](./AVENTURAS.md).
 
-### Corte 4 — CoroAventura frontend
+### Experiencia turística vigente — exploración por POI
 
-- Catálogo público de aventuras publicadas (`/aventuras`).
-- Detalle de aventura con paradas ordenadas (`/aventuras/:slug`).
-- Progreso del usuario autenticado (`/aventuras/:slug/progreso`).
-- Check-in con geolocalización del navegador (`/checkin/:locationId?token=...`).
-- Administración de aventuras, paradas y reordenamiento (`/admin/aventuras*`).
+- Catálogo de lugares en `/lugares` y ficha editorial en `/lugares/:slug`.
+- El formulario de POI gestiona historia, datos de interés, información para visitantes y
+  fuentes editoriales aparte de la fuente cartográfica.
+- Las URL públicas antiguas `/aventuras*` redirigen al catálogo de lugares.
+- El perfil presenta insignias de lugares visitados; los logros heredados de recorridos no
+  se eliminan de la base ni se muestran en el flujo actual.
+- El escáner QR en `/checkin` usa `BarcodeDetector` cuando está disponible y ofrece entrada
+  manual; el token vive solo en memoria y nunca se añade a la URL.
+- Check-in por POI con geolocalización del navegador (`/checkin/:locationId`), Chivito y
+  una insignia persistente por lugar.
 - Generación, impresión y descarga de QR de check-in (`/admin/locations/:id/qr`).
-- Suite E2E con Playwright y geolocalización simulada (`e2e/coro-aventura.spec.ts`).
+- Suite E2E con Playwright y geolocalización simulada para catálogo, QR, check-in, insignias
+  y redirección de URL heredadas.
 
-El detalle está en [`docs/COROAVENTURA-FRONTEND.md`](./COROAVENTURA-FRONTEND.md).
+El detalle histórico de la interfaz anterior está en
+[`docs/COROAVENTURA-FRONTEND.md`](./COROAVENTURA-FRONTEND.md); la ficha vigente está en
+[`docs/POI.md`](./POI.md).
 
-### Corte 5 — Perfil privado, avatar y fotos
+### Corte 5 — Perfil privado, insignias y fotos
 
 - `User` con `username`, `bio` y metadatos privados de avatar; generación automática de
   nombre de usuario y backfill para cuentas existentes.
 - Perfil visible solo para su dueño en `/perfil`; sin rutas públicas por `username`.
 - Edición de nombre, usuario y biografía, con actualización del header.
 - Avatar privado con carga, reemplazo y eliminación.
-- Foto opcional por check-in mediante `multipart/form-data`.
+- Insignias persistentes visibles en el perfil, con origen archivado marcado.
+- Galería privada paginada de visitas con filtros, visor ampliado y reemplazo/eliminación de
+  fotos sin borrar el check-in.
+- Check-in y foto en dos fases: primero la visita, después la imagen.
 - Avatares y fotos en `uploads-private/`, servidos solo por endpoints autenticados.
-- Estadísticas reales de check-in, aventuras iniciadas/completadas y paradas visitadas.
-- Bloque de Chivito derivado de esas estadísticas, sin servicios externos.
+- Estadísticas de check-ins, lugares descubiertos e insignias de lugares.
+- Bloque de Chivito celebra las visitas con mensajes basados en las estadísticas disponibles.
 - Seed idempotente de la «Ruta del Casco Histórico de Coro» con cinco paradas reales.
-- E2E de perfil, avatar y check-in con foto (`e2e/perfil.spec.ts`).
+- E2E de perfil, avatar, check-in con foto, insignias, galería y visor (`e2e/perfil.spec.ts`).
 
 El detalle está en [`docs/PERFIL.md`](./PERFIL.md).
 
@@ -236,10 +246,10 @@ Resumen operativo:
 - `npm run create-admin` creó `admin@falconsync.local`; la contraseña está en `.env` y debe
   cambiarse en el primer acceso.
 - El script es idempotente: una segunda ejecución no modifica la contraseña existente.
-- El panel `/admin` ya permite gestionar POI, imágenes, auditoría y aventuras. El backend de
-  aventuras, paradas, QR y check-in está implementado en el Corte 3 y su interfaz en el
-  Corte 4. El perfil privado, el avatar y las fotos de check-in se completaron en el Corte 5;
-  la gestión de usuarios, la moderación y las rutas guiadas corresponden a cortes siguientes.
+- El panel `/admin` permite gestionar POI editoriales, imágenes, QR y auditoría. Los datos y
+  las APIs de recorridos se mantienen temporalmente por compatibilidad, pero su gestión ya no
+  forma parte de la interfaz. El perfil privado, el avatar y las fotos de check-in se
+  completaron en el Corte 5; la moderación sigue pendiente.
 
 ## Comandos de arranque
 
@@ -257,6 +267,7 @@ npm run seed:verify    # comprueba existencia, publicación, coordenadas y retir
 npm run seed:adventures        # crea o actualiza la Ruta del Casco Histórico
 npm run seed:adventures:verify # verifica publicación, orden y paradas disponibles
 npm run backfill:usernames     # asigna username a cuentas anteriores al Corte 5
+npm run backfill:achievements  # simula la reconstrucción de insignias; --apply escribe
 npm run create-admin   # requiere ADMIN_* en .env
 npm run dev
 ```
@@ -306,14 +317,17 @@ Autenticados:
 
 - `GET /api/auth/me`
 - `POST /api/auth/change-password`
-- `GET /api/adventures/:slug/progress`
-- `POST /api/check-ins` (JSON o `multipart/form-data` con `image` opcional)
-- `GET /api/profile/me`
+- `GET /api/adventures/:slug/progress` (incluye `achievement`)
+- `POST /api/check-ins` (JSON; conserva compatibilidad `multipart/form-data` con `image`)
+- `GET /api/profile/me` (incluye insignias)
 - `PATCH /api/profile/me`
 - `GET /api/profile/avatar`
 - `POST /api/profile/avatar` (`multipart/form-data`, campo `image`)
 - `DELETE /api/profile/avatar`
+- `GET /api/profile/check-ins?page=&limit=&hasPhoto=`
 - `GET /api/profile/check-ins/:checkInId/photo`
+- `PUT /api/profile/check-ins/:checkInId/photo` (`multipart/form-data`, campo `image`)
+- `DELETE /api/profile/check-ins/:checkInId/photo`
 
 Administración (rol `admin`, cambio de contraseña completado):
 
@@ -343,7 +357,8 @@ Administración (rol `admin`, cambio de contraseña completado):
 
 Las imágenes públicas de POI se sirven en `/api/uploads/...`. Los avatares y las fotos de
 check-in no tienen URL estática: se sirven solo por `/api/profile/avatar` y
-`/api/profile/check-ins/:checkInId/photo` con sesión del dueño.
+`/api/profile/check-ins/:checkInId/photo` con sesión del dueño. La galería usa
+`GET /api/profile/check-ins` con paginación y filtro `hasPhoto`.
 
 Formato de lista de lugares:
 
@@ -411,32 +426,43 @@ detalle está en [`docs/POI.md`](./POI.md).
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm test` en `falcon-sync-backend` | 67/67 aprobadas (12 admin POI + 18 CoroAventura + 12 auth + 14 locations + 6 perfil + 2 seed aventuras + 3 seed POI) |
+| Pruebas backend | `npm test` en `falcon-sync-backend` | 75/75 aprobadas (13 admin POI + 17 APIs heredadas + 12 auth + 15 locations + 6 perfil + 6 insignias/galería + 2 seed aventuras + 4 seed POI) |
 | Seed idempotente | `test/seedLocations.test.js` | 23 insertados la primera vez y 0 la segunda |
 | Seed de aventura | `npm run seed:adventures` + `--verify` | Aventura publicada con 5 paradas, orden y disponibilidad correctos |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada de Parque Nacional Médanos de Coro sincronizada y verificada |
 | Verificación del seed | `npm run seed:verify` | 23 POI sin desviaciones; Gelatería El Sol dentro del catálogo |
 | Backfill de usuarios | `npm run backfill:usernames` | 2 usuarios actualizados con `username` |
+| Backfill de insignias | `npm run backfill:achievements` | Simulación por defecto; `--apply` escribe. No ejecutado sobre datos locales en esta verificación |
 | Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
-| Pruebas frontend | `npm test -- --watch=false` | 29/29 aprobadas |
-| Build producción | `npm run build` | Correcto, sin warnings |
-| E2E permanente | `npm run e2e` | 15/15 en Edge local y 15/15 con Chromium (`CI=1`) |
+| Pruebas frontend | `npm test -- --watch=false` | 51/51 aprobadas |
+| Build producción | `npm run build` | Correcto, sin advertencias (presupuesto `anyComponentStyle` ajustado a 10/12 kB; el perfil compila en 9.41 kB) |
+| E2E de catálogo POI, QR y perfil | `npx playwright test e2e/coro-aventura.spec.ts e2e/perfil.spec.ts` | 7/7 aprobadas |
+| E2E permanente | `npm run e2e` | 16/16 en Edge local; corrida Chromium/CI pendiente de repetir |
 | Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
 | Workflow CI | `.github/workflows/ci.yml` | Creado, **no ejecutado** en remoto |
 
+El presupuesto `anyComponentStyle` se ajustó de 6/10 kB a 10/12 kB porque el perfil privado
+compila 9.41 kB de estilos. Se mantuvieron los estilos cohesionados en el componente en lugar
+de fragmentarlos solo para cumplir un umbral pensado para componentes pequeños; el nuevo
+límite sigue acotando el crecimiento y el build queda sin advertencias.
+
 La suite `test/adventures.test.js` cubre QR, rotación, hash no expuesto, check-in válido,
 duplicado, fuera de geocerca, token inválido, check-in rechazado en POI provisional,
 progreso en cualquier orden, siguiente parada, cierre, check-in global compartido, POI no
 publicado o provisional como parada, POI en uso, publicación, reordenamiento, permisos y
-auditoría. `test/profile.test.js` cubre perfil privado, generación y edición de `username`,
-avatar privado, foto de check-in, acceso denegado a otros usuarios y estadísticas de
-aventura. `test/seedAdventures.test.js` comprueba que el seed usa paradas reales publicadas y
-rutas de imagen permitidas. `test/locations.test.js` cubre además los filtros públicos por
-circuito y etiqueta, el rechazo de valores desconocidos y la ocultación de un POI provisional
-aunque esté marcado como publicado. `test/adminLocations.test.js` cubre la regla de
-publicación con fecha de verificación y los filtros administrativos por circuito y etiqueta.
+auditoría. `test/achievements.test.js` cubre la insignia de lugar, el rechazo de nuevas
+insignias de recorrido heredadas, la idempotencia, la reconciliación de duplicados, la
+conservación de logros antiguos con `sourceActive: false`, la foto posterior al check-in y la
+galería paginada con filtro `hasPhoto`.
+`test/profile.test.js` cubre perfil privado, generación y edición de `username`, avatar
+privado, foto de check-in, acceso denegado a otros usuarios y estadísticas de aventura.
+`test/seedAdventures.test.js` comprueba que el seed usa paradas reales publicadas y rutas de
+imagen permitidas. `test/locations.test.js` cubre además los filtros públicos por circuito y
+etiqueta, el rechazo de valores desconocidos y la ocultación de un POI provisional aunque
+esté marcado como publicado. `test/adminLocations.test.js` cubre la regla de publicación con
+fecha de verificación y los filtros administrativos por circuito y etiqueta.
 
 La suite E2E comprueba:
 
@@ -453,16 +479,18 @@ La suite E2E comprueba:
 - cambio obligatorio del admin inicial y desbloqueo posterior;
 - creación de un POI, carga de imagen, publicación y aparición en el mapa;
 - archivo lógico, desaparición del API público y restauración como borrador;
-- escaneo de QR sin sesión: redirección a login con `returnUrl` completo y token conservado;
-- check-in con geolocalización simulada dentro del radio, progreso al 33 % y siguiente parada;
+- escáner QR: entrada manual, login con `returnUrl` sin token y token conservado en memoria;
+- enlace heredado con token: limpieza de la URL y acceso conservado tras el login;
+- check-in con geolocalización simulada, felicitación de Chivito e insignia del lugar;
 - rechazo de check-in duplicado y de posición fuera de la geocerca;
-- recorrido completo de las tres paradas, cierre de ruta al 100 %, insignia y fecha;
+- catálogo y detalle editorial por POI, con redirección de URL públicas heredadas;
 - perfil privado: edición de nombre, usuario y biografía, actualización del header, avatar,
-  check-in con foto y aparición de la foto en `/perfil`.
+  check-in con foto, insignia, visor ampliado, reemplazo y eliminación de foto y filtros de
+  galería.
 
 La E2E local usa Microsoft Edge mediante el canal de Playwright. La suite completa se
-ejecutó localmente tras el Corte 5: 15/15. La misma suite se ejecutó con `CI=1`/Chromium:
-15/15, lo que replica el navegador configurado en GitHub Actions. La ejecución remota del
+ejecutó localmente tras el Corte 5 y los cambios de insignias: 16/16. La corrida con
+`CI=1`/Chromium quedó pendiente de repetir después de estos cambios; la ejecución remota del
 workflow sigue pendiente. Las imágenes de la E2E se guardan en
 `test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan las carpetas
 de desarrollo.
@@ -488,7 +516,14 @@ de desarrollo.
 - Las respuestas de imágenes privadas usan `Cache-Control: private, max-age=300,
   must-revalidate`.
 - La sustitución de avatar elimina el archivo anterior; si falla la persistencia, elimina el
-  archivo nuevo. Si falla un check-in después de guardar la foto, también la elimina.
+  archivo nuevo. Si falla un check-in en modo multipart después de guardar la foto, también la
+  elimina.
+- La foto del check-in se sube después de la visita; un fallo de imagen no revierte la visita
+  ni las insignias. Reemplazarla o eliminarla tampoco borra el check-in.
+- Las insignias se otorgan con índice único `(user, type, sourceId)` y `$setOnInsert`; una
+  insignia ya obtenida no se duplica y se conserva si su origen se archiva.
+- El backfill de insignias es una simulación por defecto; `--apply` exige
+  `--allow-production` cuando `NODE_ENV=production`.
 - El QR de check-in usa un token opaco de 32 bytes; solo se persiste su hash SHA-256, la
   comparación es en tiempo constante y el hash nunca se serializa.
 - La geocerca se valida en servidor con Haversine, con radio configurable entre 10 y 500 m.
@@ -516,18 +551,23 @@ de desarrollo.
   antivirus y no están replicadas. En producción deben incluirse en el respaldo.
 - El perfil privado no tiene directorio público por decisión de alcance. Si se agrega, exige
   revisar privacidad, moderación y consentimiento.
-- No hay galería completa de fotos: `/perfil` muestra los últimos 8 check-in.
-- No existe endpoint para eliminar o reemplazar la foto de un check-in ya registrado.
+- La galería privada está paginada (9 por página) y solo muestra las visitas del usuario. No
+  hay perfiles públicos ni compartición social.
+- No existe todavía un flujo de moderación; `visibility` y `moderationStatus` están
+  reservados en `CheckIn.photo`.
 - Los avatares y las fotos privadas son locales, no están cifrados de extremo a extremo y
   dependen del respaldo y control de acceso del servidor.
 - No hay lista de nombres de usuario reservados ni historial de cambios de `username`.
-- El backend de aventuras, paradas, QR y check-in está implementado y el frontend de
-  aventuras se completó en el Corte 4; el perfil privado y las fotos se completaron en el
-  Corte 5. Faltan el escáner de QR, la moderación, los artículos, los eventos y la agenda.
-- El seed de aventura cubre una ruta; las demás se crean por el API administrativo. No hay
-  imágenes de QR almacenadas; el token solo se devuelve al rotar.
+- El backend/API de aventuras y paradas se conserva para compatibilidad; no hay una interfaz
+  turística ni administrativa para crear recorridos. Faltan la moderación, los artículos,
+  los eventos y la agenda. Las fichas POI ya admiten historia, datos, información práctica y
+  fuentes; todavía hay que completar y revisar editorialmente esos contenidos.
+- Los QR no guardan imágenes en el servidor; el token solo se devuelve al rotar.
 - El QR puede fotografiarse y compartirse y la ubicación del cliente puede simularse; la
-  geocerca reduce el abuso, pero no elimina el fraude.
+  geocerca reduce el abuso, pero no elimina el fraude. La aplicación mantiene el token solo en
+  memoria y lo elimina de la URL si llega en un enlace heredado.
+- La lectura automática de QR depende de `BarcodeDetector`; si el navegador no lo admite, el
+  escáner usa entrada manual y no envía fotogramas al servidor.
 - El slug de una aventura archivada no se reutiliza automáticamente.
 - La autoría y licencia de 18 imágenes sigue pendiente de verificación; las otras 5 están
   acreditadas con CC BY-SA 4.0.

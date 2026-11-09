@@ -108,6 +108,44 @@
             <input id="poi-period-field" type="text" formControlName="historicalPeriod" maxlength="120" />
           </div>
 
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-history-field">Historia del lugar</label>
+            <textarea
+              id="poi-history-field"
+              rows="8"
+              formControlName="historicalStory"
+              maxlength="10000"
+              placeholder="Relato histórico documentado, en lenguaje claro para visitantes."
+            ></textarea>
+            <p class="form-field__help">
+              Separa la historia de la descripción breve. Incluye solo hechos que puedas respaldar
+              con fuentes.
+            </p>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-facts-field">Datos de interés</label>
+            <textarea
+              id="poi-facts-field"
+              rows="5"
+              formControlName="interestingFactsText"
+              maxlength="2300"
+              placeholder="Un dato por línea (máximo 8)"
+            ></textarea>
+            <p class="form-field__help">Hasta 8 datos; máximo 280 caracteres por dato.</p>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-visitor-info-field">Información para visitantes</label>
+            <textarea
+              id="poi-visitor-info-field"
+              rows="4"
+              formControlName="visitorInfo"
+              maxlength="2000"
+              placeholder="Acceso, horarios conocidos, recomendaciones o limitaciones."
+            ></textarea>
+          </div>
+
           <div class="admin-field">
             <label for="poi-conservation-field">Estado de conservación</label>
             <select id="poi-conservation-field" formControlName="conservationStatus">
@@ -254,7 +292,7 @@
 
         <div class="admin-form-grid">
           <div class="admin-field">
-            <label for="poi-source-field">Fuente (URL)</label>
+            <label for="poi-source-field">Fuente del dato del POI (URL)</label>
             <input
               id="poi-source-field"
               type="url"
@@ -266,6 +304,20 @@
             @if (urlError('sourceUrl')) {
               <p id="poi-source-error" class="form-field__error">{{ urlError('sourceUrl') }}</p>
             }
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-content-sources-field">Fuentes históricas y editoriales</label>
+            <textarea
+              id="poi-content-sources-field"
+              rows="4"
+              formControlName="contentSourcesText"
+              maxlength="5009"
+              placeholder="Una URL http(s) por línea"
+            ></textarea>
+            <p class="form-field__help">
+              Hasta 10 enlaces que respalden la historia y los datos de interés.
+            </p>
           </div>
 
           <div class="admin-field">

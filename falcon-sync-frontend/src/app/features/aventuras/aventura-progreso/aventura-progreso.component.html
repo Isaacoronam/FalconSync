@@ -1,6 +1,6 @@
 @if (notFound()) {
-  <h1>Aventura no encontrada</h1>
-  <p class="form-error" role="alert">La aventura solicitada no existe o no está publicada.</p>
+  <h1>Recorrido no encontrado</h1>
+  <p class="form-error" role="alert">El recorrido solicitado no existe o no está publicado.</p>
   <a class="button button--ghost" routerLink="/aventuras">Volver al catálogo</a>
 } @else if (error()) {
   <p class="form-error" role="alert">{{ error() }}</p>
@@ -34,7 +34,7 @@
       [style.width.%]="progress.percentage"
       [attr.aria-valuenow]="progress.percentage"
       role="progressbar"
-      aria-label="Progreso de la aventura"
+      aria-label="Progreso del recorrido"
     ></div>
   </div>
 

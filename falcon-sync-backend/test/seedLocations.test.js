@@ -7,9 +7,13 @@ process.env.MONGODB_URI =
   process.env.MONGODB_URI_TEST ??
   "mongodb://127.0.0.1:27017/falconsync_seed_test";
 
-const { seedLocations, syncLocations, verifyLocations, locations } = await import(
-  "../scripts/seedLocations.js"
-);
+const {
+  seedLocations,
+  syncLocations,
+  syncEditorialContent,
+  verifyLocations,
+  locations,
+} = await import("../scripts/seedLocations.js");
 const { connectDB, disconnectDB } = await import("../src/config/db.js");
 const { default: Location } = await import("../src/models/Location.js");
 
@@ -99,6 +103,11 @@ describe("Seed de POI", () => {
     assert.equal(syncedPark.verificationLevel, "unverified");
     assert.equal(syncedPark.checkInRadiusMeters, 200);
     assert.deepEqual(unchangedCathedral.location.coordinates, [-69.6777, 11.4076]);
+    assert.equal(
+      unchangedCathedral.historicalStory,
+      locations.find((location) => location.slug === "catedral-de-coro")
+        .historicalStory,
+    );
   });
 
   it("mantiene los 23 POI publicados y con metadatos de publicación coherentes", () => {
@@ -121,12 +130,80 @@ describe("Seed de POI", () => {
         ["single-source", "unverified"].includes(location.verificationLevel),
         `${location.title} debe declarar un nivel de verificación`,
       );
+      assert.ok(
+        location.historicalStory?.length >= 100,
+        `${location.title} debe tener una reseña editorial ampliada`,
+      );
+      assert.ok(
+        location.interestingFacts?.length >= 2,
+        `${location.title} debe tener datos de interés`,
+      );
+      assert.ok(
+        location.interestingFacts.every((fact) => fact.length <= 280),
+        `${location.title} tiene datos de interés que exceden el límite`,
+      );
+      assert.ok(
+        location.visitorInfo?.length > 0,
+        `${location.title} debe tener información para visitantes`,
+      );
+      assert.ok(
+        location.contentSources?.every((source) => /^https?:\/\//i.test(source)),
+        `${location.title} tiene fuentes con formato inválido`,
+      );
     }
 
     const casaMuseo = locations.find(
       (location) => location.slug === "casa-museo-locos-de-la-vela",
     );
     assert.equal(casaMuseo.checkInRadiusMeters, 100);
+  });
+
+  it("sincroniza solo el contenido editorial vacío y no borra ni sobrescribe otros datos", async () => {
+    for (const location of locations) {
+      const base = { ...location };
+      delete base.historicalStory;
+      delete base.interestingFacts;
+      delete base.visitorInfo;
+      delete base.contentSources;
+      await Location.create(base);
+    }
+
+    await Location.create({
+      ...locations[0],
+      title: "Mirador legado",
+      slug: "mirador-legado",
+      historicalStory: undefined,
+      interestingFacts: [],
+      visitorInfo: undefined,
+      contentSources: [],
+    });
+
+    const result = await syncEditorialContent();
+    const cathedral = await Location.findOne({ slug: "catedral-de-coro" });
+    const legacy = await Location.findOne({ slug: "mirador-legado" });
+
+    assert.equal(result.updated, locations.length);
+    assert.equal(
+      cathedral.historicalStory,
+      locations.find((location) => location.slug === "catedral-de-coro")
+        .historicalStory,
+    );
+    assert.ok(legacy);
+    assert.equal(legacy.historicalStory, undefined);
+    assert.equal(
+      await Location.countDocuments({}),
+      locations.length + 1,
+    );
+
+    await Location.updateOne(
+      { slug: "catedral-de-coro" },
+      { $set: { historicalStory: "Contenido editorial propio" } },
+    );
+    await assert.rejects(syncEditorialContent(), /no sobrescribir contenido existente/);
+    const preservedCathedral = await Location.findOne({
+      slug: "catedral-de-coro",
+    });
+    assert.equal(preservedCathedral.historicalStory, "Contenido editorial propio");
   });
 
   it("incluye imágenes locales para todos los POI del catálogo y excluye Mirador del Pueblo", () => {

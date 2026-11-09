@@ -1,11 +1,11 @@
 @if (notFound()) {
-  <h1>Aventura no encontrada</h1>
-  <p class="form-error" role="alert">La aventura solicitada no existe o no está publicada.</p>
+  <h1>Recorrido no encontrado</h1>
+  <p class="form-error" role="alert">El recorrido solicitado no existe o no está publicado.</p>
   <a class="button button--ghost" routerLink="/aventuras">Volver al catálogo</a>
 } @else if (error()) {
   <p class="form-error" role="alert">{{ error() }}</p>
 } @else if (loading()) {
-  <p>Cargando aventura…</p>
+  <p>Cargando recorrido…</p>
 } @else {
   @let aventura = this.adventure()!;
 
@@ -45,7 +45,7 @@
     Recorre las paradas en orden y haz check-in en cada punto de interés.
   </p>
 
-  <section class="aventura-stops" aria-label="Paradas de la aventura">
+  <section class="aventura-stops" aria-label="Paradas del recorrido">
     @for (stop of stops(); track stop.id; let i = $index) {
       <article class="stop-card">
         <div class="stop-card__header">

@@ -76,6 +76,10 @@ export interface AdminLocationPayload {
   circuits: LocationCircuit[];
   tags: LocationTag[];
   historicalPeriod?: string;
+  historicalStory?: string;
+  interestingFacts?: string[];
+  visitorInfo?: string;
+  contentSources?: string[];
   conservationStatus: ConservationStatus;
   sourceUrl?: string;
   coordinateSource?: string;

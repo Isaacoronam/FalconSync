@@ -48,15 +48,16 @@ OpenCode busca las skills de proyecto en `.opencode/skills/<nombre>/SKILL.md`. N
 Este repositorio también contiene la aplicación:
 
 - `falcon-sync-backend/`: API REST con Express 5.3, Mongoose 9.12, autenticación JWT,
-  CRUD de POI, aventuras, paradas, QR, check-in con geocerca, perfil privado, avatar, fotos
-  de check-in, imágenes locales y auditoría.
+  catálogo editorial de POI, QR y check-in con geocerca, insignias por lugar, perfil privado,
+  avatar, fotos de check-in, imágenes locales y auditoría. Las APIs de recorridos permanecen
+  temporalmente por compatibilidad, fuera del flujo turístico.
 - `falcon-sync-frontend/`: Angular 21 con Leaflet 1.9.4, autenticación, panel administrativo
   completo para POI, perfil privado y suite E2E permanente con Playwright.
 - `docs/FALCONSYNC.md`: alcance, comandos, fuentes de datos, verificación y pendientes.
 - `docs/AUTENTICACION.md`: modelo de sesión, roles, cookies y límites de seguridad.
 - `docs/ADMINISTRACION.md`: CRUD de POI, borrado lógico, imágenes y auditoría.
 - `docs/POI.md`: catálogo, reglas de publicación, fuentes y créditos de imágenes.
-- `docs/AVENTURAS.md`: modelo de aventuras, QR opaco, geocercas, check-in y progreso.
+- `docs/AVENTURAS.md`: referencia de la infraestructura heredada de recorridos y del QR/check-in.
 - `docs/PERFIL.md`: perfil privado, avatar, foto de check-in y seed de aventura.
 - `.github/workflows/ci.yml`: workflow de pruebas, build y E2E (creado, aún no ejecutado en
   remoto).

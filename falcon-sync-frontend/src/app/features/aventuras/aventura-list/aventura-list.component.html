@@ -1,19 +1,23 @@
-<h1>Catálogo de aventuras</h1>
+<h1>Catálogo de recorridos</h1>
 <p class="lead">
-  Recorridos patrimoniales publicados por Santa Ana de Coro. Cada aventura tiene paradas
+  Recorridos patrimoniales publicados por Santa Ana de Coro. Cada recorrido tiene paradas
   ordenadas y puedes hacer check-in en cada punto de interés.
 </p>
+
+<div class="aventuras-acciones">
+  <a class="button button--primary" routerLink="/checkin">Escanear QR de una parada</a>
+</div>
 
 @if (error()) {
   <p class="form-error" role="alert">{{ error() }}</p>
 }
 
 @if (loading()) {
-  <p>Cargando aventuras…</p>
+  <p>Cargando recorridos…</p>
 } @else if (adventures().length === 0) {
-  <p class="empty">No hay aventuras publicadas todavía.</p>
+  <p class="empty">No hay recorridos publicados todavía.</p>
 } @else {
-  <section class="aventura-grid" aria-label="Aventuras disponibles">
+  <section class="aventura-grid" aria-label="Recorridos disponibles">
     @for (aventura of adventures(); track aventura.id) {
       <article class="aventura-card">
         @if (aventura.coverImage) {
@@ -46,7 +50,7 @@
             class="button button--primary button--block"
             [routerLink]="['/aventuras', aventura.slug]"
           >
-            Ver aventura
+            Ver recorrido
           </a>
         </div>
       </article>
