@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { adventures } from '../scripts/seedAdventures.js';
-import { locations } from '../scripts/seedLocations.js';
+
+process.env.NODE_ENV = 'test';
+
+const { adventures } = await import('../scripts/seedAdventures.js');
+const { locations } = await import('../scripts/seedLocations.js');
 
 const locationBySlug = new Map(
   locations.map((location) => [location.slug, location]),
