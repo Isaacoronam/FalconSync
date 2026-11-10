@@ -1,11 +1,21 @@
 import { isInsideFalcon } from '../config/falcon.js';
+import Adventure from '../models/Adventure.js';
+import AdventureStop from '../models/AdventureStop.js';
 import AuditLog from '../models/AuditLog.js';
 import Location, {
   CONSERVATION_STATUSES,
   LOCATION_CATEGORIES,
+  LOCATION_CIRCUITS,
   LOCATION_STATUSES,
+  LOCATION_TAGS,
+  LOCATION_VERIFICATION_LEVELS,
 } from '../models/Location.js';
 import { recordAudit } from '../services/auditService.js';
+import {
+  createCheckInToken,
+  hashCheckInToken,
+} from '../services/checkInTokenService.js';
+import { QR_FORMATS, renderCheckInQr } from '../services/qrService.js';
 import { storageAdapter } from '../services/storage/index.js';
 import { HttpError } from '../utils/HttpError.js';
 
@@ -195,6 +205,21 @@ function readStatus(body, issues, { allowArchived = false } = {}) {
   return body.status;
 }
 
+function readCheckInRadius(body, issues) {
+  if (!hasOwn(body, 'checkInRadiusMeters')) {
+    return undefined;
+  }
+
+  const value = Number(body.checkInRadiusMeters);
+
+  if (!Number.isInteger(value) || value < 10 || value > 500) {
+    issues.push('El radio de check-in debe ser un entero entre 10 y 500 metros');
+    return undefined;
+  }
+
+  return value;
+}
+
 function readHttpUrl(body, key, issues) {
   const value = readText(body, key, issues, { max: 500 });
 
@@ -207,6 +232,154 @@ function readHttpUrl(body, key, issues) {
   }
 
   return value;
+}
+
+function readEnumArray(body, key, allowed, issues) {
+  if (!hasOwn(body, key)) {
+    return undefined;
+  }
+
+  if (!Array.isArray(body[key])) {
+    issues.push(`El campo ${key} debe enviarse como una lista`);
+    return undefined;
+  }
+
+  const values = [];
+
+  for (const entry of body[key]) {
+    if (typeof entry !== 'string' || !allowed.includes(entry)) {
+      issues.push(`El campo ${key} solo admite: ${allowed.join(', ')}`);
+      continue;
+    }
+
+    if (values.includes(entry)) {
+      issues.push(`El campo ${key} no puede repetir valores`);
+      continue;
+    }
+
+    values.push(entry);
+  }
+
+  return values;
+}
+
+function readContentArray(
+  body,
+  key,
+  issues,
+  { maxItems, maxLength, urls = false },
+) {
+  if (!hasOwn(body, key)) {
+    return undefined;
+  }
+
+  if (!Array.isArray(body[key])) {
+    issues.push(`El campo ${key} debe enviarse como una lista`);
+    return undefined;
+  }
+
+  if (body[key].length > maxItems) {
+    issues.push(`El campo ${key} no puede tener más de ${maxItems} elementos`);
+  }
+
+  const values = [];
+
+  for (const entry of body[key]) {
+    if (typeof entry !== 'string') {
+      issues.push(`Todos los elementos de ${key} deben ser texto`);
+      continue;
+    }
+
+    const value = entry.trim();
+
+    if (!value) {
+      continue;
+    }
+
+    if (value.length > maxLength) {
+      issues.push(`Cada elemento de ${key} no puede superar ${maxLength} caracteres`);
+      continue;
+    }
+
+    if (urls && !HTTP_URL_PATTERN.test(value)) {
+      issues.push(`Cada elemento de ${key} debe ser una URL http o https`);
+      continue;
+    }
+
+    if (values.includes(value)) {
+      issues.push(`El campo ${key} no puede repetir valores`);
+      continue;
+    }
+
+    values.push(value);
+  }
+
+  return values;
+}
+
+function readVerificationLevel(body, issues) {
+  if (!hasOwn(body, 'verificationLevel')) {
+    return undefined;
+  }
+
+  if (!LOCATION_VERIFICATION_LEVELS.includes(body.verificationLevel)) {
+    issues.push(
+      `El nivel de verificación debe ser uno de: ${LOCATION_VERIFICATION_LEVELS.join(', ')}`,
+    );
+    return undefined;
+  }
+
+  return body.verificationLevel;
+}
+
+function readDate(body, key, issues) {
+  if (!hasOwn(body, key)) {
+    return undefined;
+  }
+
+  if (body[key] === null || body[key] === '') {
+    return null;
+  }
+
+  const date = new Date(body[key]);
+
+  if (Number.isNaN(date.getTime())) {
+    issues.push(`El campo ${key} debe ser una fecha válida o null`);
+    return undefined;
+  }
+
+  return date;
+}
+
+function ensurePublishable(payload, current = {}) {
+  const status = payload.status ?? current.status ?? 'draft';
+
+  if (status !== 'published') {
+    return;
+  }
+
+  const isProvisional =
+    payload.isProvisional ?? current.isProvisional ?? false;
+  const coordinateVerifiedAt = hasOwn(payload, 'coordinateVerifiedAt')
+    ? payload.coordinateVerifiedAt
+    : current.coordinateVerifiedAt;
+  const issues = [];
+
+  if (isProvisional) {
+    issues.push(
+      'No se puede publicar un punto de interés provisional. Verifica sus coordenadas y desmarca isProvisional',
+    );
+  }
+
+  if (!coordinateVerifiedAt) {
+    issues.push(
+      'No se puede publicar sin fecha de verificación de coordenadas (coordinateVerifiedAt)',
+    );
+  }
+
+  if (issues.length > 0) {
+    throw validationError(issues);
+  }
 }
 
 function buildPayload(body, { partial = false } = {}) {
@@ -255,12 +428,63 @@ function buildPayload(body, { partial = false } = {}) {
     payload.description = description;
   }
 
+  const address = readText(body, 'address', issues, { max: 240 });
+
+  if (address !== undefined) {
+    payload.address = address;
+  }
+
+  const circuits = readEnumArray(body, 'circuits', LOCATION_CIRCUITS, issues);
+
+  if (circuits !== undefined) {
+    payload.circuits = circuits;
+  }
+
+  const tags = readEnumArray(body, 'tags', LOCATION_TAGS, issues);
+
+  if (tags !== undefined) {
+    payload.tags = tags;
+  }
+
   const historicalPeriod = readText(body, 'historicalPeriod', issues, {
     max: 120,
   });
 
   if (historicalPeriod !== undefined) {
     payload.historicalPeriod = historicalPeriod;
+  }
+
+  const historicalStory = readText(body, 'historicalStory', issues, {
+    max: 10000,
+  });
+
+  if (historicalStory !== undefined) {
+    payload.historicalStory = historicalStory;
+  }
+
+  const interestingFacts = readContentArray(body, 'interestingFacts', issues, {
+    maxItems: 8,
+    maxLength: 280,
+  });
+
+  if (interestingFacts !== undefined) {
+    payload.interestingFacts = interestingFacts;
+  }
+
+  const visitorInfo = readText(body, 'visitorInfo', issues, { max: 2000 });
+
+  if (visitorInfo !== undefined) {
+    payload.visitorInfo = visitorInfo;
+  }
+
+  const contentSources = readContentArray(body, 'contentSources', issues, {
+    maxItems: 10,
+    maxLength: 500,
+    urls: true,
+  });
+
+  if (contentSources !== undefined) {
+    payload.contentSources = contentSources;
   }
 
   const coordinates = readCoordinates(body, issues, { required: !partial });
@@ -285,6 +509,26 @@ function buildPayload(body, { partial = false } = {}) {
     payload.sourceUrl = sourceUrl;
   }
 
+  const coordinateSource = readText(body, 'coordinateSource', issues, {
+    max: 500,
+  });
+
+  if (coordinateSource !== undefined) {
+    payload.coordinateSource = coordinateSource;
+  }
+
+  const coordinateVerifiedAt = readDate(body, 'coordinateVerifiedAt', issues);
+
+  if (coordinateVerifiedAt !== undefined) {
+    payload.coordinateVerifiedAt = coordinateVerifiedAt;
+  }
+
+  const verificationLevel = readVerificationLevel(body, issues);
+
+  if (verificationLevel !== undefined) {
+    payload.verificationLevel = verificationLevel;
+  }
+
   const audioGuideUrl = readHttpUrl(body, 'audioGuideUrl', issues);
 
   if (audioGuideUrl !== undefined) {
@@ -305,10 +549,26 @@ function buildPayload(body, { partial = false } = {}) {
     }
   }
 
+  if (hasOwn(body, 'isCatalogVisible')) {
+    if (typeof body.isCatalogVisible !== 'boolean') {
+      issues.push('isCatalogVisible debe ser verdadero o falso');
+    } else {
+      payload.isCatalogVisible = body.isCatalogVisible;
+    }
+  } else if (!partial) {
+    payload.isCatalogVisible = true;
+  }
+
   const status = readStatus(body, issues);
 
   if (status !== undefined) {
     payload.status = status;
+  }
+
+  const checkInRadiusMeters = readCheckInRadius(body, issues);
+
+  if (checkInRadiusMeters !== undefined) {
+    payload.checkInRadiusMeters = checkInRadiusMeters;
   }
 
   if (issues.length > 0) {
@@ -342,6 +602,30 @@ function ensureEditable(location) {
   }
 }
 
+async function ensureLocationNotInUse(location) {
+  const publishedAdventureIds = await Adventure.distinct('_id', {
+    status: 'published',
+    deletedAt: null,
+  });
+
+  if (publishedAdventureIds.length === 0) {
+    return;
+  }
+
+  const stop = await AdventureStop.exists({
+    location: location._id,
+    adventure: { $in: publishedAdventureIds },
+  });
+
+  if (stop) {
+    throw new HttpError(
+      409,
+      'LOCATION_IN_USE',
+      'El punto de interés es parada de una aventura publicada. Retíralo o sustitúyelo antes de archivarlo o retirarlo de publicación',
+    );
+  }
+}
+
 export async function listAdminLocations(request, response) {
   const page = parsePositiveInteger(request.query.page, 1);
   const limit = Math.min(
@@ -368,6 +652,26 @@ export async function listAdminLocations(request, response) {
     }
 
     filter.category = request.query.category;
+  }
+
+  if (request.query.circuit && request.query.circuit !== 'all') {
+    if (!LOCATION_CIRCUITS.includes(request.query.circuit)) {
+      throw validationError([
+        `El circuito debe ser all o uno de: ${LOCATION_CIRCUITS.join(', ')}`,
+      ]);
+    }
+
+    filter.circuits = request.query.circuit;
+  }
+
+  if (request.query.tag && request.query.tag !== 'all') {
+    if (!LOCATION_TAGS.includes(request.query.tag)) {
+      throw validationError([
+        `La etiqueta debe ser all o una de: ${LOCATION_TAGS.join(', ')}`,
+      ]);
+    }
+
+    filter.tags = request.query.tag;
   }
 
   if (request.query.q) {
@@ -408,6 +712,7 @@ export async function getAdminLocation(request, response) {
 
 export async function createAdminLocation(request, response) {
   const payload = buildPayload(request.body);
+  ensurePublishable(payload);
 
   const existing = await Location.findOne({ slug: payload.slug });
 
@@ -447,6 +752,8 @@ export async function updateAdminLocation(request, response) {
     throw validationError(['No se envió ningún campo editable']);
   }
 
+  ensurePublishable(payload, location);
+
   if (payload.slug && payload.slug !== location.slug) {
     const duplicate = await Location.findOne({
       slug: payload.slug,
@@ -460,6 +767,14 @@ export async function updateAdminLocation(request, response) {
         'Ya existe un punto de interés con ese slug',
       );
     }
+  }
+
+  if (
+    payload.status !== undefined &&
+    payload.status !== 'published' &&
+    location.status === 'published'
+  ) {
+    await ensureLocationNotInUse(location);
   }
 
   const changedFields = Object.keys(payload);
@@ -487,6 +802,8 @@ export async function deleteAdminLocation(request, response) {
       'El punto de interés ya está archivado',
     );
   }
+
+  await ensureLocationNotInUse(location);
 
   location.status = 'archived';
   location.deletedAt = new Date();
@@ -605,6 +922,64 @@ export async function deleteAdminLocationImage(request, response) {
   });
 
   response.json({ data: location });
+}
+
+export async function rotateLocationCheckInToken(request, response) {
+  const location = await findLocationOrFail(request.params.id);
+  ensureEditable(location);
+
+  const format =
+    typeof request.query.format === 'string'
+      ? request.query.format.toLowerCase()
+      : 'svg';
+
+  if (!QR_FORMATS.includes(format)) {
+    throw new HttpError(
+      400,
+      'INVALID_QR_FORMAT',
+      `El formato del QR debe ser uno de: ${QR_FORMATS.join(', ')}`,
+    );
+  }
+
+  const token = createCheckInToken();
+  const rotatedAt = new Date();
+
+  location.checkInTokenHash = hashCheckInToken(token);
+  location.checkInTokenVersion = (location.checkInTokenVersion ?? 0) + 1;
+  location.checkInTokenRotatedAt = rotatedAt;
+  location.updatedBy = request.user._id;
+  await location.save();
+
+  const qr = await renderCheckInQr({
+    locationId: location._id,
+    token,
+    format,
+  });
+
+  await recordAudit({
+    request,
+    action: 'location.qr.rotated',
+    entityType: 'Location',
+    entityId: location._id,
+    summary: `Rotó el QR de check-in del POI «${location.title}»`,
+    metadata: {
+      slug: location.slug,
+      tokenVersion: location.checkInTokenVersion,
+      format,
+    },
+  });
+
+  response.set('Cache-Control', 'no-store');
+  response.json({
+    data: {
+      location: location.toJSON(),
+      token,
+      tokenVersion: location.checkInTokenVersion,
+      rotatedAt,
+      format,
+      qrDataUrl: qr.dataUrl,
+    },
+  });
 }
 
 export async function listAuditLog(request, response) {

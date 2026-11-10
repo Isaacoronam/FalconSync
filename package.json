@@ -1,0 +1,19 @@
+{
+  "name": "falconsync",
+  "private": true,
+  "scripts": {
+    "test:backend": "npm --prefix falcon-sync-backend test",
+    "test:frontend": "npm --prefix falcon-sync-frontend run test -- --watch=false",
+    "seed:sync": "npm --prefix falcon-sync-backend run seed:sync",
+    "seed:verify": "npm --prefix falcon-sync-backend run seed:verify",
+    "publish:pois": "npm --prefix falcon-sync-backend run publish:pois",
+    "qr:generate": "npm --prefix falcon-sync-backend run qr:generate",
+    "seed:adventures": "npm --prefix falcon-sync-backend run seed:adventures",
+    "seed:adventures:verify": "npm --prefix falcon-sync-backend run seed:adventures:verify",
+    "backfill:usernames": "npm --prefix falcon-sync-backend run backfill:usernames",
+    "backfill:achievements": "npm --prefix falcon-sync-backend run backfill:achievements",
+    "build": "npm --prefix falcon-sync-frontend run build",
+    "e2e": "npm --prefix falcon-sync-frontend run e2e",
+    "verify": "npm run test:backend && npm run test:frontend && npm run build && npm run e2e"
+  }
+}

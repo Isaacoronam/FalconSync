@@ -55,6 +55,7 @@ export default defineConfig({
         COOKIE_SECURE: 'false',
         TRUST_PROXY: 'false',
         UPLOAD_DIR: e2eUploadDir,
+        UPLOAD_PRIVATE_DIR: path.resolve('test-results/e2e-uploads-private'),
       },
     },
     {

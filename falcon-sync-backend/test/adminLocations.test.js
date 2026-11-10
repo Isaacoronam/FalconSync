@@ -47,9 +47,15 @@ function poiPayload(overrides = {}) {
     category: 'architecture',
     description:
       'Inmueble de prueba con una descripción suficientemente extensa.',
+    address: 'Casco histórico de Coro, municipio Miranda',
+    circuits: ['casco-historico'],
+    tags: ['colonial'],
     latitude: 11.4075,
     longitude: -69.6778,
     conservationStatus: 'unknown',
+    coordinateSource: 'Google Maps, Plus Code de prueba',
+    coordinateVerifiedAt: '2026-11-01T00:00:00.000Z',
+    verificationLevel: 'single-source',
     isProvisional: false,
     status: 'published',
     ...overrides,
@@ -187,6 +193,72 @@ describe('Administración de POI', () => {
     assert.equal(audit.body.data[0].entityId, location.id);
   });
 
+  it('guarda y publica contenido editorial y valida sus fuentes', async () => {
+    const location = await createLocation({
+      historicalStory: 'Relato histórico con referencias documentadas.',
+      interestingFacts: ['Primer dato de interés.', 'Segundo dato de interés.'],
+      visitorInfo: 'El acceso está sujeto al horario del recinto.',
+      contentSources: ['https://example.org/historia-del-lugar'],
+    });
+
+    const publicDetail = await request(app).get(
+      `/api/locations/${location.slug}`,
+    );
+
+    assert.equal(publicDetail.status, 200);
+    assert.equal(
+      publicDetail.body.data.historicalStory,
+      'Relato histórico con referencias documentadas.',
+    );
+    assert.deepEqual(publicDetail.body.data.interestingFacts, [
+      'Primer dato de interés.',
+      'Segundo dato de interés.',
+    ]);
+    assert.equal(
+      publicDetail.body.data.visitorInfo,
+      'El acceso está sujeto al horario del recinto.',
+    );
+    assert.deepEqual(publicDetail.body.data.contentSources, [
+      'https://example.org/historia-del-lugar',
+    ]);
+
+    const invalid = await asAdmin(
+      request(app).post('/api/admin/locations'),
+    ).send(
+      poiPayload({
+        title: 'Fuentes Inválidas',
+        contentSources: ['javascript:alert(1)'],
+      }),
+    );
+
+    assert.equal(invalid.status, 400);
+    assert.equal(invalid.body.error.code, 'VALIDATION_ERROR');
+    assert.ok(
+      invalid.body.error.details.some((detail) =>
+        detail.includes('URL http o https'),
+      ),
+    );
+  });
+
+  it('permite excluir un POI del catálogo público sin archivarlo', async () => {
+    const hidden = await createLocation({
+      title: 'Comercio Interno',
+      status: 'draft',
+      isProvisional: true,
+      coordinateVerifiedAt: null,
+      isCatalogVisible: false,
+    });
+
+    assert.equal(hidden.isCatalogVisible, false);
+
+    const updated = await asAdmin(
+      request(app).patch(`/api/admin/locations/${hidden.id}`),
+    ).send({ isCatalogVisible: true });
+
+    assert.equal(updated.status, 200);
+    assert.equal(updated.body.data.isCatalogVisible, true);
+  });
+
   it('rechaza coordenadas fuera de Falcón y datos inválidos', async () => {
     const outside = await asAdmin(
       request(app).post('/api/admin/locations'),
@@ -213,6 +285,66 @@ describe('Administración de POI', () => {
     assert.equal(unsafeImage.status, 400);
   });
 
+  it('rechaza publicar un POI provisional o sin fecha de verificación', async () => {
+    const provisional = await asAdmin(
+      request(app).post('/api/admin/locations'),
+    ).send(
+      poiPayload({
+        title: 'Casa Provisional',
+        isProvisional: true,
+        status: 'published',
+      }),
+    );
+
+    assert.equal(provisional.status, 400);
+    assert.equal(provisional.body.error.code, 'VALIDATION_ERROR');
+    assert.ok(
+      provisional.body.error.details.some((detail) =>
+        detail.includes('provisional'),
+      ),
+    );
+
+    const withoutDate = await asAdmin(
+      request(app).post('/api/admin/locations'),
+    ).send(
+      poiPayload({
+        title: 'Casa Sin Fecha',
+        coordinateVerifiedAt: null,
+        status: 'published',
+      }),
+    );
+
+    assert.equal(withoutDate.status, 400);
+    assert.equal(withoutDate.body.error.code, 'VALIDATION_ERROR');
+    assert.ok(
+      withoutDate.body.error.details.some((detail) =>
+        detail.includes('fecha de verificación'),
+      ),
+    );
+
+    const draft = await createLocation({
+      title: 'Casa En Borrador',
+      status: 'draft',
+      isProvisional: true,
+      coordinateVerifiedAt: null,
+    });
+
+    const publishDraft = await asAdmin(
+      request(app).patch(`/api/admin/locations/${draft.id}`),
+    ).send({ status: 'published' });
+
+    assert.equal(publishDraft.status, 400);
+    assert.equal(publishDraft.body.error.code, 'VALIDATION_ERROR');
+
+    const published = await createLocation({ title: 'Casa Publicada' });
+    const clearDate = await asAdmin(
+      request(app).patch(`/api/admin/locations/${published.id}`),
+    ).send({ coordinateVerifiedAt: null });
+
+    assert.equal(clearDate.status, 400);
+    assert.equal(clearDate.body.error.code, 'VALIDATION_ERROR');
+  });
+
   it('rechaza slugs duplicados', async () => {
     await createLocation();
 
@@ -224,12 +356,14 @@ describe('Administración de POI', () => {
     assert.equal(duplicate.body.error.code, 'DUPLICATE_SLUG');
   });
 
-  it('lista, busca y filtra por estado y categoría', async () => {
+  it('lista, busca y filtra por estado, categoría, circuito y etiqueta', async () => {
     await createLocation({ title: 'Casa de Prueba', status: 'published' });
     await createLocation({
       title: 'Plaza de Prueba',
       slug: 'plaza-de-prueba',
       category: 'urban',
+      circuits: ['espacios-urbanos'],
+      tags: ['family'],
       status: 'draft',
     });
 
@@ -249,6 +383,29 @@ describe('Administración de POI', () => {
       request(app).get('/api/admin/locations?category=urban'),
     );
     assert.equal(urban.body.meta.total, 1);
+
+    const byCircuit = await asAdmin(
+      request(app).get('/api/admin/locations?circuit=espacios-urbanos'),
+    );
+    assert.equal(byCircuit.body.meta.total, 1);
+    assert.equal(byCircuit.body.data[0].slug, 'plaza-de-prueba');
+
+    const byTag = await asAdmin(
+      request(app).get('/api/admin/locations?tag=family'),
+    );
+    assert.equal(byTag.body.meta.total, 1);
+
+    const invalidCircuit = await asAdmin(
+      request(app).get('/api/admin/locations?circuit=inventado'),
+    );
+    assert.equal(invalidCircuit.status, 400);
+    assert.equal(invalidCircuit.body.error.code, 'VALIDATION_ERROR');
+
+    const invalidTag = await asAdmin(
+      request(app).get('/api/admin/locations?tag=inventada'),
+    );
+    assert.equal(invalidTag.status, 400);
+    assert.equal(invalidTag.body.error.code, 'VALIDATION_ERROR');
   });
 
   it('actualiza un POI, guarda el cambio y audita los campos', async () => {

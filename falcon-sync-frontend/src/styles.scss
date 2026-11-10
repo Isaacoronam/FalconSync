@@ -103,6 +103,72 @@ a {
   background: var(--blue);
 }
 
+.heritage-marker__dot--museum {
+  background: #8c5a3c;
+}
+
+.heritage-marker__dot--viewpoint {
+  background: #3f7c6a;
+}
+
+.heritage-marker__dot--commerce {
+  background: #b56a2d;
+}
+
+.heritage-marker__dot--service {
+  background: #6b6f7d;
+}
+
+.heritage-marker--provisional .heritage-marker__dot {
+  border-color: #7a4b00;
+  border-style: dashed;
+  box-shadow:
+    0 0 0 2px #f7e4b7,
+    0 4px 14px rgba(43, 26, 19, 0.4);
+}
+
+.location-card__dot--museum {
+  background: #8c5a3c;
+}
+
+.location-card__dot--viewpoint {
+  background: #3f7c6a;
+}
+
+.location-card__dot--commerce {
+  background: #b56a2d;
+}
+
+.location-card__dot--service {
+  background: #6b6f7d;
+}
+
+.heritage-cluster {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.heritage-cluster__count {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 3px solid var(--paper);
+  border-radius: 50%;
+  color: var(--paper);
+  background: var(--terracotta-dark);
+  box-shadow: 0 6px 18px rgba(43, 26, 19, 0.4);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.heritage-cluster--provisional .heritage-cluster__count {
+  border-color: #7a4b00;
+  color: #694300;
+  background: #fff0c7;
+}
+
 .leaflet-popup-content-wrapper {
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -151,10 +217,29 @@ a {
   letter-spacing: -0.01em;
 }
 
+.heritage-popup__address {
+  margin: -0.25rem 0 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .heritage-popup__text {
   margin: 0 0 0.7rem;
   color: var(--ink-soft);
   font-size: 0.82rem;
+}
+
+.heritage-popup__credit {
+  margin: -0.5rem 0 0.7rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+  line-height: 1.35;
+}
+
+.heritage-popup__credit a {
+  color: var(--terracotta-dark);
+  text-decoration: underline;
 }
 
 .heritage-popup__meta {
@@ -176,6 +261,16 @@ a {
 .heritage-popup__tag--warning {
   color: #7a4b00;
   background: #f7e4b7;
+}
+
+.heritage-popup__tag--verified {
+  color: #2f5841;
+  background: #dcecdf;
+}
+
+.heritage-popup__tag--circuit {
+  color: var(--terracotta-dark);
+  background: #f3ddd4;
 }
 
 .heritage-popup__source {

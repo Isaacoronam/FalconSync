@@ -42,3 +42,15 @@ export const passwordLimiter = createLimiter({
   limit: 10,
   message: 'Demasiados cambios de contraseña. Espera 15 minutos.',
 });
+
+export const checkInLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  message: 'Demasiados intentos de check-in. Espera 15 minutos.',
+});
+
+export const uploadLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  message: 'Demasiadas cargas de imágenes. Espera unos minutos.',
+});

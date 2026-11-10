@@ -1,7 +1,13 @@
 <div class="app-shell">
   <header class="site-header">
     <a class="brand" routerLink="/" aria-label="FalconSync, ir al mapa">
-      <span class="brand__mark" aria-hidden="true">F</span>
+      <img
+        class="brand__mark"
+        src="brand/falconsync-logo.png"
+        alt=""
+        width="48"
+        height="48"
+      />
       <span class="brand__copy">
         <span class="brand__eyebrow">Santa Ana de Coro · Patrimonio Mundial</span>
         <span class="brand__name">FALCONSYNC</span>
@@ -18,12 +24,14 @@
       >
         CoroMap
       </a>
-      <span class="site-nav__link site-nav__link--soon">
-        Patrimonio <small>Próximamente</small>
-      </span>
-      <span class="site-nav__link site-nav__link--soon">
-        CoroAventura <small>Próximamente</small>
-      </span>
+      <a
+        class="site-nav__link"
+        routerLink="/lugares"
+        routerLinkActive="site-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Explorar lugares
+      </a>
 
       @if (auth.isAuthenticated()) {
         @if (auth.isAdmin()) {
@@ -38,9 +46,9 @@
         }
         <a
           class="site-nav__user"
-          routerLink="/cambiar-contrasena"
-          title="Cambiar contraseña"
-          [attr.aria-label]="'Cuenta de ' + (auth.currentUser()?.name ?? '') + '. Cambiar contraseña'"
+          routerLink="/perfil"
+          title="Mi perfil"
+          [attr.aria-label]="'Perfil de ' + (auth.currentUser()?.name ?? '')"
         >
           {{ auth.currentUser()?.name }}
         </a>

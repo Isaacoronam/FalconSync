@@ -64,6 +64,10 @@ export const config = {
   },
   uploads: {
     dir: path.resolve(process.env.UPLOAD_DIR ?? path.join(process.cwd(), 'uploads')),
+    privateDir: path.resolve(
+      process.env.UPLOAD_PRIVATE_DIR ??
+        path.join(process.cwd(), 'uploads-private'),
+    ),
     publicPrefix: '/api/uploads',
     maxImageBytes: toPositiveInteger(
       process.env.UPLOAD_MAX_IMAGE_BYTES,

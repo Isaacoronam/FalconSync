@@ -11,6 +11,42 @@ const userSchema = new mongoose.Schema(
       minlength: [2, 'El nombre debe tener al menos 2 caracteres'],
       maxlength: [80, 'El nombre no puede superar 80 caracteres'],
     },
+    username: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true,
+      minlength: [3, 'El nombre de usuario debe tener al menos 3 caracteres'],
+      maxlength: [30, 'El nombre de usuario no puede superar 30 caracteres'],
+      match: [
+        /^[a-z0-9](?:[a-z0-9._-]{1,28}[a-z0-9])$/,
+        'El nombre de usuario solo admite minúsculas, números, puntos, guiones y guiones bajos',
+      ],
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [280, 'La biografía no puede superar 280 caracteres'],
+      default: '',
+    },
+    avatarFilename: {
+      type: String,
+      select: false,
+    },
+    avatarMimeType: {
+      type: String,
+      select: false,
+    },
+    avatarSize: {
+      type: Number,
+      min: 0,
+      select: false,
+    },
+    avatarUpdatedAt: {
+      type: Date,
+      select: false,
+    },
     email: {
       type: String,
       required: [true, 'El correo es obligatorio'],

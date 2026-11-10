@@ -14,8 +14,14 @@ blob-report/
 !.env.example
 !**/.env.example
 
-# Medios subidos por usuarios (futuro)
+# Medios subidos por usuarios
 uploads/
+
+# Avatares y fotos privadas de check-in
+uploads-private/
+
+# QR de check-in generados localmente (contienen tokens)
+.qr-codes/
 
 # Logs y archivos del sistema
 *.log

@@ -29,4 +29,5 @@ const upload = multer({
   },
 });
 
-export const uploadLocationImage = upload.single('image');
+export const uploadImage = upload.single('image');
+export const uploadLocationImage = uploadImage;

@@ -31,8 +31,42 @@ test('el mapa carga los POI, limita Falcón y responde en móvil', async ({ page
   await page.goto('/');
 
   await expect(page.locator('#map-title')).toContainText('El patrimonio de Coro');
-  await expect(page.locator('.location-card')).toHaveCount(6);
+  await expect(page.locator('.location-card')).toHaveCount(23);
+  await expect(page.locator('.location-card__thumb')).toHaveCount(23);
+  await expect(page.locator('.location-card__status')).toHaveCount(0);
+  await expect(
+    page.locator('.location-card').filter({ hasText: 'Gelatería El Sol' }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator('.location-card')
+      .filter({ hasText: 'Parque Nacional Médanos de Coro' }),
+  ).toHaveCount(1);
+  await expect(
+    page.locator('.location-card').filter({ hasText: 'Mirador del Pueblo' }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Explorar por circuito' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Explorar por etiqueta' })).toHaveCount(0);
   await expect(page.locator('#coro-map')).toBeVisible();
+  await expect(page.locator('.heritage-cluster').first()).toBeVisible();
+  await expect(page.locator('.map-hero__notice')).toHaveCount(0);
+
+  const poiList = page.locator('.map-panel__section--list');
+  const listMetrics = await poiList.evaluate((element) => ({
+    overflowY: getComputedStyle(element).overflowY,
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight,
+  }));
+  expect(listMetrics.overflowY).toBe('auto');
+  expect(listMetrics.scrollHeight).toBeGreaterThan(listMetrics.clientHeight);
+
+  await poiList.hover();
+  const pageScrollBefore = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 800);
+  await expect
+    .poll(() => poiList.evaluate((element) => element.scrollTop))
+    .toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(pageScrollBefore);
 
   await page.waitForFunction(() => Boolean(window.__falconsyncMap));
 
@@ -87,13 +121,31 @@ test('el mapa carga los POI, limita Falcón y responde en móvil', async ({ page
   expect(overviewZoom).toBeLessThan(10);
   expect(overviewZoom).toBeGreaterThanOrEqual(8);
 
+  await page
+    .locator('.location-card')
+    .filter({ hasText: 'Iglesia de San Francisco' })
+    .click();
+  await expect(page.locator('.heritage-popup__notice')).toHaveCount(0);
+
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.map-stage')).toBeVisible();
+  const mobileListMetrics = await poiList.evaluate((element) => ({
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight,
+  }));
+  expect(mobileListMetrics.scrollHeight).toBeGreaterThan(mobileListMetrics.clientHeight);
 
   const horizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
+  await page.getByRole('button', { name: 'Museo', exact: true }).click();
+  await expect(page.locator('.location-card')).toHaveCount(5);
+
+  await page.getByRole('button', { name: 'Todas las categorías' }).click();
+  await page.getByRole('button', { name: 'Monumento', exact: true }).click();
+  await expect(page.locator('.location-card')).toHaveCount(3);
 
   const appErrors = consoleErrors.filter(
     (message) =>

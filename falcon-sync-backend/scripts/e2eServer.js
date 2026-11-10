@@ -48,7 +48,7 @@ async function prepareDatabase() {
   });
 
   console.log(
-    '[e2e] Base de datos reiniciada con 6 POI, un admin operativo y un admin pendiente de cambio de contraseña.',
+    '[e2e] Base de datos reiniciada con 23 POI publicados, un admin operativo y un admin pendiente de cambio de contraseña.',
   );
 }
 

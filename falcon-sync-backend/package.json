@@ -11,6 +11,15 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "seed": "node scripts/seedLocations.js",
+    "seed:sync": "node scripts/seedLocations.js --sync",
+    "seed:editorial": "node scripts/seedLocations.js --sync-editorial",
+    "seed:verify": "node scripts/seedLocations.js --verify",
+    "publish:pois": "node scripts/publishLocations.js",
+    "qr:generate": "node scripts/generateCheckInQr.js",
+    "seed:adventures": "node scripts/seedAdventures.js",
+    "seed:adventures:verify": "node scripts/seedAdventures.js --verify",
+    "backfill:usernames": "node scripts/backfillUsernames.js",
+    "backfill:achievements": "node scripts/backfillAchievements.js",
     "create-admin": "node scripts/createAdmin.js",
     "test": "node --test --test-concurrency=1",
     "test:watch": "node --test --watch --test-concurrency=1"
@@ -25,7 +34,8 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.12.0",
-    "multer": "^2.5.0"
+    "multer": "^2.5.0",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "supertest": "^7.1.4"

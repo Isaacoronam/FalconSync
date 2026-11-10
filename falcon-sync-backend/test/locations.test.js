@@ -20,9 +20,16 @@ const cathedral = {
     type: "Point",
     coordinates: [-69.6778073, 11.4075246],
   },
+  address: "Frente a la Plaza Bolívar, casco histórico de Coro",
+  circuits: ["casco-historico"],
+  tags: ["colonial", "unesco"],
   sourceUrl: "https://www.openstreetmap.org/way/370610638",
+  coordinateSource: "OpenStreetMap way 370610638",
+  coordinateVerifiedAt: new Date("2026-11-01T00:00:00.000Z"),
+  verificationLevel: "single-source",
   images: ["/images/locations/catedral-de-coro.jpg"],
   isProvisional: false,
+  status: "published",
 };
 
 const plaza = {
@@ -35,8 +42,16 @@ const plaza = {
     type: "Point",
     coordinates: [-69.6781938, 11.4072811],
   },
+  address: "Casco histórico de Coro, frente a la Catedral",
+  circuits: ["casco-historico", "espacios-urbanos"],
+  tags: ["family", "free-entry"],
   sourceUrl: "https://www.openstreetmap.org/way/370610469",
+  coordinateSource: "OpenStreetMap way 370610469",
+  coordinateVerifiedAt: new Date("2026-11-01T00:00:00.000Z"),
+  verificationLevel: "single-source",
+  images: [],
   isProvisional: false,
+  status: "published",
 };
 
 async function seedLocations() {
@@ -108,6 +123,138 @@ describe("FalconSync API", () => {
     assert.equal(response.status, 200);
     assert.equal(response.body.meta.total, 1);
     assert.equal(response.body.data[0].slug, "catedral-de-coro");
+  });
+
+  it("filtra los lugares por circuito y etiqueta", async () => {
+    await seedLocations();
+
+    const byCircuit = await request(app).get(
+      "/api/locations?circuit=espacios-urbanos",
+    );
+
+    assert.equal(byCircuit.status, 200);
+    assert.equal(byCircuit.body.meta.total, 1);
+    assert.equal(byCircuit.body.data[0].slug, "plaza-bolivar-de-coro");
+
+    const byTag = await request(app).get("/api/locations?tag=unesco");
+
+    assert.equal(byTag.status, 200);
+    assert.equal(byTag.body.meta.total, 1);
+    assert.equal(byTag.body.data[0].slug, "catedral-de-coro");
+  });
+
+  it("incluye solo los borradores provisionales visibles cuando se solicita", async () => {
+    await seedLocations();
+    await Location.create([
+      {
+        ...cathedral,
+        title: "Teatro Provisional",
+        slug: "teatro-provisional",
+        category: "urban",
+        tags: ["theater"],
+        coordinateVerifiedAt: null,
+        verificationLevel: "unverified",
+        isProvisional: true,
+        status: "draft",
+      },
+      {
+        ...cathedral,
+        title: "Comercio Excluido",
+        slug: "comercio-excluido",
+        category: "commerce",
+        coordinateVerifiedAt: null,
+        isProvisional: true,
+        isCatalogVisible: false,
+        status: "draft",
+      },
+      {
+        ...cathedral,
+        title: "Borrador Interno",
+        slug: "borrador-interno",
+        coordinateVerifiedAt: null,
+        status: "draft",
+      },
+    ]);
+
+    const defaultList = await request(app).get("/api/locations");
+    const discovered = await request(app).get(
+      "/api/locations?includeProvisional=true&tag=theater",
+    );
+    const invalidFlag = await request(app).get(
+      "/api/locations?includeProvisional=maybe",
+    );
+    const provisionalDetail = await request(app).get(
+      "/api/locations/teatro-provisional",
+    );
+    const nearby = await request(app).get(
+      "/api/locations/near?lat=11.4075&lng=-69.6778&radius=500",
+    );
+
+    assert.equal(defaultList.body.meta.total, 2);
+    assert.equal(discovered.status, 200);
+    assert.deepEqual(
+      discovered.body.data.map((location) => location.slug),
+      ["teatro-provisional"],
+    );
+    assert.equal(discovered.body.data[0].isProvisional, true);
+    assert.equal(discovered.body.data[0].status, "draft");
+    assert.equal(invalidFlag.status, 400);
+    assert.equal(invalidFlag.body.error.code, "INVALID_INCLUDE_PROVISIONAL");
+    assert.equal(provisionalDetail.status, 404);
+    assert.ok(
+      nearby.body.data.every((location) => location.slug !== "teatro-provisional"),
+    );
+  });
+
+  it("rechaza circuitos y etiquetas desconocidos", async () => {
+    const circuit = await request(app).get(
+      "/api/locations?circuit=inventado",
+    );
+    const tag = await request(app).get("/api/locations?tag=inventada");
+
+    assert.equal(circuit.status, 400);
+    assert.equal(circuit.body.error.code, "INVALID_CIRCUIT");
+    assert.equal(tag.status, 400);
+    assert.equal(tag.body.error.code, "INVALID_TAG");
+  });
+
+  it("oculta un POI publicado que haya quedado marcado como provisional", async () => {
+    await seedLocations();
+    await Location.collection.insertOne({
+      title: "Catedral Provisional",
+      slug: "catedral-provisional",
+      category: "religious",
+      description:
+        "Registro legado de prueba que conserva el estado publicado pero es provisional.",
+      location: {
+        type: "Point",
+        coordinates: [-69.6778073, 11.4075246],
+      },
+      conservationStatus: "unknown",
+      isProvisional: true,
+      status: "published",
+      deletedAt: null,
+      images: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const list = await request(app).get("/api/locations");
+    const detail = await request(app).get(
+      "/api/locations/catedral-provisional",
+    );
+    const near = await request(app).get(
+      "/api/locations/near?lat=11.4075&lng=-69.6778&radius=500",
+    );
+
+    assert.equal(list.body.meta.total, 2);
+    assert.ok(
+      list.body.data.every((item) => item.slug !== "catedral-provisional"),
+    );
+    assert.equal(detail.status, 404);
+    assert.ok(
+      near.body.data.every((item) => item.slug !== "catedral-provisional"),
+    );
   });
 
   it("rechaza una categoría desconocida", async () => {

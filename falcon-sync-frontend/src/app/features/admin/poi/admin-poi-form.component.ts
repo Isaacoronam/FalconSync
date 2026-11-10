@@ -6,14 +6,20 @@ import { AdminLocationPayload } from '../../../core/models/admin.model';
 import {
   ConservationStatus,
   LocationCategory,
+  LocationCircuit,
   LocationStatus,
+  LocationTag,
+  LocationVerificationLevel,
 } from '../../../core/models/location.model';
 import { AdminApiService } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error';
 import {
   CONSERVATION_LABELS,
   LOCATION_CATEGORY_LABELS,
+  LOCATION_CIRCUIT_CHOICES,
   LOCATION_STATUS_LABELS,
+  LOCATION_TAG_CHOICES,
+  LOCATION_VERIFICATION_CHOICES,
 } from '../../../core/utils/location-labels';
 import { LocationPickerComponent, PickerCoordinates } from './location-picker.component';
 
@@ -44,6 +50,9 @@ export class AdminPoiFormComponent implements OnInit {
     value,
     label: LOCATION_STATUS_LABELS[value],
   }));
+  protected readonly circuits = LOCATION_CIRCUIT_CHOICES;
+  protected readonly tags = LOCATION_TAG_CHOICES;
+  protected readonly verificationLevels = LOCATION_VERIFICATION_CHOICES;
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
@@ -59,12 +68,21 @@ export class AdminPoiFormComponent implements OnInit {
       '',
       [Validators.required, Validators.minLength(10), Validators.maxLength(5000)],
     ],
+    address: ['', [Validators.maxLength(240)]],
     historicalPeriod: ['', [Validators.maxLength(120)]],
+    historicalStory: ['', [Validators.maxLength(10000)]],
+    interestingFactsText: ['', [Validators.maxLength(2300)]],
+    visitorInfo: ['', [Validators.maxLength(2000)]],
+    contentSourcesText: ['', [Validators.maxLength(5000)]],
     conservationStatus: ['unknown', [Validators.required]],
     status: ['draft', [Validators.required]],
     sourceUrl: ['', [Validators.pattern(/^https?:\/\/[^\s]+$/i)]],
+    coordinateSource: ['', [Validators.maxLength(500)]],
+    coordinateVerifiedAt: [''],
+    verificationLevel: ['unverified' as LocationVerificationLevel],
     audioGuideUrl: ['', [Validators.pattern(/^https?:\/\/[^\s]+$/i)]],
     isProvisional: [false],
+    isCatalogVisible: [true],
     latitude: [11.4078, [Validators.required, Validators.min(10.3), Validators.max(12.19)]],
     longitude: [-69.6785, [Validators.required, Validators.min(-71.35), Validators.max(-68.18)]],
   });
@@ -79,6 +97,8 @@ export class AdminPoiFormComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly success = signal<string | null>(null);
   protected readonly imageError = signal<string | null>(null);
+  protected readonly selectedCircuits = signal<LocationCircuit[]>([]);
+  protected readonly selectedTags = signal<LocationTag[]>([]);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -116,16 +136,29 @@ export class AdminPoiFormComponent implements OnInit {
             slug: data.slug,
             category: data.category,
             description: data.description,
+            address: data.address ?? '',
             historicalPeriod: data.historicalPeriod ?? '',
+            historicalStory: data.historicalStory ?? '',
+            interestingFactsText: (data.interestingFacts ?? []).join('\n'),
+            visitorInfo: data.visitorInfo ?? '',
+            contentSourcesText: (data.contentSources ?? []).join('\n'),
             conservationStatus: data.conservationStatus,
             status: data.status === 'archived' ? 'draft' : data.status,
             sourceUrl: data.sourceUrl ?? '',
+            coordinateSource: data.coordinateSource ?? '',
+            coordinateVerifiedAt: data.coordinateVerifiedAt
+              ? data.coordinateVerifiedAt.slice(0, 10)
+              : '',
+            verificationLevel: data.verificationLevel ?? 'unverified',
             audioGuideUrl: data.audioGuideUrl ?? '',
             isProvisional: data.isProvisional,
+            isCatalogVisible: data.isCatalogVisible !== false,
             latitude,
             longitude,
           });
 
+          this.selectedCircuits.set([...(data.circuits ?? [])]);
+          this.selectedTags.set([...(data.tags ?? [])]);
           this.locationTitle.set(data.title);
           this.images.set(data.images);
           this.loading.set(false);
@@ -146,6 +179,22 @@ export class AdminPoiFormComponent implements OnInit {
     this.form.controls.longitude.markAsTouched();
   }
 
+  protected toggleCircuit(circuit: LocationCircuit, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+
+    this.selectedCircuits.update((values) =>
+      checked ? [...values, circuit] : values.filter((value) => value !== circuit),
+    );
+  }
+
+  protected toggleTag(tag: LocationTag, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+
+    this.selectedTags.update((values) =>
+      checked ? [...values, tag] : values.filter((value) => value !== tag),
+    );
+  }
+
   protected submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -154,16 +203,49 @@ export class AdminPoiFormComponent implements OnInit {
     }
 
     const values = this.form.getRawValue();
+    const coordinateVerifiedAt = values.coordinateVerifiedAt.trim();
+
+    if (values.status === 'published' && values.isProvisional) {
+      this.error.set(
+        'No puedes publicar un POI provisional. Verifica la ubicación y desmarca la casilla.',
+      );
+      return;
+    }
+
+    if (values.status === 'published' && !coordinateVerifiedAt) {
+      this.error.set(
+        'No puedes publicar sin fecha de verificación de coordenadas.',
+      );
+      return;
+    }
+
     const payload: AdminLocationPayload = {
       title: values.title.trim(),
       category: values.category as LocationCategory,
       description: values.description.trim(),
+      address: values.address.trim() || undefined,
+      circuits: this.selectedCircuits(),
+      tags: this.selectedTags(),
       historicalPeriod: values.historicalPeriod.trim() || undefined,
+      historicalStory: values.historicalStory.trim() || undefined,
+      interestingFacts: values.interestingFactsText
+        .split(/\r?\n/)
+        .map((fact) => fact.trim())
+        .filter(Boolean),
+      visitorInfo: values.visitorInfo.trim() || undefined,
+      contentSources: values.contentSourcesText
+        .split(/\r?\n/)
+        .map((source) => source.trim())
+        .filter(Boolean),
       conservationStatus: values.conservationStatus as ConservationStatus,
       status: values.status as Exclude<LocationStatus, 'archived'>,
       sourceUrl: values.sourceUrl.trim() || undefined,
+      coordinateSource: values.coordinateSource.trim() || undefined,
+      coordinateVerifiedAt: coordinateVerifiedAt || null,
+      verificationLevel: values.verificationLevel as LocationVerificationLevel,
       audioGuideUrl: values.audioGuideUrl.trim() || undefined,
       isProvisional: values.isProvisional,
+      isCatalogVisible: values.isCatalogVisible,
       latitude: Number(values.latitude),
       longitude: Number(values.longitude),
     };

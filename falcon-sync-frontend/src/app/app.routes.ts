@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guard';
+import { checkInTokenGuard } from './core/guards/check-in-token.guard';
 
 export const routes: Routes = [
   {
@@ -7,6 +8,63 @@ export const routes: Routes = [
     title: 'FALCONSYNC',
     loadComponent: () =>
       import('./features/map/coro-map.component').then((module) => module.CoroMapComponent),
+  },
+  {
+    path: 'lugares',
+    title: 'Explora los lugares | FALCONSYNC',
+    loadComponent: () =>
+      import('./features/lugares/lugar-list/lugar-list.component').then(
+        (module) => module.LugarListComponent,
+      ),
+  },
+  {
+    path: 'lugares/:slug',
+    title: 'Historia del lugar | FALCONSYNC',
+    loadComponent: () =>
+      import('./features/lugares/lugar-detail/lugar-detail.component').then(
+        (module) => module.LugarDetailComponent,
+      ),
+  },
+  {
+    path: 'aventuras/:slug/progreso',
+    redirectTo: '/lugares',
+    pathMatch: 'full',
+  },
+  {
+    path: 'aventuras/:slug',
+    redirectTo: '/lugares',
+    pathMatch: 'full',
+  },
+  {
+    path: 'aventuras',
+    redirectTo: '/lugares',
+    pathMatch: 'full',
+  },
+  {
+    path: 'checkin',
+    title: 'Escanear QR | FALCONSYNC',
+    loadComponent: () =>
+      import(
+        './features/aventuras/checkin-escaner/checkin-escaner.component'
+      ).then((module) => module.CheckinEscanerComponent),
+  },
+  {
+    path: 'checkin/:locationId',
+    canActivate: [checkInTokenGuard, authGuard],
+    title: 'Check-in | FALCONSYNC',
+    loadComponent: () =>
+      import('./features/aventuras/checkin/checkin.component').then(
+        (module) => module.CheckinComponent,
+      ),
+  },
+  {
+    path: 'perfil',
+    title: 'Mi perfil | FALCONSYNC',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/perfil/perfil.component').then(
+        (module) => module.PerfilComponent,
+      ),
   },
   {
     path: 'login',
@@ -80,6 +138,34 @@ export const routes: Routes = [
           import('./features/admin/audit/admin-audit.component').then(
             (module) => module.AdminAuditComponent,
           ),
+      },
+      {
+        path: 'aventuras',
+        redirectTo: 'poi',
+        pathMatch: 'full',
+      },
+      {
+        path: 'aventuras/nuevo',
+        redirectTo: 'poi',
+        pathMatch: 'full',
+      },
+      {
+        path: 'aventuras/:id/editar',
+        redirectTo: 'poi',
+        pathMatch: 'full',
+      },
+      {
+        path: 'aventuras/:id/paradas',
+        redirectTo: 'poi',
+        pathMatch: 'full',
+      },
+      {
+        path: 'locations/:id/qr',
+        title: 'Imprimir QR | FALCONSYNC',
+        loadComponent: () =>
+          import(
+            './features/admin/aventuras/qr-imprimir/qr-imprimir.component'
+          ).then((module) => module.QrImprimirComponent),
       },
     ],
   },
