@@ -38,43 +38,43 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: |
-            falcon-sync-backend/package-lock.json
-            falcon-sync-frontend/package-lock.json
+            projects/backend/package-lock.json
+            projects/frontend/package-lock.json
 
       - name: Instalar dependencias del backend
-        working-directory: falcon-sync-backend
+        working-directory: projects/backend
         run: npm ci
 
       - name: Auditoría de dependencias del backend
-        working-directory: falcon-sync-backend
+        working-directory: projects/backend
         run: npm audit --omit=dev
 
       - name: Pruebas del backend
-        working-directory: falcon-sync-backend
+        working-directory: projects/backend
         run: npm test
 
       - name: Instalar dependencias del frontend
-        working-directory: falcon-sync-frontend
+        working-directory: projects/frontend
         run: npm ci
 
       - name: Auditoría de dependencias del frontend
-        working-directory: falcon-sync-frontend
+        working-directory: projects/frontend
         run: npm audit --omit=dev
 
       - name: Pruebas del frontend
-        working-directory: falcon-sync-frontend
+        working-directory: projects/frontend
         run: npm test -- --watch=false
 
       - name: Build de producción
-        working-directory: falcon-sync-frontend
+        working-directory: projects/frontend
         run: npm run build
 
       - name: Instalar Chromium de Playwright
-        working-directory: falcon-sync-frontend
+        working-directory: projects/frontend
         run: npx playwright install --with-deps chromium
 
       - name: Pruebas E2E
-        working-directory: falcon-sync-frontend
+        working-directory: projects/frontend
         run: npm run e2e
 
       - name: Publicar reporte E2E
@@ -83,6 +83,6 @@ jobs:
         with:
           name: playwright-report
           path: |
-            falcon-sync-frontend/playwright-report
-            falcon-sync-frontend/test-results
+            projects/frontend/playwright-report
+            projects/frontend/test-results
           retention-days: 7

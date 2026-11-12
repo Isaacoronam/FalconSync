@@ -8,7 +8,7 @@ Unidades 2 a 7 todavía no están incorporadas en `.opencode/knowledge/`.
 
 ## Alcance
 
-- Layout administrativo con navegación a panel, POI y auditoría.
+- Layout administrativo con navegación a panel, POI, aventuras, usuarios y auditoría.
 - Panel con métricas por estado, usuarios y actividad reciente.
 - Listado de POI con búsqueda, filtros por estado, categoría, circuito y etiqueta,
   paginación y acciones.
@@ -35,7 +35,8 @@ Todas las rutas `/api/admin/*` exigen:
 5. rol `admin`.
 
 El rol `moderator` sigue reservado para el corte de moderación. No se implementó todavía
-gestión de usuarios ni asignación de roles desde el panel.
+edición de cuentas ni asignación de roles desde el panel. El administrador puede consultar
+usuarios registrados, su rol y estado, fecha de registro y último acceso.
 
 ## Modelo de POI
 
@@ -92,7 +93,8 @@ administrativo.
 
 | Método | Ruta | Resultado |
 |---|---|---|
-| `GET` | `/api/admin/summary` | Métricas, estados y últimas seis acciones. |
+| `GET` | `/api/admin/summary` | Métricas de usuarios y POI, check-ins de los últimos 30 días, visitantes únicos, lugares más visitados, alertas editoriales y últimas seis acciones. |
+| `GET` | `/api/admin/users` | Usuarios paginados; filtros opcionales `q`, `role`, `active`, `page` y `limit` (máximo 50). |
 | `GET` | `/api/admin/locations` | Lista paginada con `q`, `status`, `category`, `circuit`, `tag`, `page`, `limit`. |
 | `GET` | `/api/admin/locations/:id` | Detalle administrativo. |
 | `POST` | `/api/admin/locations` | Crea un POI; por defecto como borrador. |
@@ -162,7 +164,15 @@ Rutas:
 - `/admin/poi`: listado y acciones.
 - `/admin/poi/nuevo`: creación.
 - `/admin/poi/:id/editar`: edición, imágenes y publicación.
+- `/admin/aventuras`: gestión de aventuras, formularios y paradas.
+- `/admin/usuarios`: consulta paginada y filtrable de usuarios.
 - `/admin/auditoria`: historial.
+
+El dashboard presenta check-ins reales, visitantes únicos y los lugares más visitados en
+los últimos 30 días, además de pendientes editoriales y actividad administrativa. Si todavía
+no hay check-ins, muestra un estado vacío en vez de simular actividad. La lista de usuarios
+expone únicamente nombre, username, correo, rol, estado, fecha de registro y último acceso;
+no entrega hashes de contraseña, tokens ni otros datos privados del perfil.
 
 El formulario usa validación reactiva, un selector Leaflet limitado a Falcón y gestión de
 imágenes en la misma pantalla de edición. Incluye descripción, historia, hechos de interés,
@@ -176,8 +186,8 @@ evitar desplazamiento horizontal.
 
 | Comprobación | Resultado |
 |---|---|
-| Pruebas backend | 75/75 aprobadas |
-| Pruebas frontend | 51/51 aprobadas |
+| Pruebas backend | 79/79 aprobadas |
+| Pruebas frontend | 52/52 aprobadas |
 | Build de producción | Correcto, sin advertencias |
 | E2E | 16/16 en Edge local; corrida Chromium/CI pendiente de repetir |
 | Seed y verificación | 23 POI publicados; Gelatería El Sol y la entrada del Parque Nacional Médanos de Coro visibles en el mapa |
@@ -188,15 +198,18 @@ aparece en el mapa, lo archiva, verifica que desaparece del API público y lo re
 
 ## Límites y pendientes
 
-- No hay gestión de usuarios ni cambio de roles desde el panel.
+- La lista de usuarios es de solo consulta; no permite cambiar roles, desactivar cuentas,
+  exportar datos ni consultar historial de viajes individuales.
+- Los indicadores de demanda dependen de los check-ins por QR/geocerca; no existen reservas,
+  ventas, pagos ni inventario de servicios en el alcance actual.
 - No hay flujo editorial con revisión por un segundo usuario.
 - No se generan miniaturas ni se eliminan metadatos EXIF.
 - No hay análisis antivirus de archivos subidos.
 - El almacenamiento es local y no está replicado.
 - El slug archivado no puede reutilizarse sin elegir otro.
 - No se implementó historial visual de versiones ni comparación de cambios.
-- Los 17 POI borradores requieren verificación de coordenadas en campo; uno tiene
-  discrepancias documentadas y no deben publicarse todavía.
+- Los POI provisionales o sin verificación completa deben revisarse antes de publicarse; el
+  dashboard muestra las alertas según los datos actuales.
 - La autoría y licencia de 18 imágenes sigue pendiente de confirmación.
 - No hay flujo para aprobar la verificación de coordenadas por un segundo usuario.
 - El workflow de CI sigue sin ejecutarse en remoto.

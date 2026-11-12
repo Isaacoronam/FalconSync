@@ -373,7 +373,7 @@ ignoradas por Git. En la suite E2E se usan `test-results/e2e-uploads` y
 | Comprobación | Comando | Resultado |
 |---|---|---|
 | Pruebas de perfil y logros | `node --test test/achievements.test.js` | Aprobadas |
-| Suite backend completa | `npm test` en `falcon-sync-backend` | 75/75 aprobadas |
+| Suite backend completa | `npm test` en `projects/backend` | 75/75 aprobadas |
 | Pruebas del seed de aventura | `node --test test/seedAdventures.test.js` | 2/2 aprobadas |
 | Pruebas frontend | `npm test -- --watch=false` | 51/51 aprobadas |
 | Build de producción | `npm run build` | Correcto, sin advertencias |

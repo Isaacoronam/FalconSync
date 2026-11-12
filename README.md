@@ -53,8 +53,13 @@ flowchart LR
 
 ```text
 FalconSYN/
-├── falcon-sync-backend/      # API REST y lógica de negocio
-├── falcon-sync-frontend/     # Aplicación web Angular
+├── projects/
+│   ├── backend/              # API REST y lógica de negocio
+│   ├── frontend/             # Aplicación web Angular
+│   └── mobile/               # Esqueleto reservado para la app de campo
+├── context/                  # Contexto, reglas y contratos
+├── skills/                   # Índice de skills locales
+├── memory/                   # Decisiones y soluciones conocidas
 ├── docs/                     # Documentación técnica y funcional
 ├── .github/workflows/        # CI/CD para validación
 ├── README.md                 # Documento principal
@@ -86,18 +91,18 @@ cd FalconSync
 ### 2. Instalar dependencias del backend
 
 ```bash
-npm install --prefix falcon-sync-backend
+npm install --prefix projects/backend
 ```
 
 ### 3. Instalar dependencias del frontend
 
 ```bash
-npm install --prefix falcon-sync-frontend
+npm install --prefix projects/frontend
 ```
 
 ### 4. Configurar variables de entorno
 
-Crea un archivo `.env` dentro de `falcon-sync-backend/` con la estructura del ejemplo:
+Crea un archivo `.env` dentro de `projects/backend/` con la estructura del ejemplo:
 
 ```env
 NODE_ENV=development
@@ -123,14 +128,14 @@ ADMIN_PASSWORD=cambia-esta-clave
 ADMIN_NAME=Administrador FalconSync
 ```
 
-Puedes usar el archivo base `falcon-sync-backend/.env.example` como referencia.
+Puedes usar el archivo base `projects/backend/.env.example` como referencia.
 
 ## Ejecución local
 
 ### Backend
 
 ```bash
-npm --prefix falcon-sync-backend run dev
+npm --prefix projects/backend run dev
 ```
 
 El backend queda disponible en:
@@ -140,7 +145,7 @@ El backend queda disponible en:
 ### Frontend
 
 ```bash
-npm --prefix falcon-sync-frontend run start
+npm --prefix projects/frontend run start
 ```
 
 El frontend queda disponible en:

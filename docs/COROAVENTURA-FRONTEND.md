@@ -86,7 +86,7 @@ Mensajes del frontend:
 
 ### Unitarias (Vitest)
 
-`npm test -- --watch=false` en `falcon-sync-frontend`.
+`npm test -- --watch=false` en `projects/frontend`.
 
 Suites nuevas o ampliadas:
 
@@ -135,10 +135,10 @@ remota del workflow sigue pendiente.
 ## Requisitos de arranque local
 
 1. Backend en `http://localhost:3000`.
-2. Frontend: `cd falcon-sync-frontend && npm start` → `http://localhost:4200`.
+2. Frontend: `cd projects/frontend && npm start` → `http://localhost:4200`.
 3. El seed de aventura se ejecuta con `npm run seed:adventures`; crea la «Ruta del Casco Histórico de Coro» con cinco paradas reales. `npm run seed:adventures:verify` comprueba el estado.
 4. Para check-in real, el POI debe tener un token QR rotado (`POST /api/admin/locations/:id/qr/rotate`) y el usuario debe abrir `/checkin` para escanearlo o pegar su contenido.
-5. Las fotos de perfil y check-in requieren `UPLOAD_PRIVATE_DIR`; por defecto es `falcon-sync-backend/uploads-private/`.
+5. Las fotos de perfil y check-in requieren `UPLOAD_PRIVATE_DIR`; por defecto es `projects/backend/uploads-private/`.
 6. La lectura automática de QR requiere un navegador con `BarcodeDetector` y permiso de cámara. Si no está disponible, la entrada manual sigue funcionando.
 
 ## Riesgos y limitaciones

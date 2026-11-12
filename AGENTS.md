@@ -2,6 +2,18 @@
 
 Estas instrucciones aplican a los agentes que trabajen en este repositorio.
 
+## Organización del repositorio
+
+- `projects/backend/`: API Express, modelos Mongoose, scripts y pruebas.
+- `projects/frontend/`: SPA Angular, recursos públicos y pruebas E2E.
+- `projects/mobile/`: esqueleto reservado para la futura app Android de campo; aún no es
+  una aplicación compilable.
+- `context/`: contexto funcional, reglas de negocio y contratos HTTP vigentes.
+- `memory/`: decisiones arquitectónicas y soluciones verificadas.
+- `skills/`: índice hacia las skills locales, que permanecen en `.opencode/skills/` para
+  conservar el mecanismo de descubrimiento de OpenCode.
+- `docs/`: documentación técnica y funcional ampliada.
+
 ## 1. Contexto académico y alcance
 
 El marco académico disponible corresponde a las Unidades 2 a 7 de la materia Implantación de Sistemas:
@@ -19,6 +31,11 @@ La fuente de verdad académica será `.opencode/knowledge/`. Antes de afirmar qu
 1. contenido confirmado en el material de la asignatura;
 2. evidencia encontrada en el propio proyecto;
 3. buenas prácticas o conocimiento general de ingeniería.
+
+Los originales de las Unidades 2–7 están en `.opencode/knowledge/fuentes/`; las
+transcripciones `unidad-02.md` a `unidad-07.md` aún no están incorporadas. Consulta el
+original correspondiente si puedes leerlo; si no, declara que no verificaste el material y
+no le atribuyas conclusiones académicas.
 
 ## 2. Método de trabajo
 
@@ -74,6 +91,8 @@ Responde en español salvo que el usuario solicite otro idioma.
 ## 6. Uso de skills del proyecto
 
 OpenCode descubre las skills locales en `.opencode/skills/<nombre>/SKILL.md` y las carga bajo demanda mediante su herramienta nativa `skill`.
+Los agentes de `.opencode/agents/` restringen `permission.skill` a una lista explícita de
+skills pertinentes; cualquier otra skill debe quedar denegada para ese agente.
 
 - Antes de una tarea especializada, identifica si existe una skill pertinente y cárgala solo si aporta valor.
 - No cargues todas las skills indiscriminadamente.

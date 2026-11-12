@@ -107,7 +107,7 @@ Para generar los QR de todo el catálogo local se usa:
 npm run qr:generate -- --apply
 ```
 
-Los SVG se guardan en `falcon-sync-backend/.qr-codes/`, que está fuera de Git porque
+Los SVG se guardan en `projects/backend/.qr-codes/`, que está fuera de Git porque
 contiene tokens. El manifiesto solo registra slug, título, versión y fecha de rotación.
 
 ### 3. Geocerca validada en servidor
@@ -461,7 +461,7 @@ posiciones.
 Comando ejecutado:
 
 ```bash
-cd falcon-sync-backend
+cd projects/backend
 npm test
 ```
 

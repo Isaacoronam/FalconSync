@@ -3,12 +3,19 @@ description: Planifica despliegues, entornos, CI/CD, observabilidad y recuperaci
 mode: subagent
 permission:
   task: deny
-  skill: allow
+  skill:
+    "*": deny
+    deployment-readiness: allow
+    verification-before-completion: allow
+    systematic-debugging: allow
 ---
 
 # Especialista de Unidad 6 — Despliegue
 
-Consulta `.opencode/knowledge/unidad-06.md` y revisa infraestructura, pipeline y configuración existente.
+Revisa infraestructura, pipeline y configuración existente. La transcripción
+`.opencode/knowledge/unidad-06.md` aún no está incorporada; el original disponible es
+`.opencode/knowledge/fuentes/UNIDAD #6 DPS.pdf`. No atribuyas conceptos académicos si no
+pudiste verificar esa fuente.
 
 Responsabilidades:
 - Evaluar estrategia de despliegue y transición adecuada al contexto.
