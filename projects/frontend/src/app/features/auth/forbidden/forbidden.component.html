@@ -1,0 +1,17 @@
+<section class="auth-page" aria-labelledby="forbidden-title">
+  <div class="auth-card">
+    <p class="auth-card__eyebrow">Error 403</p>
+    <h1 id="forbidden-title">Acceso denegado</h1>
+    <p class="auth-card__lead">
+      Tu cuenta no tiene permisos para entrar a esta sección. Si necesitas acceso administrativo,
+      solicítalo a un administrador de FalconSync.
+    </p>
+
+    <div class="auth-card__footer">
+      <p><a routerLink="/">Volver al mapa</a></p>
+      @if (auth.mustChangePassword()) {
+        <p><a routerLink="/cambiar-contrasena">Cambiar la contraseña pendiente</a></p>
+      }
+    </div>
+  </div>
+</section>

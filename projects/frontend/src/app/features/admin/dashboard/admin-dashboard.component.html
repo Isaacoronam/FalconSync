@@ -1,0 +1,170 @@
+<section class="admin-page" aria-labelledby="admin-title">
+  <header class="admin-page__header">
+    <div>
+      <p class="admin-page__eyebrow">Centro de operación turística</p>
+      <h1 id="admin-title">Panel de control</h1>
+      <p class="admin-page__lead">
+        Resumen de visitas, patrimonio y actividad · Hola, {{ auth.currentUser()?.name }}
+      </p>
+    </div>
+    <div class="admin-page__actions">
+      <a class="button button--primary" routerLink="/admin/poi/nuevo">Nuevo POI</a>
+      <a class="button button--ghost" routerLink="/admin/usuarios">Ver usuarios</a>
+      <button class="button button--ghost" type="button" (click)="load()">Actualizar</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="admin-state">Cargando métricas…</p>
+  } @else if (error()) {
+    <div class="admin-state admin-state--error" role="alert">
+      <p>{{ error() }}</p>
+      <button class="button button--ghost" type="button" (click)="load()">Reintentar</button>
+    </div>
+  } @else if (summary(); as data) {
+    <div class="admin-grid">
+      <article class="admin-card">
+        <span class="admin-card__label">Visitantes únicos · 30 días</span>
+        <strong class="admin-card__value">{{ data.tourism.uniqueVisitorsLast30Days }}</strong>
+        <p class="admin-card__hint">Personas con al menos un check-in</p>
+      </article>
+      <article class="admin-card">
+        <span class="admin-card__label">Visitas · 30 días</span>
+        <strong class="admin-card__value">{{ data.tourism.checkInsLast30Days }}</strong>
+        <p class="admin-card__hint">Check-ins registrados en el período</p>
+      </article>
+      <article class="admin-card">
+        <span class="admin-card__label">POI publicados</span>
+        <strong class="admin-card__value">{{ data.locationsByStatus.published }}</strong>
+        <p class="admin-card__hint">De {{ data.locations }} puntos en el catálogo</p>
+      </article>
+      <article class="admin-card">
+        <span class="admin-card__label">Usuarios registrados</span>
+        <strong class="admin-card__value">{{ data.users }}</strong>
+        <p class="admin-card__hint">
+          {{ data.byRole.admin }} administradores · {{ data.byRole.moderator }} moderadores
+        </p>
+      </article>
+    </div>
+
+    <div class="admin-dashboard__columns">
+      <section class="admin-panel" aria-labelledby="visits-title">
+        <div class="admin-panel__heading">
+          <div>
+            <h2 id="visits-title">Evolución de visitas</h2>
+            <p class="admin-panel__note">Check-ins diarios · últimos 30 días</p>
+          </div>
+          <strong class="admin-panel__metric">{{ data.tourism.totalCheckIns }} históricas</strong>
+        </div>
+
+        @if (data.tourism.checkInsLast30Days === 0) {
+          <p class="admin-empty__message">
+            Aún no hay visitas registradas en este período. Las visitas aparecerán cuando los
+            turistas completen un check-in en un lugar publicado.
+          </p>
+        }
+
+        <div class="admin-visits-chart" role="img" [attr.aria-label]="chartLabel(data)">
+          @for (day of data.tourism.visitsByDay; track day.date; let index = $index) {
+            <div class="admin-visits-chart__column">
+              <span
+                class="admin-visits-chart__bar"
+                [class.admin-visits-chart__bar--empty]="day.visits === 0"
+                [style.height.%]="barHeight(day.visits, data)"
+                [attr.title]="chartDate(day.date) + ': ' + day.visits + ' visitas'"
+              ></span>
+              @if (index % 5 === 0 || index === data.tourism.visitsByDay.length - 1) {
+                <span class="admin-visits-chart__date">{{ chartDay(day.date) }}</span>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="admin-panel" aria-labelledby="review-title">
+        <div class="admin-panel__heading">
+          <h2 id="review-title">Pendientes de atención</h2>
+          <a class="admin-panel__link" routerLink="/admin/poi">Revisar catálogo</a>
+        </div>
+        <ul class="admin-dashboard-list">
+          <li>
+            <span>Borradores de lugares</span>
+            <strong>{{ data.contentReview.draftLocations }}</strong>
+          </li>
+          <li>
+            <span>Lugares con ubicación provisional</span>
+            <strong>{{ data.contentReview.provisionalLocations }}</strong>
+          </li>
+          <li>
+            <span>POI publicados sin verificación completa</span>
+            <strong>{{ data.contentReview.unverifiedLocations }}</strong>
+          </li>
+          <li>
+            <span>Aventuras en borrador</span>
+            <strong>{{ data.contentReview.draftAdventures }}</strong>
+          </li>
+        </ul>
+        @if (
+          data.contentReview.draftLocations +
+            data.contentReview.provisionalLocations +
+            data.contentReview.unverifiedLocations +
+            data.contentReview.draftAdventures ===
+          0
+        ) {
+          <p class="admin-dashboard__success">No hay pendientes editoriales detectados.</p>
+        }
+      </section>
+    </div>
+
+    <div class="admin-dashboard__columns">
+      <section class="admin-panel" aria-labelledby="popular-title">
+        <div class="admin-panel__heading">
+          <h2 id="popular-title">Lugares más visitados</h2>
+          <a class="admin-panel__link" routerLink="/admin/poi">Gestionar POI</a>
+        </div>
+        @if (data.tourism.topLocationsLast30Days.length === 0) {
+          <p class="admin-panel__note">Todavía no hay visitas a lugares publicadas.</p>
+        } @else {
+          <ol class="admin-dashboard-list admin-dashboard-list--ranked">
+            @for (location of data.tourism.topLocationsLast30Days; track location.id) {
+              <li>
+                <a [routerLink]="['/lugares', location.slug]">{{ location.title }}</a>
+                <strong>{{ location.visits }}</strong>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+
+      <section class="admin-panel" aria-labelledby="activity-title">
+        <div class="admin-panel__heading">
+          <h2 id="activity-title">Actividad administrativa</h2>
+          <a class="admin-panel__link" routerLink="/admin/auditoria">Ver auditoría</a>
+        </div>
+        @if (data.recentActivity.length === 0) {
+          <p class="admin-panel__note">Todavía no hay acciones registradas.</p>
+        } @else {
+          <ul class="admin-activity">
+            @for (entry of data.recentActivity; track entry.id) {
+              <li class="admin-activity__item">
+                <span class="admin-activity__action">{{ actionLabel(entry.action) }}</span>
+                <span class="admin-activity__summary">{{ entry.summary }}</span>
+                <span class="admin-activity__meta">
+                  {{ entry.actorEmail }} · {{ generatedAt(entry.createdAt) }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <section class="admin-panel admin-dashboard__footer" aria-label="Accesos rápidos">
+      <span>{{ data.adventures.published }} aventuras publicadas</span>
+      <span>{{ data.byRole.user }} cuentas de turistas</span>
+      <a class="admin-panel__link" routerLink="/admin/aventuras">Gestionar aventuras</a>
+      <a class="admin-panel__link" routerLink="/admin/usuarios">Consultar usuarios</a>
+      <span class="admin-panel__timestamp">Actualizado: {{ generatedAt(data.generatedAt) }}</span>
+    </section>
+  }
+</section>

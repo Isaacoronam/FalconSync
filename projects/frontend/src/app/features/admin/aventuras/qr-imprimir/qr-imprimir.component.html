@@ -1,0 +1,54 @@
+<h1>Imprimir QR de check-in</h1>
+<p class="lead">
+  Genera el código QR de un punto de interés para imprimirlo o descargarlo una sola vez.
+  El token queda embebido en el QR y se invalida al rotar de nuevo.
+</p>
+
+@if (locationTitle()) {
+  <p class="qr__lugar">{{ locationTitle() }}</p>
+}
+
+@if (error()) {
+  <p class="form-error" role="alert">{{ error() }}</p>
+}
+@if (success()) {
+  <p class="form-success" role="status">{{ success() }}</p>
+}
+
+@if (qrDataUrl()) {
+  <div class="qr-resultado">
+    <div class="qr-preview">
+      <img [src]="qrDataUrl()" alt="Código QR de check-in" />
+    </div>
+    <div class="qr-datos">
+      <p class="qr-datos__etiqueta">Token (solo se muestra una vez)</p>
+      <p class="qr-datos__valor">{{ token() }}</p>
+      <p class="qr-datos__meta">
+        Versión {{ tokenVersion() }} · {{ formatDate(rotatedAt()!) }}
+      </p>
+      <div class="qr-acciones">
+        <button class="button button--primary" type="button" (click)="imprimir()">
+          Imprimir QR
+        </button>
+        <button class="button button--ghost" type="button" (click)="descargarSVG()">
+          Descargar SVG
+        </button>
+      </div>
+      <p class="qr-datos__aviso">
+        Guarda el token en un lugar seguro si necesitas reimprimir más tarde. Cada rotación
+        invalida los QR anteriores.
+      </p>
+    </div>
+  </div>
+} @else {
+  <button
+    class="button button--primary"
+    type="button"
+    (click)="generarQR()"
+    [disabled]="generating()"
+  >
+    {{ generating() ? 'Generando QR…' : 'Generar e imprimir QR' }}
+  </button>
+}
+
+<a class="button button--ghost" routerLink="/admin/poi">Volver a puntos de interés</a>

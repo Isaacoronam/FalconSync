@@ -1,0 +1,96 @@
+<div class="app-shell">
+  <header class="site-header">
+    <a class="brand" routerLink="/" aria-label="FalconSync, ir al mapa">
+      <img
+        class="brand__mark"
+        src="brand/falconsync-logo.png"
+        alt=""
+        width="48"
+        height="48"
+      />
+      <span class="brand__copy">
+        <span class="brand__eyebrow">Santa Ana de Coro · Patrimonio Mundial</span>
+        <span class="brand__name">FALCONSYNC</span>
+      </span>
+    </a>
+
+    <nav class="site-nav" aria-label="Navegación principal">
+      <a
+        class="site-nav__link"
+        routerLink="/"
+        routerLinkActive="site-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        CoroMap
+      </a>
+      <a
+        class="site-nav__link"
+        routerLink="/lugares"
+        routerLinkActive="site-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Explorar lugares
+      </a>
+
+      @if (auth.isAuthenticated()) {
+        @if (auth.isAdmin()) {
+          <a
+            class="site-nav__link"
+            routerLink="/admin"
+            routerLinkActive="site-nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            Admin
+          </a>
+        }
+        <a
+          class="site-nav__user"
+          routerLink="/perfil"
+          title="Mi perfil"
+          [attr.aria-label]="'Perfil de ' + (auth.currentUser()?.name ?? '')"
+        >
+          {{ auth.currentUser()?.name }}
+        </a>
+        <button type="button" class="site-nav__link site-nav__link--button" (click)="logout()">
+          Salir
+        </button>
+      } @else {
+        <a
+          class="site-nav__link"
+          routerLink="/login"
+          routerLinkActive="site-nav__link--active"
+          ariaCurrentWhenActive="page"
+        >
+          Iniciar sesión
+        </a>
+        <a
+          class="site-nav__link site-nav__link--cta"
+          routerLink="/registro"
+          routerLinkActive="site-nav__link--active"
+          ariaCurrentWhenActive="page"
+        >
+          Crear cuenta
+        </a>
+      }
+    </nav>
+  </header>
+
+  <main class="site-main">
+    <router-outlet />
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      <strong>FALCONSYNC</strong> · Prototipo académico de patrimonio inteligente para Santa Ana de
+      Coro.
+    </p>
+    <p>
+      Cartografía ©
+      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener"
+        >OpenStreetMap</a
+      >. Contenido patrimonial pendiente de revisión experta.
+    </p>
+    <p>© {{ year }} FALCONSYNC</p>
+  </footer>
+</div>

@@ -1,19 +1,132 @@
-# FalconSync — estado del primer corte
+# FalconSync — estado de los cortes 0 a 5
 
-Fecha de verificación: 2026-11-05.
+Fecha de verificación: 2026-11-08.
 
 ## Alcance implementado
 
-Primer corte vertical de **CoroMap en modo lectura**:
+### Corte 0 — Identidad y geografía
 
-- API REST con Express 5.3.0 y Mongoose 9.12.0.
-- Modelo `Location` con GeoJSON, índice `2dsphere`, categorías y validaciones.
-- Endpoints de salud, listado paginado, filtro por categoría, búsqueda cercana y detalle por slug.
-- Seed idempotente con 6 puntos de interés.
-- Frontend Angular 21.2.26 standalone, zoneless, con Leaflet 1.9.4.
-- Mapa con marcadores, filtros, listado lateral con miniaturas, popups con imagen y diseño responsive.
-- Imágenes locales de los 6 POI y favicon propio de FalconSync.
-- Pruebas de backend, pruebas de servicio Angular y smoke E2E manual con navegador.
+- Tipografía sans-serif de sistema para cuerpo y títulos (`Segoe UI Variable`, `Segoe UI`,
+  `system-ui`), sin peticiones externas ni dependencias de licencia.
+- Pesos y espaciado ajustados para títulos, fichas y tarjetas.
+- Mapa limitado al rectángulo operativo de Falcón con `maxBounds`,
+  `maxBoundsViscosity=1` y `minZoom=8`.
+- Vista inicial en Coro a zoom 13 y control “Ver todo Falcón”.
+- Logo maestro integrado en `projects/frontend/public/brand/falconsync-logo.png`
+  (PNG aprobado, 195×195, con transparencia), derivado a 48×48 sin deformar para el
+  marcador del header.
+- Favicon y `apple-touch-icon` regenerados desde el logo maestro
+  (`favicon.ico` con 16/32/48 px, `favicon-32.png`, `apple-touch-icon.png` de 180×180)
+  mediante `npm run brand:assets`.
+
+### Corte 1 — Autenticación y permisos
+
+- Modelos `User` y `RefreshSession`.
+- Registro, login, refresh rotativo, logout, `me` y cambio de contraseña.
+- Access token de 15 minutos en memoria; refresh de 7 días en cookie `httpOnly`,
+  `SameSite=Strict` y `Path=/api/auth`.
+- Hash `bcryptjs` con coste 12, rate limit en endpoints sensibles y comprobación de origen.
+- Roles `user`, `moderator` y `admin`.
+- Bootstrap de administrador idempotente con `scripts/createAdmin.js`.
+- Cambio obligatorio de contraseña en el primer acceso del admin creado por bootstrap.
+- Frontend: login, registro, cambio de contraseña, guards, interceptor, header con sesión,
+  expulsión a `/acceso-denegado` y panel `/admin` mínimo con métricas.
+
+### Corte 1.5 — E2E permanente y CI
+
+- Playwright dentro del repositorio, con configuración `playwright.config.ts`.
+- Servidor E2E aislado en `scripts/e2eServer.js`: base de datos `falconsync_e2e`,
+  23 POI publicados, un admin operativo y un admin pendiente de cambio de contraseña.
+- Servidores de prueba en puertos 3101 (API) y 4201 (frontend) para no chocar con el
+  entorno de desarrollo.
+- Workflow de GitHub Actions creado en `.github/workflows/ci.yml` con MongoDB de servicio,
+  pruebas, build, Chromium y E2E.
+- El workflow **no fue ejecutado** todavía en GitHub: la rama se subió, pero no se abrió un
+  PR ni existe una ejecución remota verificada. El YAML no se declara verde. La suite E2E se
+  ejecutó localmente con Chromium en modo CI (15/15 tras el Corte 5); la corrida Chromium
+  posterior a los cambios de insignias y galería queda pendiente.
+
+### Corte 2 — Administración y POI
+
+- Layout administrativo con panel, listado de POI y auditoría.
+- Panel con usuarios, POI por estado y actividad reciente.
+- CRUD de POI con validación en cliente y servidor.
+- Estados `draft`, `published` y `archived`; el API público solo expone publicados y
+  descarta los marcados como provisionales. `includeProvisional=true` sigue disponible
+  para el mapa, pero ya no hay borradores en el catálogo.
+- Ficha ampliada con dirección, circuitos, etiquetas, fuente y fecha de verificación de
+  coordenadas, nivel de verificación y créditos de imágenes.
+- Regla de publicación: un POI provisional o sin `coordinateVerifiedAt` no puede publicarse.
+- Filtros administrativos por categoría, circuito y etiqueta; el mapa público filtra solo
+  por categoría.
+- Catálogo de 23 POI en el seed: 23 publicados y 0 borradores.
+- Mapa público con 23 POI visibles, cada uno con imagen. Los 17 POI restantes se publicaron
+  el 2026-11-07 con revisión documental; el Parque Nacional Médanos de Coro queda
+  `unverified` y Casa Museo Locos de la Vela mantiene su discrepancia documentada.
+- Clustering propio en píxeles y popups con etiquetas, verificación y créditos, sin avisos
+  de provisionalidad.
+- Borrado lógico y restauración como borrador.
+- Selector de ubicación con Leaflet limitado al rectángulo de Falcón.
+- Imágenes locales mediante `StorageAdapter`, con validación de firma binaria, límite de
+  5 MB y máximo de 8 por POI.
+- Auditoría de creación, edición, archivo, restauración y gestión de imágenes.
+- Tabla responsive convertida en tarjetas por debajo de 700 px.
+
+El detalle de endpoints, permisos, validaciones y límites está en
+[`docs/ADMINISTRACION.md`](./ADMINISTRACION.md). El catálogo, las reglas de publicación,
+las fuentes y el manifiesto de imágenes están en [`docs/POI.md`](./POI.md).
+
+### Corte 3 — backend legado de recorridos y servicios de visita
+
+- Modelos `Adventure` y `AdventureStop` se conservan temporalmente para compatibilidad;
+  `CheckIn` y `UserAchievement` soportan visitas e insignias por POI.
+- Check-in global por POI, con índice único `(user, location)`.
+- QR opaco por POI: token de 32 bytes, hash SHA-256 persistido y rotación que invalida los
+  QR anteriores.
+- Geocerca Haversine validada en servidor, con radio configurable entre 10 y 500 m.
+- APIs de recorrido y progreso se conservan temporalmente, fuera del flujo turístico.
+- Las visitas nuevas y el backfill otorgan insignias por POI, no por recorrido.
+
+La referencia histórica está en [`docs/AVENTURAS.md`](./AVENTURAS.md).
+
+### Experiencia turística vigente — exploración por POI
+
+- Catálogo de lugares en `/lugares` y ficha editorial en `/lugares/:slug`.
+- El formulario de POI gestiona historia, datos de interés, información para visitantes y
+  fuentes editoriales aparte de la fuente cartográfica.
+- Las URL públicas antiguas `/aventuras*` redirigen al catálogo de lugares.
+- El perfil presenta insignias de lugares visitados; los logros heredados de recorridos no
+  se eliminan de la base ni se muestran en el flujo actual.
+- El escáner QR en `/checkin` usa `BarcodeDetector` cuando está disponible y ofrece entrada
+  manual; el token vive solo en memoria y nunca se añade a la URL.
+- Check-in por POI con geolocalización del navegador (`/checkin/:locationId`), Chivito y
+  una insignia persistente por lugar.
+- Generación, impresión y descarga de QR de check-in (`/admin/locations/:id/qr`).
+- Suite E2E con Playwright y geolocalización simulada para catálogo, QR, check-in, insignias
+  y redirección de URL heredadas.
+
+El detalle histórico de la interfaz anterior está en
+[`docs/COROAVENTURA-FRONTEND.md`](./COROAVENTURA-FRONTEND.md); la ficha vigente está en
+[`docs/POI.md`](./POI.md).
+
+### Corte 5 — Perfil privado, insignias y fotos
+
+- `User` con `username`, `bio` y metadatos privados de avatar; generación automática de
+  nombre de usuario y backfill para cuentas existentes.
+- Perfil visible solo para su dueño en `/perfil`; sin rutas públicas por `username`.
+- Edición de nombre, usuario y biografía, con actualización del header.
+- Avatar privado con carga, reemplazo y eliminación.
+- Insignias persistentes visibles en el perfil, con origen archivado marcado.
+- Galería privada paginada de visitas con filtros, visor ampliado y reemplazo/eliminación de
+  fotos sin borrar el check-in.
+- Check-in y foto en dos fases: primero la visita, después la imagen.
+- Avatares y fotos en `uploads-private/`, servidos solo por endpoints autenticados.
+- Estadísticas de check-ins, lugares descubiertos e insignias de lugares.
+- Bloque de Chivito celebra las visitas con mensajes basados en las estadísticas disponibles.
+- Seed idempotente de la «Ruta del Casco Histórico de Coro» con cinco paradas reales.
+- E2E de perfil, avatar, check-in con foto, insignias, galería y visor (`e2e/perfil.spec.ts`).
+
+El detalle está en [`docs/PERFIL.md`](./PERFIL.md).
 
 ## Stack verificado
 
@@ -24,41 +137,93 @@ Primer corte vertical de **CoroMap en modo lectura**:
 | Angular CLI / build | 21.2.29 |
 | Express | 5.3.0 |
 | Mongoose | 9.12.0 |
-| Driver MongoDB de Mongoose | ~7.8 |
 | MongoDB local | 9.0.4 |
 | Leaflet | 1.9.4 |
+| bcryptjs | 3.0.3 |
+| jsonwebtoken | 9.0.3 |
+| express-rate-limit | 8.7.3 |
+| multer | 2.x |
+| cookie-parser | 1.4.7 |
+| Playwright Test | 1.65.0 |
+| qrcode | 1.5.4 |
 | Vitest (frontend) | 4.x, integrado por Angular CLI |
 | Node test runner (backend) | `node --test` |
 
 Correcciones respecto al documento inicial:
 
-- El documento mezclaba versiones de Angular: `@angular/core@21.2.29` no existe; la última 21.x del core es `21.2.26`, mientras `@angular/cli` y `@angular/build` sí tienen `21.2.29`. Se fijó core `21.2.26` y CLI/build `21.2.29`.
-- `MongoDB 2.14.1` no es una versión válida del servidor ni de Mongoose; se usó MongoDB 9.0.4 y Mongoose 9.12.0.
-- Se añadió la categoría `urban` para representar espacios urbanos, que el documento mencionaba pero el enum original no incluía.
+- El documento mezclaba versiones de Angular: `@angular/core@21.2.29` no existe; la última
+  21.x del core es `21.2.26`, mientras `@angular/cli` y `@angular/build` sí tienen
+  `21.2.29`. Se fijó core `21.2.26` y CLI/build `21.2.29`.
+- `MongoDB 2.14.1` no es una versión válida del servidor ni de Mongoose; se usó MongoDB
+  9.0.4 y Mongoose 9.12.0.
+- Se añadió la categoría `urban` para representar espacios urbanos.
 
 ## Estructura
 
 ```text
 FalconSYN/
-├── falcon-sync-backend/
-│   ├── src/
-│   │   ├── config/
-│   │   ├── controllers/
-│   │   ├── middlewares/
-│   │   ├── models/
-│   │   └── routes/
-│   ├── scripts/seedLocations.js
-│   └── test/locations.test.js
-├── falcon-sync-frontend/
-│   ├── public/
-│   │   ├── favicon.ico
-│   │   └── images/locations/
-│   ├── src/app/core/
-│   ├── src/app/features/map/
-│   └── src/environments/
-├── docs/FALCONSYNC.md
+├── .github/workflows/ci.yml
+├── AGENTS.md
+├── context/                   # Contexto, reglas y contratos API
+├── skills/                    # Índice; las skills ejecutables siguen en .opencode/skills
+├── memory/                    # Decisiones arquitectónicas y soluciones verificadas
+├── projects/
+│   ├── backend/                # Express, Mongoose, scripts y pruebas
+│   ├── frontend/               # Angular, Leaflet y pruebas E2E
+│   └── mobile/                  # Esqueleto pendiente de la app de campo
+├── docs/
+│   ├── ADMINISTRACION.md
+│   ├── AUTENTICACION.md
+│   ├── AVENTURAS.md
+│   ├── COROAVENTURA-FRONTEND.md
+│   ├── FALCONSYNC.md
+│   ├── PERFIL.md
+│   └── POI.md
 └── .nvmrc
 ```
+
+El backend conserva `src/` y el frontend conserva `src/app/` organizados por capas y
+funcionalidades; esta reorganización solo cambia su ubicación dentro de `projects/`.
+
+## Identidad visual y geografía
+
+- `--font-body` y `--font-display` usan una pila de sistema; no se descargó ninguna fuente
+  en tiempo de ejecución.
+- Los títulos principales usan peso 700 y un `letter-spacing` negativo suave; las fichas y
+  tarjetas usan 600 para no perder jerarquía al abandonar la serif.
+- El mapa usa este límite operativo:
+
+```ts
+const FALCON_BOUNDS = [
+  [10.3, -71.35],
+  [12.19, -68.18],
+];
+```
+
+- La vista inicial es Coro (`11.4078, -69.6785`) a zoom 13. El botón “Ver todo Falcón”
+  hace `fitBounds` al rectángulo.
+- El rectángulo **no es el polígono oficial de Falcón**. Para el contorno exacto hace falta
+  un GeoJSON verificado de OSM/INE con atribución.
+- El logo maestro se incorporó en `public/brand/falconsync-logo.png` y de él se
+  derivaron favicon, `favicon-32.png` y `apple-touch-icon` (180×180) con
+  `npm run brand:assets`. La identidad visual queda cerrada en este corte.
+
+## Autenticación
+
+El detalle de decisiones, endpoints, cookies y límites está en
+[`docs/AUTENTICACION.md`](./AUTENTICACION.md).
+
+Resumen operativo:
+
+- El `.env` local está ignorado por Git y contiene secretos aleatorios generados para este
+  entorno.
+- `npm run create-admin` creó `admin@falconsync.local`; la contraseña está en `.env` y debe
+  cambiarse en el primer acceso.
+- El script es idempotente: una segunda ejecución no modifica la contraseña existente.
+- El panel `/admin` permite gestionar POI editoriales, imágenes, QR y auditoría. Los datos y
+  las APIs de recorridos se mantienen temporalmente por compatibilidad, pero su gestión ya no
+  forma parte de la interfaz. El perfil privado, el avatar y las fotos de check-in se
+  completaron en el Corte 5; la moderación sigue pendiente.
 
 ## Comandos de arranque
 
@@ -67,16 +232,24 @@ Requisitos: Node 26.13.0 y MongoDB local en `127.0.0.1:27017`.
 Backend:
 
 ```bash
-cd falcon-sync-backend
+cd projects/backend
 npm install
-npm run seed
+cp .env.example .env   # completar secretos de al menos 32 caracteres
+npm run seed           # inserta los POI ausentes y elimina Mirador del Pueblo
+npm run seed:sync      # sincroniza fichas y elimina Mirador del Pueblo
+npm run seed:verify    # comprueba existencia, publicación, coordenadas y retiro del Mirador
+npm run seed:adventures        # crea o actualiza la Ruta del Casco Histórico
+npm run seed:adventures:verify # verifica publicación, orden y paradas disponibles
+npm run backfill:usernames     # asigna username a cuentas anteriores al Corte 5
+npm run backfill:achievements  # simula la reconstrucción de insignias; --apply escribe
+npm run create-admin   # requiere ADMIN_* en .env
 npm run dev
 ```
 
 Frontend, en otra terminal:
 
 ```bash
-cd falcon-sync-frontend
+cd projects/frontend
 npm install
 npm start
 ```
@@ -84,15 +257,84 @@ npm start
 - API: `http://localhost:3000`
 - Aplicación: `http://localhost:4200`
 - El frontend usa `proxy.conf.json` para enviar `/api` al backend.
+- Las imágenes públicas de POI se guardan en `uploads/` y se sirven en `/api/uploads/...`.
+- Los avatares y las fotos de check-in se guardan en `uploads-private/` y solo se sirven por
+  endpoints autenticados del perfil. Ambas carpetas están ignoradas por Git.
+- El backend se detiene si el puerto ya está ocupado; detén la instancia anterior antes de
+  iniciar otra. `npm run seed` es idempotente, inserta POI ausentes y elimina únicamente
+  Mirador del Pueblo. `npm run seed:sync` actualiza fichas existentes, sincroniza las
+  coordenadas solo de Parque Nacional Médanos de Coro sin modificar los demás puntos,
+  preserva estado y `isProvisional`, y elimina ese mismo POI retirado.
+  `npm run seed:verify` falla si falta un POI, si Mirador del Pueblo sigue presente o si un
+  publicado está provisional o sin fecha de verificación. `npm run seed:adventures` es
+  idempotente y exige que las cinco paradas estén publicadas y disponibles.
+
+En Windows, si no se dispone de `cp`, crear `.env` manualmente a partir de
+`.env.example`. No se deben usar los valores de ejemplo en producción.
 
 ## Endpoints
 
+Públicos:
+
 - `GET /api/health`
-- `GET /api/locations?page=1&limit=50&category=religious`
+- `GET /api/locations?page=1&limit=50&category=religious&circuit=casco-historico&tag=unesco`
 - `GET /api/locations/near?lat=11.4075&lng=-69.6778&radius=500`
 - `GET /api/locations/:slug`
+- `GET /api/adventures?page=1&limit=20`
+- `GET /api/adventures/:slug`
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 
-Formato de lista:
+Autenticados:
+
+- `GET /api/auth/me`
+- `POST /api/auth/change-password`
+- `GET /api/adventures/:slug/progress` (incluye `achievement`)
+- `POST /api/check-ins` (JSON; conserva compatibilidad `multipart/form-data` con `image`)
+- `GET /api/profile/me` (incluye insignias)
+- `PATCH /api/profile/me`
+- `GET /api/profile/avatar`
+- `POST /api/profile/avatar` (`multipart/form-data`, campo `image`)
+- `DELETE /api/profile/avatar`
+- `GET /api/profile/check-ins?page=&limit=&hasPhoto=`
+- `GET /api/profile/check-ins/:checkInId/photo`
+- `PUT /api/profile/check-ins/:checkInId/photo` (`multipart/form-data`, campo `image`)
+- `DELETE /api/profile/check-ins/:checkInId/photo`
+
+Administración (rol `admin`, cambio de contraseña completado):
+
+- `GET /api/admin/summary`
+- `GET /api/admin/locations?q=&status=&category=&circuit=&tag=&page=&limit=`
+- `GET /api/admin/locations/:id`
+- `POST /api/admin/locations`
+- `PATCH /api/admin/locations/:id`
+- `DELETE /api/admin/locations/:id` (borrado lógico)
+- `POST /api/admin/locations/:id/restore`
+- `POST /api/admin/locations/:id/images`
+- `DELETE /api/admin/locations/:id/images`
+- `POST /api/admin/locations/:id/qr/rotate?format=svg|png`
+- `GET /api/admin/adventures?q=&status=&page=&limit=`
+- `GET /api/admin/adventures/:id`
+- `POST /api/admin/adventures`
+- `PATCH /api/admin/adventures/:id`
+- `DELETE /api/admin/adventures/:id` (borrado lógico)
+- `POST /api/admin/adventures/:id/publish`
+- `POST /api/admin/adventures/:id/archive`
+- `POST /api/admin/adventures/:id/restore`
+- `POST /api/admin/adventures/:id/stops`
+- `PATCH /api/admin/adventures/:id/stops/:stopId`
+- `DELETE /api/admin/adventures/:id/stops/:stopId`
+- `PUT /api/admin/adventures/:id/stops/reorder`
+- `GET /api/admin/audit?page=&limit=&action=&entityId=`
+
+Las imágenes públicas de POI se sirven en `/api/uploads/...`. Los avatares y las fotos de
+check-in no tienen URL estática: se sirven solo por `/api/profile/avatar` y
+`/api/profile/check-ins/:checkInId/photo` con sesión del dueño. La galería usa
+`GET /api/profile/check-ins` con paginación y filtro `hasPhoto`.
+
+Formato de lista de lugares:
 
 ```json
 {
@@ -103,6 +345,9 @@ Formato de lista:
 
 ## Fuentes de los POI
 
+El catálogo completo, con los 23 POI publicados, está en
+[`docs/POI.md`](./POI.md). Esta tabla resume los 6 que se publicaron primero:
+
 | POI | Coordenadas `[lng, lat]` | Fuente |
 |---|---|---|
 | Catedral de Coro | `[-69.6778073, 11.4075246]` | OpenStreetMap way 370610638 |
@@ -112,52 +357,208 @@ Formato de lista:
 | Médanos de Coro | `[-69.6577925, 11.4384496]` | OpenStreetMap relation 3461483 |
 | Plaza Bolívar de Coro | `[-69.6782276, 11.4072929]` | OpenStreetMap way 370610469 |
 
-La **Cruz de los Enconchados** no se incluyó porque no se encontró una fuente cartográfica o documental confiable para su ubicación. No se inventaron coordenadas. Debe verificarse antes de agregarla.
+Los 17 POI restantes se publicaron el 2026-11-07 con `coordinateVerifiedAt` como fecha de
+revisión documental, no de visita en campo. Quince son `single-source`; el Parque Nacional
+Médanos de Coro es `unverified` por coordenada aproximada y Casa Museo Locos de la Vela
+mantiene una discrepancia de unos 100 m entre fuentes.
 
-El estado de conservación se dejó como `unknown` en todos los POI: no hay una fuente de conservación verificada en este corte.
+La **Cruz de los Enconchados** no se incluyó porque no se encontró una fuente cartográfica
+o documental confiable para su ubicación. No se inventaron coordenadas. Debe verificarse
+antes de agregarla.
+
+El estado de conservación se dejó como `unknown` en los 23 POI: no hay una fuente de
+conservación verificada en este corte.
 
 ## Imágenes de los POI
 
-| POI | Archivo público |
-|---|---|
-| Catedral de Coro | `/images/locations/catedral-de-coro.jpg` |
-| Casa de las Ventanas de Hierro | `/images/locations/casa-de-las-ventanas-de-hierro.jpg` |
-| Casa del Sol | `/images/locations/casa-del-sol.jpg` |
-| Arco de la Federación | `/images/locations/arco-de-la-federacion.jpg` |
-| Médanos de Coro | `/images/locations/medanos-de-coro.jpg` |
-| Plaza Bolívar de Coro | `/images/locations/plaza-bolivar-de-coro.jpg` |
+Hay 23 imágenes en `public/images/locations/`, con una imagen local asociada a cada POI que
+aparece en el mapa. El manifiesto legible por máquina está en
+`public/images/locations/manifest.json` y se sirve en `/images/locations/manifest.json`.
 
-El campo `images` del modelo ya existía; el seed lo completa con una ruta relativa por POI y la API lo devuelve sin transformaciones. Los archivos se sirven desde `public/images/locations/` del frontend.
+| POI | Archivo público | Crédito |
+|---|---|---|
+| Catedral de Coro | `/images/locations/catedral-de-coro.jpg` | Pendiente de verificar |
+| Casa de las Ventanas de Hierro | `/images/locations/casa-de-las-ventanas-de-hierro.jpg` | Pendiente de verificar |
+| Casa del Sol | `/images/locations/casa-del-sol.jpg` | Pendiente de verificar |
+| Arco de la Federación | `/images/locations/arco-de-la-federacion.jpg` | Pendiente de verificar |
+| Médanos de Coro | `/images/locations/medanos-de-coro.jpg` | Pendiente de verificar |
+| Plaza Bolívar de Coro | `/images/locations/plaza-bolivar-de-coro.jpg` | Pendiente de verificar |
+| Iglesia de San Francisco | `/images/locations/iglesia-de-san-francisco.jpg` | Janethrodri, CC BY-SA 4.0 |
+| Iglesia de San Clemente | `/images/locations/iglesia-de-san-clemente.jpg` | Janethrodri, CC BY-SA 4.0 |
+| Cruz de San Clemente | `/images/locations/cruz-de-san-clemente.jpg` | Zerojosefer, CC BY-SA 4.0 |
+| Casa Balcón de los Arcaya | `/images/locations/casa-balcon-de-los-arcaya.jpg` | Zerojosefer, CC BY-SA 4.0 |
+| Museo de Arte de Coro | `/images/locations/museo-de-arte-de-coro.jpg` | Janethrodri, CC BY-SA 4.0 |
+| Gelatería El Sol | `/images/locations/Gelateria-el-sol.jpeg` | Pendiente de verificar |
+| Parque Nacional Médanos de Coro | `/images/locations/parque-nacional-medanos-de-coro.jpg` | Pendiente de verificar |
 
-Las imágenes fueron **suministradas por el responsable del proyecto**. La autoría y la licencia no están verificadas todavía y deben confirmarse antes de publicar el sitio. `Iglesia-San-Francisco.jpg` no se incorporó: no existe un POI con ese nombre en el seed ni se dispone de coordenadas y fuente verificables para agregarlo sin inventar datos.
+Las 18 imágenes suministradas por el responsable del proyecto tienen autoría y licencia
+**pendientes de verificar**. Las 5 imágenes restantes se tomaron de Wikimedia Commons,
+tienen autor, licencia y origen registrados en `imageCredits`, y el popup del mapa los muestra. El
+detalle está en [`docs/POI.md`](./POI.md).
 
 ## Verificación ejecutada
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm test` en `falcon-sync-backend` | 11/11 pruebas aprobadas |
-| Seed idempotente | `npm run seed` | 6 lugares sincronizados, sin warnings |
-| Pruebas frontend | `npm test -- --watch=false` | 4/4 pruebas aprobadas |
-| Build producción | `npm run build` | Correcto, sin warnings |
-| API real | smoke HTTP | `health=ok`, `all=6`, `poi_sin_imagen=0`; el detalle de Catedral devuelve su ruta de imagen |
-| Build estático | inspección de `dist/falcon-sync-frontend/browser` | 6 imágenes y `favicon.ico` presentes; hash del favicon igual al archivo suministrado |
-| E2E navegador | Playwright Core + Edge sobre el build de producción servido en local, script temporal | 6 miniaturas de 56×56 con `loading="lazy"`; 6 popups con imagen 16/10 y fuente; 6 solicitudes de imagen en `200`; imagen rota en tarjeta deja visible el punto de categoría; favicon en `200` (15 406 bytes); móvil sin overflow horizontal; 0 errores de consola |
+| Pruebas backend | `npm test` en `projects/backend` | 75/75 aprobadas (13 admin POI + 17 APIs heredadas + 12 auth + 15 locations + 6 perfil + 6 insignias/galería + 2 seed aventuras + 4 seed POI) |
+| Seed idempotente | `test/seedLocations.test.js` | 23 insertados la primera vez y 0 la segunda |
+| Seed de aventura | `npm run seed:adventures` + `--verify` | Aventura publicada con 5 paradas, orden y disponibilidad correctos |
+| Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada de Parque Nacional Médanos de Coro sincronizada y verificada |
+| Verificación del seed | `npm run seed:verify` | 23 POI sin desviaciones; Gelatería El Sol dentro del catálogo |
+| Backfill de usuarios | `npm run backfill:usernames` | 2 usuarios actualizados con `username` |
+| Backfill de insignias | `npm run backfill:achievements` | Simulación por defecto; `--apply` escribe. No ejecutado sobre datos locales en esta verificación |
+| Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
+| Pruebas frontend | `npm test -- --watch=false` | 51/51 aprobadas |
+| Build producción | `npm run build` | Correcto, sin advertencias (presupuesto `anyComponentStyle` ajustado a 10/12 kB; el perfil compila en 9.41 kB) |
+| E2E de catálogo POI, QR y perfil | `npx playwright test e2e/coro-aventura.spec.ts e2e/perfil.spec.ts` | 7/7 aprobadas |
+| E2E permanente | `npm run e2e` | 16/16 en Edge local; corrida Chromium/CI pendiente de repetir |
+| Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
+| Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
+| Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
+| Workflow CI | `.github/workflows/ci.yml` | Creado, **no ejecutado** en remoto |
 
-El smoke E2E se ejecutó desde una carpeta temporal y no forma parte todavía del repositorio. No se declara una suite E2E permanente.
+El presupuesto `anyComponentStyle` se ajustó de 6/10 kB a 10/12 kB porque el perfil privado
+compila 9.41 kB de estilos. Se mantuvieron los estilos cohesionados en el componente en lugar
+de fragmentarlos solo para cumplir un umbral pensado para componentes pequeños; el nuevo
+límite sigue acotando el crecimiento y el build queda sin advertencias.
+
+La suite `test/adventures.test.js` cubre QR, rotación, hash no expuesto, check-in válido,
+duplicado, fuera de geocerca, token inválido, check-in rechazado en POI provisional,
+progreso en cualquier orden, siguiente parada, cierre, check-in global compartido, POI no
+publicado o provisional como parada, POI en uso, publicación, reordenamiento, permisos y
+auditoría. `test/achievements.test.js` cubre la insignia de lugar, el rechazo de nuevas
+insignias de recorrido heredadas, la idempotencia, la reconciliación de duplicados, la
+conservación de logros antiguos con `sourceActive: false`, la foto posterior al check-in y la
+galería paginada con filtro `hasPhoto`.
+`test/profile.test.js` cubre perfil privado, generación y edición de `username`, avatar
+privado, foto de check-in, acceso denegado a otros usuarios y estadísticas de aventura.
+`test/seedAdventures.test.js` comprueba que el seed usa paradas reales publicadas y rutas de
+imagen permitidas. `test/locations.test.js` cubre además los filtros públicos por circuito y
+etiqueta, el rechazo de valores desconocidos y la ocultación de un POI provisional aunque
+esté marcado como publicado. `test/adminLocations.test.js` cubre la regla de publicación con
+fecha de verificación y los filtros administrativos por circuito y etiqueta.
+
+La suite E2E comprueba:
+
+- límites reales de Leaflet (`maxBounds`, viscosidad, zoom mínimo, centro inicial);
+- mapa público con 23 tarjetas con imagen, sin marcadores provisionales, clúster y filtro
+  únicamente por categoría;
+- la lista lateral de POI se desplaza dentro de su panel sin mover la página;
+- que un `panTo` fuera del estado queda clavado dentro del rectángulo;
+- control “Ver todo Falcón” y ausencia de overflow horizontal a 390 px;
+- registro, persistencia de sesión tras recarga, logout y rechazo de credenciales;
+- ruta protegida que redirige a login con `returnUrl`;
+- usuario normal bloqueado en `/admin`;
+- admin operativo con panel y métricas;
+- cambio obligatorio del admin inicial y desbloqueo posterior;
+- creación de un POI, carga de imagen, publicación y aparición en el mapa;
+- archivo lógico, desaparición del API público y restauración como borrador;
+- escáner QR: entrada manual, login con `returnUrl` sin token y token conservado en memoria;
+- enlace heredado con token: limpieza de la URL y acceso conservado tras el login;
+- check-in con geolocalización simulada, felicitación de Chivito e insignia del lugar;
+- rechazo de check-in duplicado y de posición fuera de la geocerca;
+- catálogo y detalle editorial por POI, con redirección de URL públicas heredadas;
+- perfil privado: edición de nombre, usuario y biografía, actualización del header, avatar,
+  check-in con foto, insignia, visor ampliado, reemplazo y eliminación de foto y filtros de
+  galería.
+
+La E2E local usa Microsoft Edge mediante el canal de Playwright. La suite completa se
+ejecutó localmente tras el Corte 5 y los cambios de insignias: 16/16. La corrida con
+`CI=1`/Chromium quedó pendiente de repetir después de estos cambios; la ejecución remota del
+workflow sigue pendiente. Las imágenes de la E2E se guardan en
+`test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan las carpetas
+de desarrollo.
 
 ## Seguridad y dependencias
 
-- `npm audit --omit=dev` en backend y frontend: **0 vulnerabilidades de producción**.
-- `npm audit` del frontend reporta **16 vulnerabilidades moderadas en dependencias de desarrollo de Angular CLI** (`pacote`, `glob`, `minimatch` y transitivas). La corrección disponible exige Angular CLI 22.2.6, un salto mayor; no se aplicó porque el proyecto fijó Angular 21 LTS.
-- No hay secretos en el repositorio. `.env.example` solo contiene valores locales.
-- El seed y la API no requieren autenticación en este corte porque solo exponen lectura pública.
+- `npm audit --omit=dev`: 0 vulnerabilidades de producción en backend y frontend.
+- `npm audit` del frontend reporta 16 vulnerabilidades moderadas en dependencias de
+  desarrollo de Angular CLI (`glob`, `minimatch` y transitivas). La corrección disponible
+  exige Angular CLI 22.2.6, un salto mayor; no se aplicó porque el proyecto fijó Angular 21.
+- No hay secretos en el repositorio. `.env` está ignorado y `.env.example` solo contiene
+  marcadores.
+- Las rutas `/api/admin/*` exigen rol `admin` y contraseña cambiada; el API público solo
+  expone POI publicados y no serializa referencias internas de usuario.
+- Las imágenes públicas se validan por firma binaria, se limitan a JPEG/PNG/WebP, 5 MB y 8
+  por POI. La carpeta `uploads/` está ignorada por Git.
+- Los avatares y las fotos de check-in se validan por MIME y firma binaria, se limitan a 5 MB
+  y se guardan en `uploads-private/`, también ignorada por Git.
+- El avatar y las fotos de check-in solo se sirven con sesión del dueño. No hay URL estática
+  ni acceso desde `/api/uploads/...`; otro usuario recibe `404`.
+- El perfil es privado: no existe directorio público ni búsqueda por `username`. El nombre de
+  usuario solo se muestra dentro de `/perfil`.
+- Las respuestas de imágenes privadas usan `Cache-Control: private, max-age=300,
+  must-revalidate`.
+- La sustitución de avatar elimina el archivo anterior; si falla la persistencia, elimina el
+  archivo nuevo. Si falla un check-in en modo multipart después de guardar la foto, también la
+  elimina.
+- La foto del check-in se sube después de la visita; un fallo de imagen no revierte la visita
+  ni las insignias. Reemplazarla o eliminarla tampoco borra el check-in.
+- Las insignias se otorgan con índice único `(user, type, sourceId)` y `$setOnInsert`; una
+  insignia ya obtenida no se duplica y se conserva si su origen se archiva.
+- El backfill de insignias es una simulación por defecto; `--apply` exige
+  `--allow-production` cuando `NODE_ENV=production`.
+- El QR de check-in usa un token opaco de 32 bytes; solo se persiste su hash SHA-256, la
+  comparación es en tiempo constante y el hash nunca se serializa.
+- La geocerca se valida en servidor con Haversine, con radio configurable entre 10 y 500 m.
+- El check-in tiene rate limit específico (30 intentos por IP cada 15 minutos) y no registra
+  tokens en logs ni en auditoría.
+- El API público solo expone aventuras publicadas y paradas con POI publicado; el hash del
+  token y las referencias de usuario no salen en las respuestas.
+- Un POI que es parada de una aventura publicada no puede archivarse ni despublicarse hasta
+  retirar la parada o archivar la aventura (`409 LOCATION_IN_USE`).
+- El seed y los endpoints de lectura son públicos por diseño en este corte. Los scripts de
+  seed y backfill se ejecutan manualmente con acceso a la base de datos.
+- El rate limit se desactiva en `NODE_ENV=test` para no interferir con las pruebas; sus
+  umbrales no tienen una prueba automatizada propia.
 
 ## Limitaciones y pendientes
 
-- No hay autenticación, usuarios, roles, aventuras, subida de imágenes ni moderación. Ese es el siguiente corte.
-- La autoría y licencia de las imágenes están pendientes de verificación. `Iglesia-San-Francisco.jpg` queda fuera del seed hasta disponer de coordenadas y fuente verificables.
-- Las imágenes suministradas tienen resoluciones de entre 330 y 738 px de ancho; son suficientes para tarjetas y popups, pero deberían sustituirse por originales de mayor calidad antes de una publicación definitiva.
-- No se creó configuración Docker porque Docker no está instalado en el entorno. El arranque verificado es con MongoDB local.
-- Los tiles de OpenStreetMap se usan con atribución visible. Para producción debe revisarse su política de uso y evaluarse un proveedor con cuota o autoalojado.
-- Las transcripciones de las Unidades 2 a 7 no están generadas; solo existen los PDF/DOCX en `.opencode/knowledge/fuentes/`. Este documento no atribuye el trabajo a una unidad académica.
-- Falta revisión experta del contenido patrimonial, imágenes, audios y estados de conservación.
+- El logo maestro y los iconos de marca se integraron y regeneraron en este corte
+  (`public/brand/falconsync-logo.png`, `npm run brand:assets`).
+- El límite del mapa es rectangular y operativo, no el polígono oficial de Falcón.
+- No hay verificación de correo, recuperación de contraseña, MFA ni gestión de sesiones.
+- El panel admin no gestiona usuarios ni roles; el rol `moderator` sigue reservado para el
+  corte de moderación.
+- El slug de un POI archivado no se reutiliza automáticamente; debe elegirse otro.
+- Las imágenes locales no generan miniaturas ni eliminan metadatos EXIF, no pasan por
+  antivirus y no están replicadas. En producción deben incluirse en el respaldo.
+- El perfil privado no tiene directorio público por decisión de alcance. Si se agrega, exige
+  revisar privacidad, moderación y consentimiento.
+- La galería privada está paginada (9 por página) y solo muestra las visitas del usuario. No
+  hay perfiles públicos ni compartición social.
+- No existe todavía un flujo de moderación; `visibility` y `moderationStatus` están
+  reservados en `CheckIn.photo`.
+- Los avatares y las fotos privadas son locales, no están cifrados de extremo a extremo y
+  dependen del respaldo y control de acceso del servidor.
+- No hay lista de nombres de usuario reservados ni historial de cambios de `username`.
+- El backend/API de aventuras y paradas se conserva para compatibilidad; no hay una interfaz
+  turística ni administrativa para crear recorridos. Faltan la moderación, los artículos,
+  los eventos y la agenda. Las fichas POI ya admiten historia, datos, información práctica y
+  fuentes; todavía hay que completar y revisar editorialmente esos contenidos.
+- Los QR no guardan imágenes en el servidor; el token solo se devuelve al rotar.
+- El QR puede fotografiarse y compartirse y la ubicación del cliente puede simularse; la
+  geocerca reduce el abuso, pero no elimina el fraude. La aplicación mantiene el token solo en
+  memoria y lo elimina de la URL si llega en un enlace heredado.
+- La lectura automática de QR depende de `BarcodeDetector`; si el navegador no lo admite, el
+  escáner usa entrada manual y no envía fotogramas al servidor.
+- El slug de una aventura archivada no se reutiliza automáticamente.
+- La autoría y licencia de 18 imágenes sigue pendiente de verificación; las otras 5 están
+  acreditadas con CC BY-SA 4.0.
+- La verificación en campo de los 23 POI sigue pendiente; `coordinateVerifiedAt` registra
+  revisión documental. El Parque Nacional Médanos de Coro es `unverified` por coordenada
+  aproximada y Casa Museo Locos de la Vela mantiene una discrepancia de unos 100 m.
+- No se creó configuración Docker porque Docker no está instalado en el entorno.
+- Los tiles de OpenStreetMap se usan con atribución visible. Para producción debe revisarse
+  su política de uso y evaluarse un proveedor con cuota o autoalojado.
+- Las transcripciones de las Unidades 2 a 7 no están generadas; solo existen los PDF/DOCX en
+  `.opencode/knowledge/fuentes/`. Este documento no atribuye el trabajo a una unidad
+  académica.
+
+## Trazabilidad académica
+
+El trabajo de este corte es de ingeniería y se justifica por el estado real del repositorio.
+No se atribuye a una unidad académica porque las transcripciones de las Unidades 2 a 7
+todavía no existen en `.opencode/knowledge/`. La matriz
+Regla de Negocio → Historia de Usuario → Requerimiento → Diseño → Código → Prueba queda
+pendiente de la tarea documental.

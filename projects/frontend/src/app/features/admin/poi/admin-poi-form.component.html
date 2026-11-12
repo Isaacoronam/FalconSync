@@ -1,0 +1,407 @@
+<section class="admin-page" aria-labelledby="poi-form-title">
+  <header class="admin-page__header">
+    <div>
+      <p class="admin-page__eyebrow">Administración</p>
+      <h1 id="poi-form-title">{{ isEditing() ? 'Editar punto de interés' : 'Nuevo punto de interés' }}</h1>
+      <p class="admin-page__lead">
+        @if (isEditing()) {
+          {{ locationTitle() || 'Cargando…' }}
+        } @else {
+          Completa la ficha y guarda como borrador antes de publicar.
+        }
+      </p>
+    </div>
+    <a class="button button--ghost" routerLink="/admin/poi">Volver al listado</a>
+  </header>
+
+  @if (success()) {
+    <p class="form-success" role="status">{{ success() }}</p>
+  }
+
+  @if (error()) {
+    <p class="form-error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="admin-state">Cargando punto de interés…</p>
+  } @else {
+    <form class="admin-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Datos principales</legend>
+
+        <div class="admin-form-grid">
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-title-field">Título</label>
+            <input
+              id="poi-title-field"
+              type="text"
+              formControlName="title"
+              maxlength="120"
+              [attr.aria-invalid]="titleError() ? 'true' : null"
+              [attr.aria-describedby]="titleError() ? 'poi-title-error' : null"
+            />
+            @if (titleError()) {
+              <p id="poi-title-error" class="form-field__error">{{ titleError() }}</p>
+            }
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-slug-field">Slug</label>
+            <input
+              id="poi-slug-field"
+              type="text"
+              formControlName="slug"
+              maxlength="100"
+              placeholder="se-genera-desde-el-titulo"
+              [attr.aria-invalid]="slugError() ? 'true' : null"
+              [attr.aria-describedby]="'poi-slug-help' + (slugError() ? ' poi-slug-error' : '')"
+            />
+            <p id="poi-slug-help" class="form-field__help">
+              @if (isEditing()) {
+                Identificador estable para la URL pública.
+              } @else {
+                Si lo dejas vacío, se genera desde el título.
+              }
+            </p>
+            @if (slugError()) {
+              <p id="poi-slug-error" class="form-field__error">{{ slugError() }}</p>
+            }
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-category-field">Categoría</label>
+            <select id="poi-category-field" formControlName="category">
+              @for (category of categories; track category[0]) {
+                <option [value]="category[0]">{{ category[1] }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-description-field">Descripción</label>
+            <textarea
+              id="poi-description-field"
+              rows="6"
+              formControlName="description"
+              maxlength="5000"
+              [attr.aria-invalid]="descriptionError() ? 'true' : null"
+              [attr.aria-describedby]="descriptionError() ? 'poi-description-error' : null"
+            ></textarea>
+            @if (descriptionError()) {
+              <p id="poi-description-error" class="form-field__error">{{ descriptionError() }}</p>
+            }
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-address-field">Dirección</label>
+            <input
+              id="poi-address-field"
+              type="text"
+              formControlName="address"
+              maxlength="240"
+              placeholder="Calle, sector o referencia"
+            />
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-period-field">Periodo histórico</label>
+            <input id="poi-period-field" type="text" formControlName="historicalPeriod" maxlength="120" />
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-history-field">Historia del lugar</label>
+            <textarea
+              id="poi-history-field"
+              rows="8"
+              formControlName="historicalStory"
+              maxlength="10000"
+              placeholder="Relato histórico documentado, en lenguaje claro para visitantes."
+            ></textarea>
+            <p class="form-field__help">
+              Separa la historia de la descripción breve. Incluye solo hechos que puedas respaldar
+              con fuentes.
+            </p>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-facts-field">Datos de interés</label>
+            <textarea
+              id="poi-facts-field"
+              rows="5"
+              formControlName="interestingFactsText"
+              maxlength="2300"
+              placeholder="Un dato por línea (máximo 8)"
+            ></textarea>
+            <p class="form-field__help">Hasta 8 datos; máximo 280 caracteres por dato.</p>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-visitor-info-field">Información para visitantes</label>
+            <textarea
+              id="poi-visitor-info-field"
+              rows="4"
+              formControlName="visitorInfo"
+              maxlength="2000"
+              placeholder="Acceso, horarios conocidos, recomendaciones o limitaciones."
+            ></textarea>
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-conservation-field">Estado de conservación</label>
+            <select id="poi-conservation-field" formControlName="conservationStatus">
+              @for (status of conservationStatuses; track status[0]) {
+                <option [value]="status[0]">{{ status[1] }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-status-field">Publicación</label>
+            <select id="poi-status-field" formControlName="status">
+              @for (status of statuses; track status.value) {
+                <option [value]="status.value">{{ status.label }}</option>
+              }
+            </select>
+          </div>
+
+          <label class="admin-checkbox">
+            <input type="checkbox" formControlName="isProvisional" />
+            <span>Ubicación o datos provisionales</span>
+          </label>
+
+          <label class="admin-checkbox">
+            <input type="checkbox" formControlName="isCatalogVisible" />
+            <span>Incluir en el catálogo público y en el mapa</span>
+          </label>
+
+          <p class="admin-panel__note admin-form-grid__full">
+            Para publicar, el POI no puede ser provisional y debe tener fecha de verificación
+            de coordenadas.
+          </p>
+
+          <div class="admin-field admin-form-grid__full">
+            <span class="admin-field__legend">Circuitos</span>
+            <div class="admin-checkbox-grid" role="group" aria-label="Circuitos del POI">
+              @for (circuit of circuits; track circuit.value) {
+                <label class="admin-checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedCircuits().includes(circuit.value)"
+                    (change)="toggleCircuit(circuit.value, $event)"
+                  />
+                  <span>{{ circuit.label }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <span class="admin-field__legend">Etiquetas</span>
+            <div class="admin-checkbox-grid" role="group" aria-label="Etiquetas del POI">
+              @for (tag of tags; track tag.value) {
+                <label class="admin-checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedTags().includes(tag.value)"
+                    (change)="toggleTag(tag.value, $event)"
+                  />
+                  <span>{{ tag.label }}</span>
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Ubicación</legend>
+
+        <div class="admin-form-grid">
+          <div class="admin-field">
+            <label for="poi-latitude-field">Latitud</label>
+            <input
+              id="poi-latitude-field"
+              type="number"
+              step="0.000001"
+              formControlName="latitude"
+              [attr.aria-invalid]="coordinateError('latitude') ? 'true' : null"
+              [attr.aria-describedby]="coordinateError('latitude') ? 'poi-latitude-error' : null"
+            />
+            @if (coordinateError('latitude')) {
+              <p id="poi-latitude-error" class="form-field__error">{{ coordinateError('latitude') }}</p>
+            }
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-longitude-field">Longitud</label>
+            <input
+              id="poi-longitude-field"
+              type="number"
+              step="0.000001"
+              formControlName="longitude"
+              [attr.aria-invalid]="coordinateError('longitude') ? 'true' : null"
+              [attr.aria-describedby]="coordinateError('longitude') ? 'poi-longitude-error' : null"
+            />
+            @if (coordinateError('longitude')) {
+              <p id="poi-longitude-error" class="form-field__error">{{ coordinateError('longitude') }}</p>
+            }
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-coordinate-source-field">Fuente de las coordenadas</label>
+            <input
+              id="poi-coordinate-source-field"
+              type="text"
+              formControlName="coordinateSource"
+              maxlength="500"
+              placeholder="OpenStreetMap way…, Google Maps Plus Code…, verificación en campo…"
+            />
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-coordinate-verified-field">Fecha de verificación</label>
+            <input
+              id="poi-coordinate-verified-field"
+              type="date"
+              formControlName="coordinateVerifiedAt"
+            />
+            <p class="form-field__help">Obligatoria para publicar.</p>
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-verification-field">Nivel de verificación</label>
+            <select id="poi-verification-field" formControlName="verificationLevel">
+              @for (level of verificationLevels; track level.value) {
+                <option [value]="level.value">{{ level.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="admin-form-grid__full">
+            <app-location-picker
+              [latitude]="form.controls.latitude.value"
+              [longitude]="form.controls.longitude.value"
+              (coordinatesChange)="updateCoordinates($event)"
+            />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Fuentes y recursos</legend>
+
+        <div class="admin-form-grid">
+          <div class="admin-field">
+            <label for="poi-source-field">Fuente del dato del POI (URL)</label>
+            <input
+              id="poi-source-field"
+              type="url"
+              formControlName="sourceUrl"
+              placeholder="https://…"
+              [attr.aria-invalid]="urlError('sourceUrl') ? 'true' : null"
+              [attr.aria-describedby]="urlError('sourceUrl') ? 'poi-source-error' : null"
+            />
+            @if (urlError('sourceUrl')) {
+              <p id="poi-source-error" class="form-field__error">{{ urlError('sourceUrl') }}</p>
+            }
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-content-sources-field">Fuentes históricas y editoriales</label>
+            <textarea
+              id="poi-content-sources-field"
+              rows="4"
+              formControlName="contentSourcesText"
+              maxlength="5009"
+              placeholder="Una URL http(s) por línea"
+            ></textarea>
+            <p class="form-field__help">
+              Hasta 10 enlaces que respalden la historia y los datos de interés.
+            </p>
+          </div>
+
+          <div class="admin-field">
+            <label for="poi-audio-field">Audioguía (URL)</label>
+            <input
+              id="poi-audio-field"
+              type="url"
+              formControlName="audioGuideUrl"
+              placeholder="https://…"
+              [attr.aria-invalid]="urlError('audioGuideUrl') ? 'true' : null"
+              [attr.aria-describedby]="urlError('audioGuideUrl') ? 'poi-audio-error' : null"
+            />
+            @if (urlError('audioGuideUrl')) {
+              <p id="poi-audio-error" class="form-field__error">{{ urlError('audioGuideUrl') }}</p>
+            }
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="admin-form__actions">
+        <button class="button button--primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : isEditing() ? 'Guardar cambios' : 'Crear POI' }}
+        </button>
+        <a class="button button--ghost" routerLink="/admin/poi">Cancelar</a>
+      </div>
+    </form>
+
+    <section class="admin-panel admin-images" aria-labelledby="poi-images-title">
+      <h2 id="poi-images-title">Imágenes</h2>
+
+      @if (!isEditing()) {
+        <p class="admin-panel__note">Guarda el POI primero para poder añadir imágenes.</p>
+      } @else {
+        <p class="admin-panel__note">
+          JPEG, PNG o WebP · máximo 5 MB por archivo · hasta 8 imágenes.
+        </p>
+
+        @if (images().length > 0) {
+          <ul class="admin-image-grid">
+            @for (image of images(); track image) {
+              <li class="admin-image-card">
+                <img
+                  [src]="image"
+                  [alt]="'Imagen de ' + (locationTitle() || 'el punto de interés')"
+                  loading="lazy"
+                  (error)="hideBrokenImage($event)"
+                />
+                <button
+                  class="button button--ghost button--small"
+                  type="button"
+                  [disabled]="removingImageUrl() === image"
+                  (click)="removeImage(image)"
+                >
+                  {{ removingImageUrl() === image ? 'Quitando…' : 'Quitar' }}
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="admin-state">Este POI todavía no tiene imágenes.</p>
+        }
+
+        <div class="admin-images__actions">
+          <input
+            #imageInput
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            (change)="onFileSelected($event)"
+          />
+          <button
+            class="button button--primary button--small"
+            type="button"
+            [disabled]="uploadingImage() || images().length >= 8"
+            (click)="imageInput.click()"
+          >
+            {{ uploadingImage() ? 'Subiendo…' : 'Añadir imagen' }}
+          </button>
+        </div>
+
+        @if (imageError()) {
+          <p class="form-error" role="alert">{{ imageError() }}</p>
+        }
+      }
+    </section>
+  }
+</section>

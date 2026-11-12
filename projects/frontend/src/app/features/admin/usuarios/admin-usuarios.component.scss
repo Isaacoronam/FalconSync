@@ -1,0 +1,22 @@
+.admin-table__title {
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.admin-table__meta {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.admin-badge--published {
+  color: #395c33;
+  background: #eef6ec;
+}
+
+.admin-badge--archived {
+  color: #5d4338;
+  background: #ead9bf;
+}

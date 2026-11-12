@@ -14,9 +14,16 @@
   ],
   "agent_count": 10,
   "skills": [
+    "api-validation-security",
+    "angular-spa",
+    "authentication-security",
+    "backend-architecture-crud",
     "brainstorming",
     "deployment-readiness",
     "documentation-as-code",
+    "error-handling-human-ux",
+    "external-integrations",
+    "mobile-kotlin-android",
     "requesting-code-review",
     "skill-authoring",
     "systematic-debugging",
@@ -28,10 +35,10 @@
     "webapp-testing",
     "writing-plans"
   ],
-  "skill_count": 13,
+  "skill_count": 20,
   "project_local": true,
   "contains_opencode_json": false,
   "reason_config_omitted": "Preserve existing project configuration and avoid overwriting user settings.",
   "unit_1_available": false,
-  "knowledge_status": "Unit 02-07 files are placeholders pending source-based transcription."
+  "knowledge_status": "Original sources for Units 02-07 are present; structured transcriptions are pending."
 }

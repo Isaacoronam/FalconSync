@@ -1,0 +1,237 @@
+{
+  "generatedAt": "2026-11-06",
+  "basePath": "/images/locations",
+  "note": "Las imágenes con status pending-verification fueron suministradas por el responsable del proyecto y no tienen autoría ni licencia confirmadas. No deben publicarse fuera de este repositorio hasta completar esa verificación.",
+  "images": [
+    {
+      "file": "catedral-de-coro.jpg",
+      "poiSlug": "catedral-de-coro",
+      "poiTitle": "Catedral de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "casa-de-las-ventanas-de-hierro.jpg",
+      "poiSlug": "casa-de-las-ventanas-de-hierro",
+      "poiTitle": "Casa de las Ventanas de Hierro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "casa-del-sol.jpg",
+      "poiSlug": "casa-del-sol",
+      "poiTitle": "Casa del Sol",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "arco-de-la-federacion.jpg",
+      "poiSlug": "arco-de-la-federacion",
+      "poiTitle": "Arco de la Federación",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "medanos-de-coro.jpg",
+      "poiSlug": "medanos-de-coro",
+      "poiTitle": "Médanos de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "plaza-bolivar-de-coro.jpg",
+      "poiSlug": "plaza-bolivar-de-coro",
+      "poiTitle": "Plaza Bolívar de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "iglesia-de-san-francisco.jpg",
+      "poiSlug": "iglesia-de-san-francisco",
+      "poiTitle": "Iglesia de San Francisco",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iglesia_de_San_Francisco,_Coro.jpg",
+      "status": "credited"
+    },
+    {
+      "file": "iglesia-de-san-clemente.jpg",
+      "poiSlug": "iglesia-de-san-clemente",
+      "poiTitle": "Iglesia de San Clemente",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iglesia_de_San_Clemente,_Coro.jpg",
+      "status": "credited"
+    },
+    {
+      "file": "cruz-de-san-clemente.jpg",
+      "poiSlug": "cruz-de-san-clemente",
+      "poiTitle": "Cruz de San Clemente",
+      "author": "Zerojosefer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cruz_de_San_Clemente_(Coro).jpg",
+      "status": "credited"
+    },
+    {
+      "file": "casa-balcon-de-los-arcaya.jpg",
+      "poiSlug": "casa-balcon-de-los-arcaya",
+      "poiTitle": "Casa Balcón de los Arcaya",
+      "author": "Zerojosefer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Casa_Balc%C3%B3n_de_los_Arcaya_(exterior).jpg",
+      "status": "credited"
+    },
+    {
+      "file": "museo-de-arte-de-coro.jpg",
+      "poiSlug": "museo-de-arte-de-coro",
+      "poiTitle": "Museo de Arte de Coro",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sede_Museo_de_Arte_de_Coro.jpg",
+      "status": "credited"
+    },
+    {
+      "file": "Gelateria-el-sol.jpeg",
+      "poiSlug": "heladeria-el-sol",
+      "poiTitle": "Gelatería El Sol",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "parque-nacional-medanos-de-coro.jpg",
+      "poiSlug": "parque-nacional-medanos-de-coro",
+      "poiTitle": "Parque Nacional Médanos de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "Casa-Museo-Locos-de-la-Vela.jpg",
+      "poiSlug": "casa-museo-locos-de-la-vela",
+      "poiTitle": "Casa Museo Locos de la Vela",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "ciudad-deportiva-coro.jpg",
+      "poiSlug": "ciudad-deportiva",
+      "poiTitle": "Ciudad Deportiva",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "mirador-ali-primera.jpg",
+      "poiSlug": "mirador-ali-primera",
+      "poiTitle": "Mirador Alí Primera",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "monumento-de-las-madres-coro.jpg",
+      "poiSlug": "monumento-de-las-madres",
+      "poiTitle": "Monumento de las Madres",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "museo-alberto-herique-coro.jpg",
+      "poiSlug": "museo-alberto-henriquez",
+      "poiTitle": "Museo Alberto Henríquez",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "museo-diocesano-de-coro.jpg",
+      "poiSlug": "museo-diocesano",
+      "poiTitle": "Museo Diocesano",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "museo-guadalupano.jpg",
+      "poiSlug": "museo-guadalupano",
+      "poiTitle": "Museo Guadalupano",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "paseo-independencia-coro.jpg",
+      "poiSlug": "paseo-independencia",
+      "poiTitle": "Paseo Independencia",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "plaza-antillana-coro.jpg",
+      "poiSlug": "plaza-antillana",
+      "poiTitle": "Plaza Antillana",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "teatro-armonia.jpg",
+      "poiSlug": "teatro-armonia",
+      "poiTitle": "Teatro Armonía",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    }
+  ]
+}
