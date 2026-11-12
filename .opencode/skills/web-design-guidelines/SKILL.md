@@ -13,6 +13,10 @@ metadata:
 ## Cuándo usar
 Al crear o revisar pantallas, componentes, formularios, navegación y experiencias web.
 
+En FalconSync, revisa primero los componentes Angular/SCSS y el sistema visual existentes.
+No asumas Bootstrap: no es una dependencia instalada. Para el mapa, Leaflet debe conservar
+los límites de Falcón y la atribución visible de las teselas.
+
 ## Revisión
 - Jerarquía visual: títulos, contenido, acciones y estados.
 - Consistencia: espaciado, tipografía, color, componentes y patrones.

@@ -12,7 +12,7 @@ Fecha de verificación: 2026-11-08.
 - Mapa limitado al rectángulo operativo de Falcón con `maxBounds`,
   `maxBoundsViscosity=1` y `minZoom=8`.
 - Vista inicial en Coro a zoom 13 y control “Ver todo Falcón”.
-- Logo maestro integrado en `falcon-sync-frontend/public/brand/falconsync-logo.png`
+- Logo maestro integrado en `projects/frontend/public/brand/falconsync-logo.png`
   (PNG aprobado, 195×195, con transparencia), derivado a 48×48 sin deformar para el
   marcador del header.
 - Favicon y `apple-touch-icon` regenerados desde el logo maestro
@@ -163,43 +163,14 @@ Correcciones respecto al documento inicial:
 ```text
 FalconSYN/
 ├── .github/workflows/ci.yml
-├── falcon-sync-backend/
-│   ├── scripts/
-│   │   ├── backfillUsernames.js
-│   │   ├── createAdmin.js
-│   │   ├── e2eServer.js
-│   │   ├── generateCheckInQr.js
-│   │   ├── publishLocations.js
-│   │   ├── seedAdventures.js
-│   │   └── seedLocations.js
-│   ├── src/
-│   │   ├── config/            # entorno, Mongo y límites de Falcón
-│   │   ├── controllers/       # auth, perfil, admin, POI, aventuras, QR y check-in
-│   │   ├── middlewares/       # auth, origin, rate limit, upload, errores
-│   │   ├── models/            # User, RefreshSession, Location, Adventure, AdventureStop, CheckIn, AuditLog
-│   │   ├── routes/
-│   │   ├── services/          # auth, usuarios, auditoría, storage, QR, tokens, progreso
-│   │   └── utils/             # HttpError, validaciones, distancia Haversine
-│   ├── uploads/               # imágenes públicas de POI, ignoradas por Git
-│   ├── uploads-private/       # avatares y fotos de check-in, ignorados por Git
-│   └── test/                  # locations, auth, adminLocations, adventures, profile y seeds
-├── falcon-sync-frontend/
-│   ├── e2e/                   # map, auth, admin-poi, coro-aventura y perfil
-│   ├── public/images/locations/ # imágenes y manifest.json de créditos
-│   ├── src/app/
-│   │   ├── core/              # guards, interceptor, modelos, servicios
-│   │   ├── features/
-│   │   │   ├── admin/         # layout, dashboard, POI, auditoría y aventuras
-│   │   │   │   └── aventuras/ # listado, formulario, paradas y QR
-│   │   │   ├── aventuras/     # catálogo, detalle, progreso y check-in
-│   │   │   ├── auth/          # login, registro, cambio, 403
-│   │   │   ├── map/
-│   │   │   └── perfil/        # perfil privado, avatar, estadísticas y fotos
-│   │   ├── environments/
-│   │   └── styles/_admin.scss
-│   ├── playwright.config.ts
-│   ├── proxy.conf.json
-│   └── proxy.e2e.conf.json
+├── AGENTS.md
+├── context/                   # Contexto, reglas y contratos API
+├── skills/                    # Índice; las skills ejecutables siguen en .opencode/skills
+├── memory/                    # Decisiones arquitectónicas y soluciones verificadas
+├── projects/
+│   ├── backend/                # Express, Mongoose, scripts y pruebas
+│   ├── frontend/               # Angular, Leaflet y pruebas E2E
+│   └── mobile/                  # Esqueleto pendiente de la app de campo
 ├── docs/
 │   ├── ADMINISTRACION.md
 │   ├── AUTENTICACION.md
@@ -210,6 +181,9 @@ FalconSYN/
 │   └── POI.md
 └── .nvmrc
 ```
+
+El backend conserva `src/` y el frontend conserva `src/app/` organizados por capas y
+funcionalidades; esta reorganización solo cambia su ubicación dentro de `projects/`.
 
 ## Identidad visual y geografía
 
@@ -258,7 +232,7 @@ Requisitos: Node 26.13.0 y MongoDB local en `127.0.0.1:27017`.
 Backend:
 
 ```bash
-cd falcon-sync-backend
+cd projects/backend
 npm install
 cp .env.example .env   # completar secretos de al menos 32 caracteres
 npm run seed           # inserta los POI ausentes y elimina Mirador del Pueblo
@@ -275,7 +249,7 @@ npm run dev
 Frontend, en otra terminal:
 
 ```bash
-cd falcon-sync-frontend
+cd projects/frontend
 npm install
 npm start
 ```
@@ -426,7 +400,7 @@ detalle está en [`docs/POI.md`](./POI.md).
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm test` en `falcon-sync-backend` | 75/75 aprobadas (13 admin POI + 17 APIs heredadas + 12 auth + 15 locations + 6 perfil + 6 insignias/galería + 2 seed aventuras + 4 seed POI) |
+| Pruebas backend | `npm test` en `projects/backend` | 75/75 aprobadas (13 admin POI + 17 APIs heredadas + 12 auth + 15 locations + 6 perfil + 6 insignias/galería + 2 seed aventuras + 4 seed POI) |
 | Seed idempotente | `test/seedLocations.test.js` | 23 insertados la primera vez y 0 la segunda |
 | Seed de aventura | `npm run seed:adventures` + `--verify` | Aventura publicada con 5 paradas, orden y disponibilidad correctos |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada de Parque Nacional Médanos de Coro sincronizada y verificada |

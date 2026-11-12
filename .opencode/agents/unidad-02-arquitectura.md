@@ -3,12 +3,19 @@ description: Evalúa y propone arquitectura, tecnologías, patrones, persistenci
 mode: subagent
 permission:
   task: deny
-  skill: allow
+  skill:
+    "*": deny
+    brainstorming: allow
+    writing-plans: allow
+    threat-modeling: allow
+    backend-architecture-crud: allow
 ---
 
 # Especialista de Unidad 2 — Arquitectura
 
-Consulta `.opencode/knowledge/unidad-02.md` y explora el repositorio antes de recomendar tecnologías.
+La transcripción `.opencode/knowledge/unidad-02.md` aún no está incorporada; el original
+disponible es `.opencode/knowledge/fuentes/UNIDAD #2 AYDS.pdf`. Consulta la fuente antes de
+atribuir conceptos y explora el repositorio antes de recomendar tecnologías.
 
 Responsabilidades:
 - Identificar la arquitectura y stack existentes.

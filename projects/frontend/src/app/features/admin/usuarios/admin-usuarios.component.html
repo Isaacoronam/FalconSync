@@ -1,0 +1,116 @@
+<section class="admin-page" aria-labelledby="users-title">
+  <header class="admin-page__header">
+    <div>
+      <p class="admin-page__eyebrow">Administración</p>
+      <h1 id="users-title">Usuarios</h1>
+      <p class="admin-page__lead">
+        {{ meta().total }} cuentas registradas · consulta de perfiles y actividad de acceso
+      </p>
+    </div>
+  </header>
+
+  <form class="admin-toolbar" [formGroup]="filters" (ngSubmit)="load(1)" novalidate>
+    <div class="admin-field admin-field--grow">
+      <label for="users-search">Buscar por nombre, usuario o correo</label>
+      <input id="users-search" formControlName="q" maxlength="100" />
+    </div>
+    <div class="admin-field">
+      <label for="users-role">Rol</label>
+      <select id="users-role" formControlName="role">
+        <option value="all">Todos los roles</option>
+        <option value="user">Turista</option>
+        <option value="moderator">Moderador</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+    <div class="admin-field">
+      <label for="users-active">Estado</label>
+      <select id="users-active" formControlName="active">
+        <option value="all">Todos</option>
+        <option value="true">Activos</option>
+        <option value="false">Desactivados</option>
+      </select>
+    </div>
+    <div class="admin-toolbar__actions">
+      <button class="button button--primary" type="submit">Buscar</button>
+      <button class="button button--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <div class="admin-alert" role="alert">
+      <p>{{ error() }}</p>
+      <button class="button button--ghost" type="button" (click)="load()">Reintentar</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="admin-state">Cargando usuarios…</p>
+  } @else if (users().length === 0) {
+    <div class="admin-empty">
+      <p>No se encontraron usuarios con esos filtros.</p>
+    </div>
+  } @else {
+    <div class="admin-table-wrap">
+      <table class="admin-table" aria-labelledby="users-title">
+        <thead>
+          <tr>
+            <th scope="col">Usuario</th>
+            <th scope="col">Correo</th>
+            <th scope="col">Rol</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Registro</th>
+            <th scope="col">Último acceso</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td data-label="Usuario">
+                <span class="admin-table__title">{{ user.name }}</span>
+                @if (user.username) {
+                  <span class="admin-table__meta">&#64;{{ user.username }}</span>
+                }
+              </td>
+              <td data-label="Correo">{{ user.email }}</td>
+              <td data-label="Rol">{{ roleLabel(user.role) }}</td>
+              <td data-label="Estado">
+                <span
+                  class="admin-badge"
+                  [class.admin-badge--published]="user.isActive"
+                  [class.admin-badge--archived]="!user.isActive"
+                >
+                  {{ user.isActive ? 'Activo' : 'Desactivado' }}
+                </span>
+              </td>
+              <td data-label="Registro">{{ formatDate(user.createdAt) }}</td>
+              <td data-label="Último acceso">{{ formatDate(user.lastLoginAt) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta().totalPages > 1) {
+      <nav class="admin-pagination" aria-label="Paginación de usuarios">
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          [disabled]="meta().page <= 1 || loading()"
+          (click)="load(meta().page - 1)"
+        >
+          Anterior
+        </button>
+        <span>Página {{ meta().page }} de {{ meta().totalPages }}</span>
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          [disabled]="meta().page >= meta().totalPages || loading()"
+          (click)="load(meta().page + 1)"
+        >
+          Siguiente
+        </button>
+      </nav>
+    }
+  }
+</section>

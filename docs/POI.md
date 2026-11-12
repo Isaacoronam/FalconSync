@@ -13,7 +13,7 @@ No atribuye el diseño a una unidad académica: las transcripciones de las Unida
 todavía no están incorporadas en `.opencode/knowledge/`.
 
 La fuente de verdad del catálogo es
-[`falcon-sync-backend/scripts/seedLocations.js`](../falcon-sync-backend/scripts/seedLocations.js).
+[`projects/backend/scripts/seedLocations.js`](../projects/backend/scripts/seedLocations.js).
 Si este documento y el seed difieren, prevalece el seed.
 
 ## Modelo
@@ -161,7 +161,7 @@ publicación y la generación de QR se ejecutaron con los scripts nuevos:
 ```
 
 Los 23 POI tienen token QR en versión 1. Los SVG se guardaron en
-`falcon-sync-backend/.qr-codes/`, fuera de Git.
+`projects/backend/.qr-codes/`, fuera de Git.
 
 La sincronización de coordenadas está limitada a `parque-nacional-medanos-de-coro`;
 los demás puntos conservan las coordenadas que ya tengan en la base de datos. La
@@ -230,7 +230,7 @@ usa 100 m por la discrepancia documentada.
 ## Imágenes y créditos
 
 El manifiesto legible por máquina está en
-[`falcon-sync-frontend/public/images/locations/manifest.json`](../falcon-sync-frontend/public/images/locations/manifest.json)
+[`projects/frontend/public/images/locations/manifest.json`](../projects/frontend/public/images/locations/manifest.json)
 y se sirve en `/images/locations/manifest.json`.
 
 | Archivo | POI | Autor | Licencia | Estado |

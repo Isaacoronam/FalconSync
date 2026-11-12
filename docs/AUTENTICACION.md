@@ -64,7 +64,7 @@ Errores relevantes: `INVALID_CREDENTIALS`, `EMAIL_IN_USE`, `AUTHENTICATION_REQUI
 
 ## Configuración
 
-Variables nuevas en `falcon-sync-backend/.env.example`:
+Variables nuevas en `projects/backend/.env.example`:
 
 - `JWT_ACCESS_SECRET` y `JWT_REFRESH_SECRET`: obligatorias, mínimo 32 caracteres.
 - `ACCESS_TOKEN_TTL_SECONDS`, `REFRESH_TOKEN_TTL_DAYS`, `BCRYPT_COST`.
