@@ -12,7 +12,7 @@ Fecha de verificación: 2026-11-07.
 | Persistencia de sesión | Colección `RefreshSession` con hash SHA-256 del refresh token, expiración y estado de revocación. |
 | Revocación global | `User.tokenVersion` se incrementa al cambiar la contraseña; el backend lo compara en cada petición autenticada. |
 | Hash de contraseña | `bcryptjs` con coste 12 en desarrollo/producción y 10 en pruebas. |
-| Roles | `user`, `moderator`, `admin`. `moderator` queda previsto para el corte de moderación. |
+| Roles | `user`, `moderator` (legacy temporal), `historian`, `inspector` y `admin`. La migración de `moderator` a `historian` aún no se ejecutó. |
 | Bootstrap admin | `scripts/createAdmin.js` con variables `ADMIN_*`; idempotente y sin credenciales por defecto. |
 | Cambio obligatorio | El admin creado por bootstrap recibe `mustChangePassword=true`; el backend bloquea rutas de rol hasta el cambio. |
 | Nombre de usuario | `User.username` único, generado al registrar o crear el admin. Se edita desde el perfil privado y no se expone como ruta pública. |
@@ -41,6 +41,10 @@ distintos, la cookie dejará de enviarse y habrá que revisar el diseño.
 | `DELETE` | `/api/profile/avatar` | Bearer | Elimina el avatar. |
 | `GET` | `/api/profile/check-ins/:checkInId/photo` | Bearer | Sirve la foto de un check-in propio. |
 | `GET` | `/api/admin/summary` | Bearer + rol `admin` | Métricas del panel y actividad reciente. |
+| `GET` | `/api/admin/users` | Bearer + rol `admin` | Usuarios paginados y filtrables; sin datos sensibles. |
+| `PATCH` | `/api/admin/users/:id/role` | Bearer + rol `admin` + reautenticación | Cambia el rol, revoca sesiones y audita. |
+| `PATCH` | `/api/admin/users/:id/status` | Bearer + rol `admin` + reautenticación | Activa o desactiva la cuenta, revoca sesiones y audita. |
+| `POST` | `/api/admin/users/:id/revoke-sessions` | Bearer + rol `admin` + reautenticación | Revoca sesiones e incrementa `tokenVersion`. |
 | `*` | `/api/admin/locations/*` | Bearer + rol `admin` | CRUD de POI, imágenes, archivo y restauración. |
 | `GET` | `/api/admin/audit` | Bearer + rol `admin` | Historial de acciones administrativas. |
 
@@ -78,26 +82,28 @@ y debe cambiarse en el primer acceso.
 ## Verificación
 
 - 12 pruebas backend de autenticación y autorización.
-- 67 pruebas backend en total, incluidas las 6 del perfil privado.
-- 29 pruebas frontend en total.
-- 15 pruebas E2E con navegador real, incluyendo registro, persistencia tras recarga,
+- 89 pruebas backend en total, incluidas las 6 del perfil privado y las 10 de roles y
+  administración sensible (verificado el 2026-11-13).
+- 53 pruebas frontend en total (verificado el 2026-11-13).
+- 17 pruebas E2E con navegador real, incluyendo registro, persistencia tras recarga,
   logout, acceso admin, cambio obligatorio, bloqueo de usuario normal, CRUD de POI, perfil,
-  avatar y check-in con foto.
+  avatar, check-in con foto y gestión de rol, estado y sesiones de una cuenta.
 - `npm audit --omit=dev`: 0 vulnerabilidades en backend y frontend.
 
 El contrato detallado del perfil, el avatar y las fotos está en [`PERFIL.md`](./PERFIL.md).
 
 ## Límites conocidos
 
-- No hay verificación de correo, recuperación de contraseña, MFA ni listado/cierre de
-  sesiones desde la interfaz.
+- No hay verificación de correo, recuperación de contraseña ni MFA. El usuario no puede
+  listar ni cerrar sus propias sesiones; solo un administrador puede revocarlas.
 - La detección de reutilización de un refresh token rechaza el token viejo, pero no
   revoca automáticamente toda la familia de sesiones.
 - El rate limit se desactiva cuando `NODE_ENV=test`; sus umbrales no están cubiertos por
   una prueba automatizada.
 - `moderator` existe en el modelo y en los guards, pero todavía no tiene rutas propias.
-- La administración de usuarios (roles, desactivación) sigue pendiente; el Corte 2 cubrió
-  el CRUD de POI, las imágenes y la auditoría.
+- La API y la interfaz administrativas permiten cambiar rol, activar/desactivar cuentas y
+  revocar sesiones con reautenticación, protecciones y auditoría obligatoria. La migración
+  de datos de `moderator` sigue pendiente de ejecución.
 - No hay perfiles públicos por `username`; el nombre de usuario solo se usa dentro del
   perfil privado en este corte.
 - No hay lista de nombres de usuario reservados ni historial de cambios.
