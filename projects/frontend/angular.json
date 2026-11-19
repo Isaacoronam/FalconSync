@@ -27,7 +27,8 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "src/assets",
+                "output": "/"
               }
             ],
             "styles": ["node_modules/leaflet/dist/leaflet.css", "src/styles.scss"],

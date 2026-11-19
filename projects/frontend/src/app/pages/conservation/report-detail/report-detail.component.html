@@ -1,0 +1,321 @@
+<section class="conservation-page" aria-labelledby="report-detail-title">
+  <header class="conservation-header">
+    <div>
+      <p class="conservation-eyebrow">Conservación · Reporte</p>
+      <h1 id="report-detail-title" class="conservation-title">
+        {{ report() ? 'Reporte ' + shortId(report()?.id) : 'Detalle del reporte' }}
+      </h1>
+      <p class="conservation-lead">
+        Consulta el daño reportado, su triaje, la evidencia adjunta y el estado de la inspección
+        asociada.
+      </p>
+    </div>
+
+    <div class="conservation-actions">
+      <a class="button button--ghost" routerLink="/reportes">Volver a mis reportes</a>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="conservation-state">Cargando el reporte…</p>
+  } @else if (error()) {
+    <div class="conservation-alert" role="alert">
+      <p>{{ error() }}</p>
+      <div class="conservation-actions">
+        <button class="button button--ghost button--small" type="button" (click)="load()">
+          Reintentar
+        </button>
+        <a class="button button--ghost button--small" routerLink="/reportes">Mis reportes</a>
+      </div>
+    </div>
+  } @else if (report(); as item) {
+    @if (refreshing()) {
+      <p class="conservation-state" role="status">Actualizando el reporte…</p>
+    }
+
+    <div class="conservation-grid conservation-grid--detail">
+      <div class="conservation-grid">
+        <section class="conservation-panel" aria-labelledby="report-data-title">
+          <div class="conservation-panel__header">
+            <div>
+              <h2 id="report-data-title">{{ targetName() }}</h2>
+              <p class="conservation-panel__hint">
+                {{ categoryLabels[item.category] }} ·
+                {{ item.capturedAt | date: 'dd/MM/yyyy HH:mm' }}
+              </p>
+            </div>
+            <span [class]="stateClass(item.state)">{{ stateLabels[item.state] }}</span>
+          </div>
+
+          <p class="conservation-card__body">{{ item.description }}</p>
+
+          <p class="conservation-meta">
+            <span><strong>Reportado por:</strong> {{ shortId(item.reporterId) }}</span>
+            <span><strong>Creado:</strong> {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            <span><strong>Versión:</strong> {{ item.version }}</span>
+            @if (item.gps) {
+              <span>
+                <strong>GPS:</strong>
+                {{ item.gps.coordinates[1] }}, {{ item.gps.coordinates[0] }}
+                @if (item.accuracyMeters) {
+                  (± {{ item.accuracyMeters }} m)
+                }
+              </span>
+            }
+          </p>
+
+          @if (item.rejectionReason) {
+            <div class="conservation-alert" role="status">
+              <p><strong>Motivo de rechazo o cierre:</strong> {{ item.rejectionReason }}</p>
+            </div>
+          }
+
+          @if (item.inspectionId) {
+            <div class="conservation-actions">
+              <a
+                class="button button--primary button--small"
+                [routerLink]="['/inspecciones', item.inspectionId]"
+              >
+                Abrir inspección
+              </a>
+            </div>
+          }
+        </section>
+
+        <app-evidence-panel
+          ownerType="Report"
+          [ownerId]="item.id"
+          [canUpload]="canUploadEvidence()"
+          title="Evidencia del reporte"
+          emptyMessage="El reporte todavía no tiene evidencia adjunta."
+          (uploaded)="load(true)"
+        />
+
+        <section class="conservation-panel" aria-labelledby="report-history-title">
+          <div class="conservation-panel__header">
+            <div>
+              <h2 id="report-history-title">Trazabilidad</h2>
+              <p class="conservation-panel__hint">Eventos registrados sobre este reporte.</p>
+            </div>
+          </div>
+
+          @if (history().length === 0) {
+            <p class="conservation-state">Todavía no hay eventos registrados.</p>
+          } @else {
+            <ol class="conservation-timeline">
+              @for (event of history(); track event.eventId) {
+                <li>
+                  <span class="conservation-timeline__event">{{
+                    eventLabel(event.eventType)
+                  }}</span>
+                  <span class="conservation-timeline__meta">
+                    {{ event.occurredAt | date: 'dd/MM/yyyy HH:mm' }} ·
+                    {{ shortId(event.actorId) }}
+                    @if (event.fromState || event.toState) {
+                      · {{ event.fromState ?? '—' }} → {{ event.toState ?? '—' }}
+                    }
+                  </span>
+                  @if (event.reason) {
+                    <span class="conservation-timeline__meta">{{ event.reason }}</span>
+                  }
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      </div>
+
+      <div class="conservation-grid">
+        @if (auth.canTriageReports()) {
+          <section class="conservation-panel" aria-labelledby="report-triage-title">
+            <div class="conservation-panel__header">
+              <div>
+                <h2 id="report-triage-title">Triaje</h2>
+                <p class="conservation-panel__hint">
+                  Un inspector distinto del autor decide el destino del reporte.
+                </p>
+              </div>
+            </div>
+
+            @if (actionError()) {
+              <div class="conservation-alert" role="alert">
+                <p>{{ actionError() }}</p>
+              </div>
+            }
+
+            @if (notice()) {
+              <p class="conservation-success" role="status">{{ notice() }}</p>
+            }
+
+            @if (canTriage()) {
+              <form
+                class="conservation-form"
+                [formGroup]="triageForm"
+                (ngSubmit)="submitTriageDecision()"
+              >
+                <div class="conservation-field">
+                  <label for="triage-decision">Decisión</label>
+                  <select id="triage-decision" formControlName="decision">
+                    <option value="">Solo marcar en triaje</option>
+                    <option value="accept">Aceptar para inspección</option>
+                    <option value="reject">Rechazar reporte</option>
+                    <option value="close">Cerrar sin inspección</option>
+                  </select>
+                </div>
+
+                @if (
+                  triageForm.controls.decision.value !== '' &&
+                  triageForm.controls.decision.value !== 'accept'
+                ) {
+                  <div class="conservation-field">
+                    <label for="triage-reason">Motivo</label>
+                    <textarea
+                      id="triage-reason"
+                      formControlName="reason"
+                      rows="3"
+                      maxlength="1000"
+                      placeholder="Explica por qué se rechaza o cierra el reporte."
+                    ></textarea>
+                  </div>
+                }
+
+                <div class="conservation-field">
+                  <label for="triage-notes">Notas internas (opcional)</label>
+                  <textarea
+                    id="triage-notes"
+                    formControlName="notes"
+                    rows="3"
+                    maxlength="2000"
+                    placeholder="Observaciones para el equipo de conservación."
+                  ></textarea>
+                </div>
+
+                <div class="conservation-actions">
+                  <button
+                    class="button button--primary button--small"
+                    type="submit"
+                    [disabled]="actionLocked()"
+                  >
+                    {{ busy() === 'triage' ? 'Guardando…' : 'Guardar triaje' }}
+                  </button>
+                </div>
+              </form>
+            } @else if (item.reporterId === auth.currentUser()?.id) {
+              <p class="conservation-state">
+                No puedes tramitar tu propio reporte. Otro inspector debe revisarlo.
+              </p>
+            } @else {
+              <p class="conservation-state">
+                El reporte está en estado {{ stateLabels[item.state] }} y no admite más decisiones
+                de triaje.
+              </p>
+            }
+          </section>
+
+          @if (item.state === 'accepted') {
+            <section class="conservation-panel" aria-labelledby="report-convert-title">
+              <div class="conservation-panel__header">
+                <div>
+                  <h2 id="report-convert-title">Convertir en inspección</h2>
+                  <p class="conservation-panel__hint">
+                    Asigna inspector y revisor. La revisión debe hacerla otra persona.
+                  </p>
+                </div>
+              </div>
+
+              <form class="conservation-form" [formGroup]="convertForm" (ngSubmit)="convert()">
+                @if (!item.heritageAssetId) {
+                  <div class="conservation-field">
+                    <label for="convert-asset">Activo patrimonial</label>
+                    <select id="convert-asset" formControlName="assetId">
+                      <option value="">Selecciona un activo</option>
+                      @for (asset of matchingAssets(); track asset.id) {
+                        <option [value]="asset.id">{{ asset.name }} ({{ asset.code }})</option>
+                      }
+                    </select>
+                    <small>
+                      Solo se muestran activos del mismo punto de interés o sin POI asignado.
+                    </small>
+                  </div>
+                }
+
+                <div class="conservation-field">
+                  <label for="convert-inspector">Inspector asignado</label>
+                  <select id="convert-inspector" formControlName="inspectorId">
+                    @for (inspector of inspectors(); track inspector.id) {
+                      <option [value]="inspector.id">{{ inspector.name }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="conservation-field">
+                  <label for="convert-reviewer">Revisor</label>
+                  <select id="convert-reviewer" formControlName="reviewerId">
+                    <option value="">Selecciona un revisor</option>
+                    @for (inspector of otherInspectors(); track inspector.id) {
+                      <option [value]="inspector.id">{{ inspector.name }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="conservation-field">
+                  <label for="convert-type">Tipo de inspección</label>
+                  <select id="convert-type" formControlName="type">
+                    @for (type of inspectionTypes; track type) {
+                      <option [value]="type">{{ inspectionTypeLabels[type] }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="conservation-field">
+                  <label for="convert-scope">Alcance</label>
+                  <textarea
+                    id="convert-scope"
+                    formControlName="scope"
+                    rows="3"
+                    maxlength="4000"
+                    placeholder="Qué se inspeccionará y con qué criterio."
+                  ></textarea>
+                </div>
+
+                <div class="conservation-field">
+                  <label for="convert-scheduled">Fecha prevista (opcional)</label>
+                  <input
+                    id="convert-scheduled"
+                    type="datetime-local"
+                    formControlName="scheduledAt"
+                  />
+                </div>
+
+                <div class="conservation-actions">
+                  <button class="button button--primary" type="submit" [disabled]="actionLocked()">
+                    {{ busy() === 'convert' ? 'Creando inspección…' : 'Crear inspección' }}
+                  </button>
+                </div>
+              </form>
+            </section>
+          }
+        } @else {
+          <section
+            class="conservation-panel conservation-panel--flat"
+            aria-labelledby="report-next-title"
+          >
+            <div class="conservation-panel__header">
+              <div>
+                <h2 id="report-next-title">Siguiente paso</h2>
+                <p class="conservation-panel__hint">
+                  El equipo de inspectores revisa el reporte y decide si se convierte en una
+                  inspección.
+                </p>
+              </div>
+            </div>
+            <p class="conservation-state">
+              Estado actual: {{ stateLabels[item.state] }}. Puedes adjuntar evidencia si eres el
+              autor y el reporte sigue abierto.
+            </p>
+          </section>
+        }
+      </div>
+    </div>
+  }
+</section>

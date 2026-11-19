@@ -1,19 +1,24 @@
 import { Routes } from '@angular/router';
-import { adminGuard, authGuard, guestGuard } from './core/guards/auth.guard';
-import { checkInTokenGuard } from './core/guards/check-in-token.guard';
+import {
+  adminGuard,
+  authGuard,
+  guestGuard,
+  inspectorGuard,
+} from './services/guards/auth.guard';
+import { checkInTokenGuard } from './services/guards/check-in-token.guard';
 
 export const routes: Routes = [
   {
     path: '',
     title: 'FALCONSYNC',
     loadComponent: () =>
-      import('./features/map/coro-map.component').then((module) => module.CoroMapComponent),
+      import('./pages/map/coro-map.component').then((module) => module.CoroMapComponent),
   },
   {
     path: 'lugares',
     title: 'Explora los lugares | FALCONSYNC',
     loadComponent: () =>
-      import('./features/lugares/lugar-list/lugar-list.component').then(
+      import('./pages/lugares/lugar-list/lugar-list.component').then(
         (module) => module.LugarListComponent,
       ),
   },
@@ -21,7 +26,7 @@ export const routes: Routes = [
     path: 'lugares/:slug',
     title: 'Historia del lugar | FALCONSYNC',
     loadComponent: () =>
-      import('./features/lugares/lugar-detail/lugar-detail.component').then(
+      import('./pages/lugares/lugar-detail/lugar-detail.component').then(
         (module) => module.LugarDetailComponent,
       ),
   },
@@ -45,7 +50,7 @@ export const routes: Routes = [
     title: 'Escanear QR | FALCONSYNC',
     loadComponent: () =>
       import(
-        './features/aventuras/checkin-escaner/checkin-escaner.component'
+        './pages/aventuras/checkin-escaner/checkin-escaner.component'
       ).then((module) => module.CheckinEscanerComponent),
   },
   {
@@ -53,7 +58,7 @@ export const routes: Routes = [
     canActivate: [checkInTokenGuard, authGuard],
     title: 'Check-in | FALCONSYNC',
     loadComponent: () =>
-      import('./features/aventuras/checkin/checkin.component').then(
+      import('./pages/aventuras/checkin/checkin.component').then(
         (module) => module.CheckinComponent,
       ),
   },
@@ -62,7 +67,7 @@ export const routes: Routes = [
     title: 'Mi perfil | FALCONSYNC',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/perfil/perfil.component').then(
+      import('./pages/perfil/perfil.component').then(
         (module) => module.PerfilComponent,
       ),
   },
@@ -71,14 +76,14 @@ export const routes: Routes = [
     title: 'Iniciar sesión | FALCONSYNC',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./features/auth/login/login.component').then((module) => module.LoginComponent),
+      import('./pages/auth/login/login.component').then((module) => module.LoginComponent),
   },
   {
     path: 'registro',
     title: 'Crear cuenta | FALCONSYNC',
     canActivate: [guestGuard],
     loadComponent: () =>
-      import('./features/auth/register/register.component').then(
+      import('./pages/auth/register/register.component').then(
         (module) => module.RegisterComponent,
       ),
   },
@@ -87,7 +92,7 @@ export const routes: Routes = [
     title: 'Cambiar contraseña | FALCONSYNC',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/auth/change-password/change-password.component').then(
+      import('./pages/auth/change-password/change-password.component').then(
         (module) => module.ChangePasswordComponent,
       ),
   },
@@ -95,7 +100,7 @@ export const routes: Routes = [
     path: 'admin',
     canActivate: [authGuard, adminGuard],
     loadComponent: () =>
-      import('./features/admin/layout/admin-layout.component').then(
+      import('./components/admin/layout/admin-layout.component').then(
         (module) => module.AdminLayoutComponent,
       ),
     children: [
@@ -103,7 +108,7 @@ export const routes: Routes = [
         path: '',
         title: 'Panel de control | FALCONSYNC',
         loadComponent: () =>
-          import('./features/admin/dashboard/admin-dashboard.component').then(
+          import('./pages/admin/dashboard/admin-dashboard.component').then(
             (module) => module.AdminDashboardComponent,
           ),
       },
@@ -111,7 +116,7 @@ export const routes: Routes = [
         path: 'poi',
         title: 'Puntos de interés | FALCONSYNC',
         loadComponent: () =>
-          import('./features/admin/poi/admin-poi-list.component').then(
+          import('./pages/admin/poi/admin-poi-list.component').then(
             (module) => module.AdminPoiListComponent,
           ),
       },
@@ -119,7 +124,7 @@ export const routes: Routes = [
         path: 'poi/nuevo',
         title: 'Nuevo POI | FALCONSYNC',
         loadComponent: () =>
-          import('./features/admin/poi/admin-poi-form.component').then(
+          import('./pages/admin/poi/admin-poi-form.component').then(
             (module) => module.AdminPoiFormComponent,
           ),
       },
@@ -127,7 +132,7 @@ export const routes: Routes = [
         path: 'poi/:id/editar',
         title: 'Editar POI | FALCONSYNC',
         loadComponent: () =>
-          import('./features/admin/poi/admin-poi-form.component').then(
+          import('./pages/admin/poi/admin-poi-form.component').then(
             (module) => module.AdminPoiFormComponent,
           ),
       },
@@ -135,7 +140,7 @@ export const routes: Routes = [
         path: 'usuarios',
         title: 'Usuarios | FALCONSYNC',
         loadComponent: () =>
-          import('./features/admin/usuarios/admin-usuarios.component').then(
+          import('./pages/admin/usuarios/admin-usuarios.component').then(
             (module) => module.AdminUsuariosComponent,
           ),
       },
@@ -145,7 +150,7 @@ export const routes: Routes = [
         title: 'Aventuras | FALCONSYNC',
         loadComponent: () =>
           import(
-            './features/admin/aventuras/admin-aventura-list/admin-aventura-list.component'
+            './pages/admin/aventuras/admin-aventura-list/admin-aventura-list.component'
           ).then((module) => module.AdminAventuraListComponent),
       },
       {
@@ -153,7 +158,7 @@ export const routes: Routes = [
         title: 'Nueva aventura | FALCONSYNC',
         loadComponent: () =>
           import(
-            './features/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
+            './pages/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
           ).then((module) => module.AdminAventuraFormComponent),
       },
       {
@@ -161,7 +166,7 @@ export const routes: Routes = [
         title: 'Editar aventura | FALCONSYNC',
         loadComponent: () =>
           import(
-            './features/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
+            './pages/admin/aventuras/admin-aventura-form/admin-aventura-form.component'
           ).then((module) => module.AdminAventuraFormComponent),
       },
       {
@@ -169,14 +174,14 @@ export const routes: Routes = [
         title: 'Paradas de aventura | FALCONSYNC',
         loadComponent: () =>
           import(
-            './features/admin/aventuras/admin-aventura-stops/admin-aventura-stops.component'
+            './pages/admin/aventuras/admin-aventura-stops/admin-aventura-stops.component'
           ).then((module) => module.AdminAventuraStopsComponent),
       },
       {
         path: 'auditoria',
         title: 'Auditoría | FALCONSYNC',
         loadComponent: () =>
-          import('./features/admin/audit/admin-audit.component').then(
+          import('./pages/admin/audit/admin-audit.component').then(
             (module) => module.AdminAuditComponent,
           ),
       },
@@ -185,16 +190,52 @@ export const routes: Routes = [
         title: 'Imprimir QR | FALCONSYNC',
         loadComponent: () =>
           import(
-            './features/admin/aventuras/qr-imprimir/qr-imprimir.component'
+            './pages/admin/aventuras/qr-imprimir/qr-imprimir.component'
           ).then((module) => module.QrImprimirComponent),
       },
     ],
   },
   {
+    path: 'reportes',
+    title: 'Mis reportes | FALCONSYNC',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/conservation/report-list/report-list.component').then(
+        (module) => module.ReportListComponent,
+      ),
+  },
+  {
+    path: 'reportes/:id',
+    title: 'Detalle del reporte | FALCONSYNC',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/conservation/report-detail/report-detail.component').then(
+        (module) => module.ReportDetailComponent,
+      ),
+  },
+  {
+    path: 'inspecciones',
+    title: 'Inspecciones | FALCONSYNC',
+    canActivate: [authGuard, inspectorGuard],
+    loadComponent: () =>
+      import('./pages/conservation/inspection-list/inspection-list.component').then(
+        (module) => module.InspectionListComponent,
+      ),
+  },
+  {
+    path: 'inspecciones/:id',
+    title: 'Detalle de la inspección | FALCONSYNC',
+    canActivate: [authGuard, inspectorGuard],
+    loadComponent: () =>
+      import('./pages/conservation/inspection-detail/inspection-detail.component').then(
+        (module) => module.InspectionDetailComponent,
+      ),
+  },
+  {
     path: 'acceso-denegado',
     title: 'Acceso denegado | FALCONSYNC',
     loadComponent: () =>
-      import('./features/auth/forbidden/forbidden.component').then(
+      import('./pages/auth/forbidden/forbidden.component').then(
         (module) => module.ForbiddenComponent,
       ),
   },
