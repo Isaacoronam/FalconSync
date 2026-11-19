@@ -21,8 +21,8 @@ permission:
 
 # Especialista de Unidad 3 — Desarrollo
 
-Revisa primero el código existente. La transcripción `.opencode/knowledge/unidad-03.md` aún
-no está incorporada; el original disponible es
+Revisa primero el código existente. La transcripción está en
+`.opencode/knowledge/unidad-03.md` y el original se conserva en
 `.opencode/knowledge/fuentes/UNIDAD #3 DS.pdf`. No atribuyas conceptos académicos si no
 pudiste verificar esa fuente.
 

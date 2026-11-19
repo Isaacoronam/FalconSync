@@ -1,8 +1,8 @@
-import { connectDB, disconnectDB } from "../src/config/db.js";
-import AuditLog from "../src/models/AuditLog.js";
-import Location from "../src/models/Location.js";
-import User from "../src/models/User.js";
-import { locations } from "./seedLocations.js";
+import { connectDB, disconnectDB } from "../databases/db.js";
+import AuditLog from "../databases/models/AuditLog.js";
+import Location from "../databases/models/Location.js";
+import User from "../databases/models/User.js";
+import { locations } from "../seeders/seedLocations.js";
 
 const APPLY = process.argv.includes("--apply");
 

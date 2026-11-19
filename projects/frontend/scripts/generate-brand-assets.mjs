@@ -4,8 +4,8 @@ import sharp from 'sharp';
 import pngToIco from 'png-to-ico';
 
 const root = process.cwd();
-const src = path.resolve(root, 'public/brand/falconsync-logo.png');
-const outDir = path.resolve(root, 'public');
+const src = path.resolve(root, 'src/assets/brand/falconsync-logo.png');
+const outDir = path.resolve(root, 'src/assets');
 
 if (!fs.existsSync(src)) {
   throw new Error(`No se encontró el logo maestro: ${src}`);

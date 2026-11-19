@@ -6,7 +6,9 @@ Aplicación Angular 21 (core 21.2.26, CLI 21.2.29) para el mapa patrimonial de S
 
 - Node.js 26.13.0
 - Backend FalconSync en `http://localhost:3000`
-- MongoDB local con el seed ejecutado
+- MongoDB local con el seed ejecutado. El E2E usa por defecto el replica set
+  `mongodb://127.0.0.1:27018` (`replicaSet=falconsyncTest`) porque conservación y
+  evidencia requieren transacciones; se puede sobrescribir con `E2E_MONGODB_URI`.
 
 ## Comandos
 
@@ -20,30 +22,51 @@ npm run e2e
 
 `npm start` usa `proxy.conf.json` para enviar `/api` al backend. La aplicación queda en `http://localhost:4200`.
 
+## Estructura
+
+```text
+projects/frontend/
+├── src/
+│   ├── app/
+│   │   ├── pages/            # Vistas enrutadas (carga diferida desde app.routes.ts)
+│   │   ├── components/       # Componentes reutilizables: layout admin, selector de mapa, panel de evidencia
+│   │   ├── services/         # Clientes HTTP y estado; subcarpetas guards/, interceptors/, validators/, utils/ y config/
+│   │   ├── models/           # Contratos TypeScript de la API
+│   │   └── app.ts, app.routes.ts, app.config.ts
+│   ├── assets/               # Recursos públicos copiados a la raíz del sitio: imágenes de POI, marca y favicons
+│   ├── environments/         # Configuración de entorno (apiUrl)
+│   ├── styles/               # Parciales SCSS compartidos
+│   └── index.html, main.ts, styles.scss
+├── e2e/                      # Pruebas Playwright
+├── scripts/                  # Generación de iconos de marca
+└── angular.json, tsconfig*.json, proxy*.conf.json, playwright.config.ts, package.json
+```
+
 ## Estructura relevante
 
-- `src/app/features/map/coro-map.component.ts`: mapa Leaflet, filtros y popups.
-- `src/app/features/aventuras/`: catálogo, detalle, progreso y check-in de aventuras.
-- `src/app/features/perfil/`: perfil privado, avatar, estadísticas, Chivito y fotos de check-in.
-- `src/app/features/admin/`: layout, panel, listado de POI, formulario, selector de mapa y
-  auditoría.
-- `src/app/features/admin/aventuras/`: listado, creación/edición, paradas y QR de aventuras.
-- `src/app/core/services/location-api.service.ts`: cliente HTTP de lugares.
-- `src/app/core/services/admin-api.service.ts`: cliente HTTP del CRUD administrativo.
-- `src/app/core/services/adventure-api.service.ts`: cliente HTTP de aventuras y paradas.
-- `src/app/core/services/check-in-api.service.ts`: cliente HTTP de check-in; usa JSON o `multipart/form-data` según haya foto.
-- `src/app/core/services/profile-api.service.ts`: perfil, avatar y blobs privados.
-- `src/app/core/services/qr-admin-api.service.ts`: cliente HTTP de rotación de QR.
-- `src/app/core/models/location.model.ts`: contrato TypeScript de `Location`.
-- `src/app/core/models/admin.model.ts`: resumen, POI administrativo y auditoría.
-- `src/app/core/models/adventure.model.ts`: contratos TypeScript de aventuras, paradas,
-  progreso, check-in y QR.
-- `src/app/core/models/profile.model.ts`: perfil, estadísticas, aventuras resumidas y check-in recientes.
+- `src/app/pages/map/coro-map.component.ts`: mapa Leaflet, filtros y popups.
+- `src/app/pages/aventuras/`: catálogo, detalle, progreso y check-in de aventuras. `aventura-list`, `aventura-detail` y `aventura-progreso` no tienen ruta activa: las rutas `/aventuras/*` redirigen a `/lugares`. Decidir en el cierre si se retiran.
+- `src/app/pages/perfil/`: perfil privado, avatar, estadísticas, Chivito y fotos de check-in.
+- `src/app/pages/admin/`: panel, listado de POI, formulario, auditoría y usuarios. El layout administrativo y el selector de mapa están en `src/app/components/admin/`.
+- `src/app/pages/admin/aventuras/`: listado, creación/edición, paradas y QR de aventuras.
+- `src/app/pages/conservation/`: reportes, triaje, inspecciones, hallazgos, evidencia, intervenciones, revisión y cierre. El panel de evidencia reutilizable está en `src/app/components/conservation/`.
+- `src/app/services/conservation-api.service.ts`: cliente HTTP de reportes, inspecciones e intervenciones.
+- `src/app/services/evidence-api.service.ts`: carga, listado y descarga privada de evidencia.
+- `src/app/services/location-api.service.ts`: cliente HTTP de lugares.
+- `src/app/services/admin-api.service.ts`: cliente HTTP del CRUD administrativo.
+- `src/app/services/adventure-api.service.ts`: cliente HTTP de aventuras y paradas.
+- `src/app/services/check-in-api.service.ts`: cliente HTTP de check-in; usa JSON o `multipart/form-data` según haya foto.
+- `src/app/services/profile-api.service.ts`: perfil, avatar y blobs privados.
+- `src/app/services/qr-admin-api.service.ts`: cliente HTTP de rotación de QR.
+- `src/app/models/location.model.ts`: contrato TypeScript de `Location`.
+- `src/app/models/admin.model.ts`: resumen, POI administrativo y auditoría.
+- `src/app/models/adventure.model.ts`: contratos TypeScript de aventuras, paradas, progreso, check-in y QR.
+- `src/app/models/profile.model.ts`: perfil, estadísticas, aventuras resumidas y check-in recientes.
 - `src/environments/environment.ts`: URL base de la API.
 - `proxy.conf.json`: proxy de desarrollo hacia el backend.
-- `public/images/locations/`: imágenes de los POI, referenciadas por el campo `images` de la API.
-- `public/favicon.ico`: favicon de FalconSync usado por `src/index.html`.
-- `e2e/`: suite Playwright de mapa, autenticación, administración de POI, aventuras y perfil.
+- `src/assets/images/locations/`: imágenes de los POI, referenciadas por el campo `images` de la API.
+- `src/assets/favicon.ico`: favicon de FalconSync usado por `src/index.html`.
+- `e2e/`: suite Playwright de mapa, autenticación, administración de POI, aventuras, perfil y flujo de conservación con denegaciones/IDOR.
 
 ## Administración
 

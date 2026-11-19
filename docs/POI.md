@@ -13,7 +13,7 @@ No atribuye el diseño a una unidad académica: las transcripciones de las Unida
 todavía no están incorporadas en `.opencode/knowledge/`.
 
 La fuente de verdad del catálogo es
-[`projects/backend/scripts/seedLocations.js`](../projects/backend/scripts/seedLocations.js).
+[`projects/backend/seeders/seedLocations.js`](../projects/backend/seeders/seedLocations.js).
 Si este documento y el seed difieren, prevalece el seed.
 
 ## Modelo
@@ -147,7 +147,7 @@ El seed contiene 23 POI: **23 publicados y 0 borradores**. El mapa muestra los 2
 | `npm run seed:sync` | Actualiza fichas, visibilidad, metadatos de verificación y radios de check-in, sincroniza las coordenadas del Parque Nacional Médanos de Coro y elimina Mirador del Pueblo; no inserta POI ausentes ni cambia el estado o `isProvisional`. Conserva las coordenadas editadas del resto del catálogo. |
 | `npm run seed:verify` | Comprueba existencia, estado, fecha de verificación en publicados, desviación de coordenadas y ausencia de Mirador del Pueblo. |
 | `npm run publish:pois` | Publica los POI del seed que sigan en borrador. Sin `--apply` simula; con `--apply` guarda. Omite archivados. |
-| `npm run qr:generate` | Rota tokens QR de POI publicados sin token vigente y guarda los SVG en `.qr-codes/`. Sin `--apply` simula; `--force` invalida los QR existentes. |
+| `npm run qr:generate` | Rota tokens QR de POI publicados sin token vigente y guarda los SVG en `assets/qr-codes/`. Sin `--apply` simula; `--force` invalida los QR existentes. |
 
 El 2026-11-07 se publicaron los 17 POI restantes y se generaron los 23 QR de check-in. La
 publicación y la generación de QR se ejecutaron con los scripts nuevos:
@@ -161,7 +161,7 @@ publicación y la generación de QR se ejecutaron con los scripts nuevos:
 ```
 
 Los 23 POI tienen token QR en versión 1. Los SVG se guardaron en
-`projects/backend/.qr-codes/`, fuera de Git.
+`projects/backend/assets/qr-codes/`, fuera de Git.
 
 La sincronización de coordenadas está limitada a `parque-nacional-medanos-de-coro`;
 los demás puntos conservan las coordenadas que ya tengan en la base de datos. La
@@ -230,7 +230,7 @@ usa 100 m por la discrepancia documentada.
 ## Imágenes y créditos
 
 El manifiesto legible por máquina está en
-[`projects/frontend/public/images/locations/manifest.json`](../projects/frontend/public/images/locations/manifest.json)
+[`projects/frontend/src/assets/images/locations/manifest.json`](../projects/frontend/src/assets/images/locations/manifest.json)
 y se sirve en `/images/locations/manifest.json`.
 
 | Archivo | POI | Autor | Licencia | Estado |
@@ -281,13 +281,13 @@ el sitio.
 
 ## Verificación ejecutada en la sesión actual
 
-| Comprobación | Comando | Resultado real (2026-11-08) |
+| Comprobación | Comando | Resultado real (2026-11-19) |
 |---|---|---|
-| Pruebas backend | `npm run test:backend` | 75/75 aprobadas |
-| Pruebas frontend | `npm run test:frontend` | 51/51 aprobadas |
+| Pruebas backend | `npm run test:backend` | 110/110 aprobadas |
+| Pruebas frontend | `npm run test:frontend` | 53/53 aprobadas |
 | Build de producción | `npm run build` | Correcto, sin advertencias |
-| E2E Edge local | `npm run e2e` | 16/16 aprobadas |
-| E2E Chromium (CI) | `$env:CI=1; npm run e2e` | Pendiente de repetir tras los cambios de insignias y galería |
+| E2E Chromium local | `$env:CI=1; npm run e2e` | 19/19 aprobadas en copia limpia (2026-11-19) |
+| E2E remoto (GitHub Actions) | Workflow CI | Pendiente de ejecución remota autorizada |
 | Idempotencia del seed | `test/seedLocations.test.js` | 23 insertados la primera vez, 0 la segunda; verificación correcta |
 | Contenido editorial del seed | `node --test test/seedLocations.test.js` | 4/4 aprobadas; las 23 fichas incluyen historia, datos de interés e información para visitantes |
 | Sincronización editorial | `npm run seed:editorial` | Actualiza solo los campos editoriales; aborta si ya hay contenido para no sobrescribirlo |
@@ -315,7 +315,7 @@ Las pruebas nuevas cubren:
   Casa Museo Locos de la Vela mantiene una discrepancia documentada de unos 100 m.
 - La autoría y licencia de 18 imágenes sigue pendiente de verificación.
 - No se generan miniaturas ni se eliminan metadatos EXIF de las imágenes.
-- Los SVG de `.qr-codes/` no se versionan porque contienen tokens de check-in. Si se
+- Los SVG de `assets/qr-codes/` no se versionan porque contienen tokens de check-in. Si se
   pierden, deben rotarse de nuevo y los QR anteriores dejan de funcionar.
 - El estado de conservación no está verificado para ningún POI.
 - El catálogo de circuitos y etiquetas es cerrado; agregar uno nuevo exige actualizar el

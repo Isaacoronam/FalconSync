@@ -15,14 +15,17 @@ blob-report/
 !.env.example
 !**/.env.example
 
-# Medios subidos por usuarios
-uploads/
-
-# Avatares y fotos privadas de check-in
-uploads-private/
+# Medios subidos y documentos privados del backend (runtime; solo se versionan los .gitkeep)
+projects/backend/uploads/**
+!projects/backend/uploads/**/
+!projects/backend/uploads/**/.gitkeep
 
 # QR de check-in generados localmente (contienen tokens)
-.qr-codes/
+projects/backend/assets/qr-codes/
+
+# Logs de ejecución del backend (PM2 y otros)
+projects/backend/logs/*
+!projects/backend/logs/.gitkeep
 
 # Logs y archivos del sistema
 *.log

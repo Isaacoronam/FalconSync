@@ -7,7 +7,7 @@ description: Diseña, implementa o revisa autenticación, sesiones, roles, permi
 
 ## Cuándo usar
 
-Ante cambios en `projects/backend/src/services/authService.js`, middleware, rutas de auth,
+Ante cambios en `projects/backend/microservices/authService.js`, middleware, rutas de auth,
 sesiones, roles, cookies, guards o interceptor del frontend.
 
 ## Invariantes del proyecto

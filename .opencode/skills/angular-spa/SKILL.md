@@ -17,8 +17,8 @@ accesibilidad, pruebas de componentes y mapa Leaflet.
 2. Revisa componentes y servicios del feature existente. Conserva la arquitectura standalone,
    `inject()`, Signals donde ya se usan, `ChangeDetectionStrategy.OnPush` y las convenciones
    del componente.
-3. Mantén contratos tipados en `src/app/core/models/` y llamadas HTTP en servicios de
-   `src/app/core/services/`. No dupliques URLs o lógica de API en componentes.
+3. Mantén contratos tipados en `src/app/models/` y llamadas HTTP en servicios de
+   `src/app/services/`. No dupliques URLs o lógica de API en componentes.
 4. Usa el control flow Angular del repositorio (`@if`, `@for`) y estados visibles de carga,
    error, vacío y éxito; no agregues Bootstrap u otra librería sin autorización.
 5. Para Leaflet, conserva límites y configuración cartográfica existentes; mantén atribución

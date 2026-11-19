@@ -90,12 +90,12 @@ Mensajes del frontend:
 
 Suites nuevas o ampliadas:
 
-- `core/services/adventure-api.service.spec.ts`
-- `core/services/check-in-api.service.spec.ts`
-- `core/services/check-in-session.service.spec.ts`
-- `core/services/profile-api.service.spec.ts`
-- `core/utils/check-in-qr.spec.ts`
-- `core/services/qr-admin-api.service.spec.ts`
+- `services/adventure-api.service.spec.ts`
+- `services/check-in-api.service.spec.ts`
+- `services/check-in-session.service.spec.ts`
+- `services/profile-api.service.spec.ts`
+- `services/utils/check-in-qr.spec.ts`
+- `services/qr-admin-api.service.spec.ts`
 
 ### E2E (Playwright)
 
@@ -125,12 +125,12 @@ emitir las peticiones de la aplicación. Esto aplica tanto al check-in como al e
 | Comando | Resultado |
 |---|---|
 | `npx playwright test e2e/coro-aventura.spec.ts e2e/perfil.spec.ts` | 7/7 aprobadas |
-| `npm run e2e` | 16/16 aprobadas |
-| `$env:CI=1; npx playwright test --project=chromium` | Pendiente de repetir tras los cambios |
+| `npm run e2e` | 19/19 aprobadas en Edge local (2026-11-18) |
+| `$env:CI=1; npm run e2e` | 19/19 aprobadas en Chromium, copia limpia (2026-11-19) |
 
 La corrida local usa Microsoft Edge mediante el canal configurado en Playwright. La corrida
 con `CI=1` usa Chromium y replica el navegador configurado en GitHub Actions. La ejecución
-remota del workflow sigue pendiente.
+remota del workflow sigue pendiente de autorización.
 
 ## Requisitos de arranque local
 
@@ -138,7 +138,7 @@ remota del workflow sigue pendiente.
 2. Frontend: `cd projects/frontend && npm start` → `http://localhost:4200`.
 3. El seed de aventura se ejecuta con `npm run seed:adventures`; crea la «Ruta del Casco Histórico de Coro» con cinco paradas reales. `npm run seed:adventures:verify` comprueba el estado.
 4. Para check-in real, el POI debe tener un token QR rotado (`POST /api/admin/locations/:id/qr/rotate`) y el usuario debe abrir `/checkin` para escanearlo o pegar su contenido.
-5. Las fotos de perfil y check-in requieren `UPLOAD_PRIVATE_DIR`; por defecto es `projects/backend/uploads-private/`.
+5. Las fotos de perfil y check-in requieren `UPLOAD_PRIVATE_DIR`; por defecto es `projects/backend/uploads/documents/`.
 6. La lectura automática de QR requiere un navegador con `BarcodeDetector` y permiso de cámara. Si no está disponible, la entrada manual sigue funcionando.
 
 ## Riesgos y limitaciones

@@ -6,9 +6,9 @@ process.env.NODE_ENV = "test";
 process.env.MONGODB_URI =
   process.env.MONGODB_URI_TEST ?? "mongodb://127.0.0.1:27017/falconsync_test";
 
-const { default: app } = await import("../src/app.js");
-const { connectDB, disconnectDB } = await import("../src/config/db.js");
-const { default: Location } = await import("../src/models/Location.js");
+const { default: app } = await import("../index.js");
+const { connectDB, disconnectDB } = await import("../databases/db.js");
+const { default: Location } = await import("../databases/models/Location.js");
 
 const cathedral = {
   title: "Catedral de Coro",

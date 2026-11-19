@@ -34,6 +34,26 @@
       </a>
 
       @if (auth.isAuthenticated()) {
+        @if (auth.canCreateReport()) {
+          <a
+            class="site-nav__link"
+            routerLink="/reportes"
+            routerLinkActive="site-nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            Reportes
+          </a>
+        }
+        @if (auth.isInspector()) {
+          <a
+            class="site-nav__link"
+            routerLink="/inspecciones"
+            routerLinkActive="site-nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            Inspecciones
+          </a>
+        }
         @if (auth.isAdmin()) {
           <a
             class="site-nav__link"

@@ -12,18 +12,18 @@ process.env.JWT_REFRESH_SECRET =
   'test-refresh-secret-with-more-than-32-characters';
 process.env.BCRYPT_COST = '10';
 
-const { default: app } = await import('../src/app.js');
-const { connectDB, disconnectDB } = await import('../src/config/db.js');
-const { default: Adventure } = await import('../src/models/Adventure.js');
+const { default: app } = await import('../index.js');
+const { connectDB, disconnectDB } = await import('../databases/db.js');
+const { default: Adventure } = await import('../databases/models/Adventure.js');
 const { default: AdventureStop } = await import(
-  '../src/models/AdventureStop.js'
+  '../databases/models/AdventureStop.js'
 );
-const { default: CheckIn } = await import('../src/models/CheckIn.js');
-const { default: Location } = await import('../src/models/Location.js');
-const { default: User } = await import('../src/models/User.js');
+const { default: CheckIn } = await import('../databases/models/CheckIn.js');
+const { default: Location } = await import('../databases/models/Location.js');
+const { default: User } = await import('../databases/models/User.js');
 const { default: mongoose } = await import('mongoose');
 const { createCheckInToken, hashCheckInToken } = await import(
-  '../src/services/checkInTokenService.js'
+  '../microservices/checkInTokenService.js'
 );
 
 const PNG_PIXEL = Buffer.from(

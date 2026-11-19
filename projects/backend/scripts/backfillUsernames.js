@@ -1,6 +1,6 @@
-import { connectDB, disconnectDB } from "../src/config/db.js";
-import User from "../src/models/User.js";
-import { generateUniqueUsername } from "../src/services/usernameService.js";
+import { connectDB, disconnectDB } from "../databases/db.js";
+import User from "../databases/models/User.js";
+import { generateUniqueUsername } from "../microservices/usernameService.js";
 
 async function backfillUsernames() {
   await User.init();

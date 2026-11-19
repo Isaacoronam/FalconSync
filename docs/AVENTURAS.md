@@ -107,7 +107,7 @@ Para generar los QR de todo el catálogo local se usa:
 npm run qr:generate -- --apply
 ```
 
-Los SVG se guardan en `projects/backend/.qr-codes/`, que está fuera de Git porque
+Los SVG se guardan en `projects/backend/assets/qr-codes/`, que está fuera de Git porque
 contiene tokens. El manifiesto solo registra slug, título, versión y fecha de rotación.
 
 ### 3. Geocerca validada en servidor
@@ -150,7 +150,7 @@ contiene tokens. El manifiesto solo registra slug, título, versión y fecha de 
 - `POST /api/check-ins` conserva temporalmente la compatibilidad con
   `multipart/form-data` y el campo `image` para clientes anteriores.
 - La foto se valida por MIME y firma binaria (JPEG, PNG o WebP) y se limita a 5 MB.
-- Se guarda en `uploads-private/check-ins/`, fuera del prefijo público `/api/uploads`.
+- Se guarda en `uploads/documents/check-ins/`, fuera del prefijo público `/api/uploads`.
 - `CheckIn.photo` guarda `{ filename, mimeType, size, updatedAt, visibility, moderationStatus }`;
   no hay URL pública. Los dos últimos campos quedan reservados para moderación.
 - La foto se sirve mediante `GET /api/profile/check-ins/:checkInId/photo` y solo al dueño
@@ -217,7 +217,7 @@ contiene tokens. El manifiesto solo registra slug, título, versión y fecha de 
 | `coordinates` | `Point` GeoJSON con la ubicación enviada al hacer check-in. |
 | `distanceMeters` | Distancia Haversine calculada por el servidor. |
 | `tokenVersion` | Versión del token QR usada en el check-in. |
-| `photo` | Objeto opcional `{ filename, mimeType, size, updatedAt, visibility, moderationStatus }`; el archivo vive en `uploads-private/check-ins/`. |
+| `photo` | Objeto opcional `{ filename, mimeType, size, updatedAt, visibility, moderationStatus }`; el archivo vive en `uploads/documents/check-ins/`. |
 
 Índice único: `(user, location)`. No se guarda el token en claro ni su hash.
 
@@ -286,7 +286,7 @@ El frontend actual usa este cuerpo JSON y sube la foto después con
 `PUT /api/profile/check-ins/:checkInId/photo` (`multipart/form-data`, campo `image`). Si se
 necesita compatibilidad con clientes anteriores, `POST /api/check-ins` también acepta
 `multipart/form-data` con los mismos campos de texto más `image` opcional. La foto se guarda
-en `uploads-private/check-ins/` y solo se sirve al dueño.
+en `uploads/documents/check-ins/` y solo se sirve al dueño.
 
 Respuesta `201`:
 
@@ -364,7 +364,7 @@ activas están visitadas; si aún no se otorgó, es `null`.
 
 ### Seed de aventura
 
-El script `scripts/seedAdventures.js` crea o actualiza la aventura publicada «Ruta del Casco
+El script `seeders/seedAdventures.js` crea o actualiza la aventura publicada «Ruta del Casco
 Histórico de Coro» con cinco paradas reales:
 
 1. `catedral-de-coro`.
@@ -440,7 +440,7 @@ posiciones.
   detalles públicos, paradas pobladas ni respuestas administrativas.
 - La geocerca se valida exclusivamente en el servidor con Haversine.
 - La foto de check-in se valida por firma binaria, se limita a 5 MB y se guarda en
-  `uploads-private/`, fuera del prefijo público.
+  `uploads/documents/`, fuera del prefijo público.
 - Las fotos de check-in solo se sirven al dueño; otro usuario recibe `404`.
 - La foto se carga después del check-in; un fallo de imagen no revierte la visita ni las
   insignias.
@@ -465,19 +465,20 @@ cd projects/backend
 npm test
 ```
 
-Resultado real del 2026-11-08:
+Resultado real del 2026-11-13:
 
 | Suite | Pruebas | Resultado |
 |---|---|---|
-| Administración de POI | 13 | Aprobadas |
+| Administración de POI | 17 | Aprobadas |
 | CoroAventura | 17 | Aprobadas |
 | Autenticación | 12 | Aprobadas |
 | API de lugares | 15 | Aprobadas |
 | Perfil privado y fotos de check-in | 6 | Aprobadas |
 | Insignias, galería y foto posterior | 6 | Aprobadas |
+| Roles y administración sensible | 10 | Aprobadas |
 | Seed de aventuras | 2 | Aprobadas |
 | Seed de POI | 4 | Aprobadas |
-| **Total** | **75** | **75/75 aprobadas** |
+| **Total** | **89** | **89/89 aprobadas** |
 
 La suite `test/adventures.test.js` cubre:
 
@@ -523,7 +524,7 @@ La suite `test/adventures.test.js` cubre:
 | Fuera de geocerca rechazado | Cumplido | `400 CHECK_IN_OUTSIDE_GEOFENCE`. |
 | Token inválido rechazado | Cumplido | `400 INVALID_CHECK_IN_TOKEN`, incluido token rotado. |
 | Progreso correcto | Cumplido | Orden libre, siguiente parada, porcentaje y cierre. |
-| Pruebas backend verdes | Cumplido | `npm test`: 75/75. |
+| Pruebas backend verdes | Cumplido | `npm test`: 89/89 (verificado el 2026-11-13). |
 | Foto privada de check-in | Cumplido | Carga posterior con `PUT`, reemplazo/eliminación y acceso solo al dueño. |
 | Insignias persistentes | Cumplido | `UserAchievement`, índice único, backfill y reconciliación. |
 | Documentación | Cumplido | Este documento, `PERFIL.md` y actualización de `FALCONSYNC.md`. |

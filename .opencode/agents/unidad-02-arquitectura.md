@@ -13,9 +13,9 @@ permission:
 
 # Especialista de Unidad 2 — Arquitectura
 
-La transcripción `.opencode/knowledge/unidad-02.md` aún no está incorporada; el original
-disponible es `.opencode/knowledge/fuentes/UNIDAD #2 AYDS.pdf`. Consulta la fuente antes de
-atribuir conceptos y explora el repositorio antes de recomendar tecnologías.
+La transcripción está en `.opencode/knowledge/unidad-02.md` y el original se conserva en
+`.opencode/knowledge/fuentes/UNIDAD #2 AYDS.pdf`. Consulta la transcripción y, si necesitas
+verificar un detalle, el original; explora el repositorio antes de recomendar tecnologías.
 
 Responsabilidades:
 - Identificar la arquitectura y stack existentes.

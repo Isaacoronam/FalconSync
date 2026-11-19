@@ -12,7 +12,7 @@ Fecha de verificación: 2026-11-08.
 - Mapa limitado al rectángulo operativo de Falcón con `maxBounds`,
   `maxBoundsViscosity=1` y `minZoom=8`.
 - Vista inicial en Coro a zoom 13 y control “Ver todo Falcón”.
-- Logo maestro integrado en `projects/frontend/public/brand/falconsync-logo.png`
+- Logo maestro integrado en `projects/frontend/src/assets/brand/falconsync-logo.png`
   (PNG aprobado, 195×195, con transparencia), derivado a 48×48 sin deformar para el
   marcador del header.
 - Favicon y `apple-touch-icon` regenerados desde el logo maestro
@@ -26,7 +26,7 @@ Fecha de verificación: 2026-11-08.
 - Access token de 15 minutos en memoria; refresh de 7 días en cookie `httpOnly`,
   `SameSite=Strict` y `Path=/api/auth`.
 - Hash `bcryptjs` con coste 12, rate limit en endpoints sensibles y comprobación de origen.
-- Roles `user`, `moderator` y `admin`.
+- Roles `user`, `moderator` (legacy temporal), `historian`, `inspector` y `admin`.
 - Bootstrap de administrador idempotente con `scripts/createAdmin.js`.
 - Cambio obligatorio de contraseña en el primer acceso del admin creado por bootstrap.
 - Frontend: login, registro, cambio de contraseña, guards, interceptor, header con sesión,
@@ -39,12 +39,15 @@ Fecha de verificación: 2026-11-08.
   23 POI publicados, un admin operativo y un admin pendiente de cambio de contraseña.
 - Servidores de prueba en puertos 3101 (API) y 4201 (frontend) para no chocar con el
   entorno de desarrollo.
-- Workflow de GitHub Actions creado en `.github/workflows/ci.yml` con MongoDB de servicio,
-  pruebas, build, Chromium y E2E.
-- El workflow **no fue ejecutado** todavía en GitHub: la rama se subió, pero no se abrió un
-  PR ni existe una ejecución remota verificada. El YAML no se declara verde. La suite E2E se
-  ejecutó localmente con Chromium en modo CI (15/15 tras el Corte 5); la corrida Chromium
-  posterior a los cambios de insignias y galería queda pendiente.
+- Workflow de GitHub Actions en `.github/workflows/ci.yml`, disparado en push y PR a
+  `develop`, `main` y `master`, y manualmente. Inicia `mongo:9.0` con `--replSet
+  falconsyncTest` y `rs.initiate()`, publica el mismo `mongod` en `27017` y `27018` y ejecuta
+  auditorías, pruebas, build, Chromium y E2E.
+- El workflow **no fue ejecutado** en GitHub: requiere publicar la rama/PR (A2). Se reprodujo
+  en una copia limpia local el 2026-11-19: 110/110 backend, 53/53 frontend, build correcto,
+  19/19 E2E con `CI=1` y auditorías `--omit=dev` sin vulnerabilidades. El paso Docker de Mongo
+  no se ejecutó localmente por no haber Docker; la secuencia `rs.initiate()` se validó en un
+  replica set desechable. No se declara CI remoto verde.
 
 ### Corte 2 — Administración y POI
 
@@ -120,13 +123,38 @@ El detalle histórico de la interfaz anterior está en
 - Galería privada paginada de visitas con filtros, visor ampliado y reemplazo/eliminación de
   fotos sin borrar el check-in.
 - Check-in y foto en dos fases: primero la visita, después la imagen.
-- Avatares y fotos en `uploads-private/`, servidos solo por endpoints autenticados.
+- Avatares y fotos en `uploads/documents/`, servidos solo por endpoints autenticados.
 - Estadísticas de check-ins, lugares descubiertos e insignias de lugares.
 - Bloque de Chivito celebra las visitas con mensajes basados en las estadísticas disponibles.
 - Seed idempotente de la «Ruta del Casco Histórico de Coro» con cinco paradas reales.
 - E2E de perfil, avatar, check-in con foto, insignias, galería y visor (`e2e/perfil.spec.ts`).
 
 El detalle está en [`docs/PERFIL.md`](./PERFIL.md).
+
+### Corte 6 — Conservación y evidencia privada
+
+- Dominio con `HeritageAsset`, `Report`, `Inspection`, `Intervention` y `Evidence`; el
+  historial se reconstruye desde `DomainEvent`.
+- Flujo vertical: reporte → triaje → conversión en inspección → hallazgos y evidencia →
+  revisión → intervención → verificación → cierre.
+- Autorización por capacidades con permisos por recurso y revisor asignado; el ejecutor no
+  puede verificar su propia intervención.
+- Evidencia en almacenamiento privado, sin URL pública, con validación de contenido
+  (`sharp`), SHA-256, eliminación de EXIF, acceso auditado y fecha de retención
+  configurable; la política final de retención (D-23) sigue pendiente.
+- Sin antimalware en producción la carga responde `503 EVIDENCE_SCAN_UNAVAILABLE`; el flujo
+  no escaneado solo se permite en desarrollo y pruebas.
+- UI `/reportes`, `/reportes/:id`, `/inspecciones` e `/inspecciones/:id` con triaje,
+  conversión, hallazgos, evidencia, intervenciones, revisión y cierre. Las acciones se
+  bloquean durante la recarga silenciosa para evitar conflictos de versión.
+- Conservación y evidencia usan transacciones sobre el replica set de `127.0.0.1:27018`;
+  el standalone de `127.0.0.1:27017` no es suficiente.
+- E2E `e2e/conservation.spec.ts`: recorrido completo, denegaciones e IDOR. La suite total
+  quedó en 19/19 en Edge local (2026-11-18) y en 19/19 con `CI=1`/Chromium en copia limpia
+  (2026-11-19).
+
+El contrato y el modelo están en [`docs/openapi.yaml`](./openapi.yaml) y
+[`docs/MODELO-DATOS.md`](./MODELO-DATOS.md).
 
 ## Stack verificado
 
@@ -160,17 +188,19 @@ Correcciones respecto al documento inicial:
 
 ## Estructura
 
+La estructura obligatoria del repositorio está descrita en `AGENTS.md` y registrada en `memory/architecture_decisions.md`.
+
 ```text
-FalconSYN/
+FalconSync/
 ├── .github/workflows/ci.yml
 ├── AGENTS.md
-├── context/                   # Contexto, reglas y contratos API
-├── skills/                    # Índice; las skills ejecutables siguen en .opencode/skills
-├── memory/                    # Decisiones arquitectónicas y soluciones verificadas
+├── context/                       # Contexto, reglas (incluye RBAC) y contratos API
+├── skills/                        # Índice; las skills ejecutables siguen en .opencode/skills
+├── memory/                        # Decisiones arquitectónicas y soluciones verificadas
 ├── projects/
-│   ├── backend/                # Express, Mongoose, scripts y pruebas
-│   ├── frontend/               # Angular, Leaflet y pruebas E2E
-│   └── mobile/                  # Esqueleto pendiente de la app de campo
+│   ├── backend/                   # Express: api/, microservices/, databases/, uploads/, scripts/, seeders/, test/
+│   ├── frontend/                  # Angular: src/app/{pages,components,services,models}, src/assets/, e2e/
+│   └── mobile/                    # Esqueleto pendiente de la app de campo
 ├── docs/
 │   ├── ADMINISTRACION.md
 │   ├── AUTENTICACION.md
@@ -182,8 +212,7 @@ FalconSYN/
 └── .nvmrc
 ```
 
-El backend conserva `src/` y el frontend conserva `src/app/` organizados por capas y
-funcionalidades; esta reorganización solo cambia su ubicación dentro de `projects/`.
+En el backend, las rutas y controladores se agrupan por módulo en `api/`, la lógica de negocio en `microservices/` y los modelos en `databases/models/`. En el frontend, las vistas están en `src/app/pages/`, los componentes reutilizables en `components/`, los clientes HTTP en `services/` y los contratos en `models/`. Solo cambió la ubicación de los archivos: las URLs de la API y de los recursos públicos se mantienen.
 
 ## Identidad visual y geografía
 
@@ -204,7 +233,7 @@ const FALCON_BOUNDS = [
   hace `fitBounds` al rectángulo.
 - El rectángulo **no es el polígono oficial de Falcón**. Para el contorno exacto hace falta
   un GeoJSON verificado de OSM/INE con atribución.
-- El logo maestro se incorporó en `public/brand/falconsync-logo.png` y de él se
+- El logo maestro se incorporó en `src/assets/brand/falconsync-logo.png` y de él se
   derivaron favicon, `favicon-32.png` y `apple-touch-icon` (180×180) con
   `npm run brand:assets`. La identidad visual queda cerrada en este corte.
 
@@ -227,7 +256,9 @@ Resumen operativo:
 
 ## Comandos de arranque
 
-Requisitos: Node 26.13.0 y MongoDB local en `127.0.0.1:27017`.
+Requisitos: Node 26.13.0 y MongoDB local. La verificación completa usa un replica set de un
+nodo en `127.0.0.1:27018` (`replicaSet=falconsyncTest`); el standalone en `127.0.0.1:27017`
+solo cubre módulos sin transacciones.
 
 Backend:
 
@@ -258,7 +289,7 @@ npm start
 - Aplicación: `http://localhost:4200`
 - El frontend usa `proxy.conf.json` para enviar `/api` al backend.
 - Las imágenes públicas de POI se guardan en `uploads/` y se sirven en `/api/uploads/...`.
-- Los avatares y las fotos de check-in se guardan en `uploads-private/` y solo se sirven por
+- Los avatares y las fotos de check-in se guardan en `uploads/documents/` y solo se sirven por
   endpoints autenticados del perfil. Ambas carpetas están ignoradas por Git.
 - El backend se detiene si el puerto ya está ocupado; detén la instancia anterior antes de
   iniciar otra. `npm run seed` es idempotente, inserta POI ausentes y elimina únicamente
@@ -327,6 +358,10 @@ Administración (rol `admin`, cambio de contraseña completado):
 - `PATCH /api/admin/adventures/:id/stops/:stopId`
 - `DELETE /api/admin/adventures/:id/stops/:stopId`
 - `PUT /api/admin/adventures/:id/stops/reorder`
+- `GET /api/admin/users?q=&role=&active=&page=&limit=`
+- `PATCH /api/admin/users/:id/role`
+- `PATCH /api/admin/users/:id/status`
+- `POST /api/admin/users/:id/revoke-sessions`
 - `GET /api/admin/audit?page=&limit=&action=&entityId=`
 
 Las imágenes públicas de POI se sirven en `/api/uploads/...`. Los avatares y las fotos de
@@ -371,9 +406,9 @@ conservación verificada en este corte.
 
 ## Imágenes de los POI
 
-Hay 23 imágenes en `public/images/locations/`, con una imagen local asociada a cada POI que
+Hay 23 imágenes en `src/assets/images/locations/`, con una imagen local asociada a cada POI que
 aparece en el mapa. El manifiesto legible por máquina está en
-`public/images/locations/manifest.json` y se sirve en `/images/locations/manifest.json`.
+`src/assets/images/locations/manifest.json` y se sirve en `/images/locations/manifest.json`.
 
 | POI | Archivo público | Crédito |
 |---|---|---|
@@ -400,7 +435,7 @@ detalle está en [`docs/POI.md`](./POI.md).
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm test` en `projects/backend` | 75/75 aprobadas (13 admin POI + 17 APIs heredadas + 12 auth + 15 locations + 6 perfil + 6 insignias/galería + 2 seed aventuras + 4 seed POI) |
+| Pruebas backend | `npm test` en `projects/backend` | 110/110 aprobadas, 14 suites (18 admin POI + 17 CoroAventura + 12 auth + 15 locations + 6 perfil + 6 insignias/galería + 10 roles + 4 autorización + 4 conservación + 2 evidencia + 2 seed aventuras + 4 seed POI + 5 estructura + 5 almacenamiento) |
 | Seed idempotente | `test/seedLocations.test.js` | 23 insertados la primera vez y 0 la segunda |
 | Seed de aventura | `npm run seed:adventures` + `--verify` | Aventura publicada con 5 paradas, orden y disponibilidad correctos |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada de Parque Nacional Médanos de Coro sincronizada y verificada |
@@ -408,14 +443,15 @@ detalle está en [`docs/POI.md`](./POI.md).
 | Backfill de usuarios | `npm run backfill:usernames` | 2 usuarios actualizados con `username` |
 | Backfill de insignias | `npm run backfill:achievements` | Simulación por defecto; `--apply` escribe. No ejecutado sobre datos locales en esta verificación |
 | Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
-| Pruebas frontend | `npm test -- --watch=false` | 51/51 aprobadas |
-| Build producción | `npm run build` | Correcto, sin advertencias (presupuesto `anyComponentStyle` ajustado a 10/12 kB; el perfil compila en 9.41 kB) |
+| Pruebas frontend | `npm test -- --watch=false` | 53/53 aprobadas |
+| Build producción | `npm run build` | Correcto, sin advertencias; 24.25 s en la copia limpia del 2026-11-19 (presupuesto `anyComponentStyle` ajustado a 10/12 kB; el perfil compila en 9.41 kB) |
 | E2E de catálogo POI, QR y perfil | `npx playwright test e2e/coro-aventura.spec.ts e2e/perfil.spec.ts` | 7/7 aprobadas |
-| E2E permanente | `npm run e2e` | 16/16 en Edge local; corrida Chromium/CI pendiente de repetir |
+| E2E permanente | `npm run e2e` | 19/19 en Edge local (2026-11-18, dentro de `npm run verify`) y 19/19 con `CI=1`/Chromium en copia limpia (2026-11-19); ejecución remota pendiente |
 | Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
-| Workflow CI | `.github/workflows/ci.yml` | Creado, **no ejecutado** en remoto |
+| Workflow CI | `.github/workflows/ci.yml` | Actualizado a replica set y disparo en `develop`; reproducido en copia limpia, **no ejecutado** en GitHub |
+| CI local reproducible | Copia limpia sin `.env` ni `node_modules` | `npm ci` + 110/110 backend + 53/53 frontend + build + 19/19 E2E con `CI=1`; `npm audit --omit=dev` 0 vulnerabilidades. El paso Docker de Mongo no se ejecutó localmente |
 
 El presupuesto `anyComponentStyle` se ajustó de 6/10 kB a 10/12 kB porque el perfil privado
 compila 9.41 kB de estilos. Se mantuvieron los estilos cohesionados en el componente en lugar
@@ -460,14 +496,15 @@ La suite E2E comprueba:
 - catálogo y detalle editorial por POI, con redirección de URL públicas heredadas;
 - perfil privado: edición de nombre, usuario y biografía, actualización del header, avatar,
   check-in con foto, insignia, visor ampliado, reemplazo y eliminación de foto y filtros de
-  galería.
+  galería;
+- gestión de cuentas: cambio de rol, desactivación, reactivación y revocación de sesiones
+  con reautenticación.
 
-La E2E local usa Microsoft Edge mediante el canal de Playwright. La suite completa se
-ejecutó localmente tras el Corte 5 y los cambios de insignias: 16/16. La corrida con
-`CI=1`/Chromium quedó pendiente de repetir después de estos cambios; la ejecución remota del
-workflow sigue pendiente. Las imágenes de la E2E se guardan en
-`test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan las carpetas
-de desarrollo.
+La E2E local usa Microsoft Edge mediante el canal de Playwright. La suite completa quedó en
+19/19 en Edge el 2026-11-18 y en 19/19 con `CI=1`/Chromium en una copia limpia el 2026-11-19.
+La ejecución remota del workflow sigue pendiente de autorización. Las imágenes de la E2E se
+guardan en `test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan
+las carpetas de desarrollo.
 
 ## Seguridad y dependencias
 
@@ -482,7 +519,7 @@ de desarrollo.
 - Las imágenes públicas se validan por firma binaria, se limitan a JPEG/PNG/WebP, 5 MB y 8
   por POI. La carpeta `uploads/` está ignorada por Git.
 - Los avatares y las fotos de check-in se validan por MIME y firma binaria, se limitan a 5 MB
-  y se guardan en `uploads-private/`, también ignorada por Git.
+  y se guardan en `uploads/documents/`, también ignorada por Git.
 - El avatar y las fotos de check-in solo se sirven con sesión del dueño. No hay URL estática
   ni acceso desde `/api/uploads/...`; otro usuario recibe `404`.
 - El perfil es privado: no existe directorio público ni búsqueda por `username`. El nombre de
@@ -515,14 +552,18 @@ de desarrollo.
 ## Limitaciones y pendientes
 
 - El logo maestro y los iconos de marca se integraron y regeneraron en este corte
-  (`public/brand/falconsync-logo.png`, `npm run brand:assets`).
+  (`src/assets/brand/falconsync-logo.png`, `npm run brand:assets`).
 - El límite del mapa es rectangular y operativo, no el polígono oficial de Falcón.
-- No hay verificación de correo, recuperación de contraseña, MFA ni gestión de sesiones.
-- El panel admin no gestiona usuarios ni roles; el rol `moderator` sigue reservado para el
-  corte de moderación.
+- No hay verificación de correo, recuperación de contraseña, MFA ni autogestión de sesiones
+  por el usuario; un administrador puede revocar sesiones ajenas desde el panel.
+- La migración de `moderator` a `historian` aún no se ejecutó y no existe exportación de
+  datos de usuario. La UI no permite asignar `moderator`, solo reemplazarlo por un rol
+  vigente.
 - El slug de un POI archivado no se reutiliza automáticamente; debe elegirse otro.
-- Las imágenes locales no generan miniaturas ni eliminan metadatos EXIF, no pasan por
-  antivirus y no están replicadas. En producción deben incluirse en el respaldo.
+- Las imágenes de POI no generan miniaturas ni eliminan metadatos EXIF, no pasan por
+  antivirus y no están replicadas. La evidencia de conservación sí elimina EXIF, pero tampoco
+  pasa por un antivirus real: sin escáner, producción bloquea la carga. Todo el
+  almacenamiento local debe incluirse en el respaldo.
 - El perfil privado no tiene directorio público por decisión de alcance. Si se agrega, exige
   revisar privacidad, moderación y consentimiento.
 - La galería privada está paginada (9 por página) y solo muestra las visitas del usuario. No

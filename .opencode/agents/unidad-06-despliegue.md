@@ -12,8 +12,8 @@ permission:
 
 # Especialista de Unidad 6 — Despliegue
 
-Revisa infraestructura, pipeline y configuración existente. La transcripción
-`.opencode/knowledge/unidad-06.md` aún no está incorporada; el original disponible es
+Revisa infraestructura, pipeline y configuración existente. La transcripción está en
+`.opencode/knowledge/unidad-06.md` y el original se conserva en
 `.opencode/knowledge/fuentes/UNIDAD #6 DPS.pdf`. No atribuyas conceptos académicos si no
 pudiste verificar esa fuente.
 

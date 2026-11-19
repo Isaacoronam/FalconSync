@@ -4,14 +4,23 @@ Estas instrucciones aplican a los agentes que trabajen en este repositorio.
 
 ## Organización del repositorio
 
-- `projects/backend/`: API Express, modelos Mongoose, scripts y pruebas.
-- `projects/frontend/`: SPA Angular, recursos públicos y pruebas E2E.
-- `projects/mobile/`: esqueleto reservado para la futura app Android de campo; aún no es
-  una aplicación compilable.
-- `context/`: contexto funcional, reglas de negocio y contratos HTTP vigentes.
-- `memory/`: decisiones arquitectónicas y soluciones verificadas.
-- `skills/`: índice hacia las skills locales, que permanecen en `.opencode/skills/` para
-  conservar el mecanismo de descubrimiento de OpenCode.
+La estructura es obligatoria. Su justificación y sus excepciones están en `memory/architecture_decisions.md`.
+
+```text
+/
+├── AGENTS.md                 # Normas de ejecución y organización
+├── context/                  # Contexto del sistema, reglas de negocio (con matriz RBAC) y contratos HTTP
+├── memory/                   # Decisiones arquitectónicas y soluciones verificadas
+├── skills/                   # Índice de skills; las ejecutables permanecen en .opencode/skills/
+└── projects/
+    ├── backend/              # API Express y MongoDB
+    ├── frontend/             # SPA Angular
+    └── mobile/               # Esqueleto de la futura app Android de campo; no compilable
+```
+
+- `projects/backend/`: `api/<módulo>/` agrupa rutas y controladores HTTP; `microservices/` contiene la capa de servicios; `databases/` contiene la conexión y los modelos Mongoose. Además: `middlewares/`, `helpers/`, `seeders/`, `scripts/`, `bin/server.js` (arranque), `index.js` (aplicación Express), `uploads/`, `assets/`, `logs/` y `public/`. Los datos de ejecución (`uploads/`, `assets/qr-codes/`, `logs/`) no se versionan.
+- `projects/frontend/src/app/`: `pages/` (vistas enrutadas), `components/` (componentes reutilizables), `services/` (clientes HTTP, guards, interceptores, validadores y utilidades) y `models/` (contratos TypeScript). Los recursos estáticos viven en `src/assets/`.
+- `projects/mobile/src/`: `screens/`, `components/`, `services/` y `models/`.
 - `docs/`: documentación técnica y funcional ampliada.
 
 ## 1. Contexto académico y alcance
@@ -32,10 +41,11 @@ La fuente de verdad académica será `.opencode/knowledge/`. Antes de afirmar qu
 2. evidencia encontrada en el propio proyecto;
 3. buenas prácticas o conocimiento general de ingeniería.
 
-Los originales de las Unidades 2–7 están en `.opencode/knowledge/fuentes/`; las
-transcripciones `unidad-02.md` a `unidad-07.md` aún no están incorporadas. Consulta el
-original correspondiente si puedes leerlo; si no, declara que no verificaste el material y
-no le atribuyas conclusiones académicas.
+Los originales de las Unidades 2–7 están en `.opencode/knowledge/fuentes/` y sus
+transcripciones están en `.opencode/knowledge/unidad-02.md` a `unidad-07.md`. Consulta la
+transcripción y, si necesitas verificar un detalle, el original correspondiente. Si no
+puedes consultar ninguno, declara que no verificaste el material y no le atribuyas
+conclusiones académicas.
 
 ## 2. Método de trabajo
 

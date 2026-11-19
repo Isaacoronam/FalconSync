@@ -13,20 +13,20 @@ process.env.JWT_REFRESH_SECRET =
   'test-refresh-secret-with-more-than-32-characters';
 process.env.BCRYPT_COST = '10';
 
-const { default: app } = await import('../src/app.js');
-const { connectDB, disconnectDB } = await import('../src/config/db.js');
-const { default: Adventure } = await import('../src/models/Adventure.js');
+const { default: app } = await import('../index.js');
+const { connectDB, disconnectDB } = await import('../databases/db.js');
+const { default: Adventure } = await import('../databases/models/Adventure.js');
 const { default: AdventureStop } = await import(
-  '../src/models/AdventureStop.js'
+  '../databases/models/AdventureStop.js'
 );
-const { default: AuditLog } = await import('../src/models/AuditLog.js');
-const { default: CheckIn } = await import('../src/models/CheckIn.js');
-const { default: Location } = await import('../src/models/Location.js');
+const { default: AuditLog } = await import('../databases/models/AuditLog.js');
+const { default: CheckIn } = await import('../databases/models/CheckIn.js');
+const { default: Location } = await import('../databases/models/Location.js');
 const { default: RefreshSession } = await import(
-  '../src/models/RefreshSession.js'
+  '../databases/models/RefreshSession.js'
 );
-const { default: User } = await import('../src/models/User.js');
-const { ensureAdmin } = await import('../src/services/adminBootstrap.js');
+const { default: User } = await import('../databases/models/User.js');
+const { ensureAdmin } = await import('../microservices/adminBootstrap.js');
 
 const ADMIN_EMAIL = 'admin@aventuras-test.local';
 const ADMIN_PASSWORD = 'AdminAventuras12345';
@@ -66,7 +66,6 @@ function poiPayload(overrides = {}) {
     tags: ['colonial'],
     latitude: BASE_COORDINATES[1],
     longitude: BASE_COORDINATES[0],
-    conservationStatus: 'unknown',
     coordinateSource: 'Google Maps, Plus Code de prueba',
     coordinateVerifiedAt: '2026-11-01T00:00:00.000Z',
     verificationLevel: 'single-source',

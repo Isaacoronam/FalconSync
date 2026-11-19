@@ -19,21 +19,21 @@ process.env.UPLOAD_DIR = path.join(
   `falconsync-admin-test-uploads-${process.pid}`,
 );
 
-const { default: app } = await import('../src/app.js');
-const { connectDB, disconnectDB } = await import('../src/config/db.js');
-const { config } = await import('../src/config/env.js');
-const { default: Adventure } = await import('../src/models/Adventure.js');
+const { default: app } = await import('../index.js');
+const { connectDB, disconnectDB } = await import('../databases/db.js');
+const { config } = await import('../helpers/env.js');
+const { default: Adventure } = await import('../databases/models/Adventure.js');
 const { default: AdventureStop } = await import(
-  '../src/models/AdventureStop.js'
+  '../databases/models/AdventureStop.js'
 );
-const { default: AuditLog } = await import('../src/models/AuditLog.js');
-const { default: CheckIn } = await import('../src/models/CheckIn.js');
-const { default: Location } = await import('../src/models/Location.js');
+const { default: AuditLog } = await import('../databases/models/AuditLog.js');
+const { default: CheckIn } = await import('../databases/models/CheckIn.js');
+const { default: Location } = await import('../databases/models/Location.js');
 const { default: RefreshSession } = await import(
-  '../src/models/RefreshSession.js'
+  '../databases/models/RefreshSession.js'
 );
-const { default: User } = await import('../src/models/User.js');
-const { ensureAdmin } = await import('../src/services/adminBootstrap.js');
+const { default: User } = await import('../databases/models/User.js');
+const { ensureAdmin } = await import('../microservices/adminBootstrap.js');
 
 const ADMIN_EMAIL = 'admin@admin-test.local';
 const ADMIN_PASSWORD = 'AdminSegura12345';
@@ -57,7 +57,6 @@ function poiPayload(overrides = {}) {
     tags: ['colonial'],
     latitude: 11.4075,
     longitude: -69.6778,
-    conservationStatus: 'unknown',
     coordinateSource: 'Google Maps, Plus Code de prueba',
     coordinateVerifiedAt: '2026-11-01T00:00:00.000Z',
     verificationLevel: 'single-source',
@@ -570,13 +569,12 @@ describe('Administración de POI', () => {
     ).send({
       title: 'Casa Actualizada',
       status: 'published',
-      conservationStatus: 'fair',
     });
 
     assert.equal(response.status, 200);
     assert.equal(response.body.data.title, 'Casa Actualizada');
     assert.equal(response.body.data.status, 'published');
-    assert.equal(response.body.data.conservationStatus, 'fair');
+    assert.equal(response.body.data.conservationStatus, 'unknown');
 
     const audit = await AuditLog.findOne({
       action: 'location.updated',
@@ -584,10 +582,27 @@ describe('Administración de POI', () => {
     });
     assert.ok(audit);
     assert.deepEqual(audit.metadata.changedFields.sort(), [
-      'conservationStatus',
       'status',
       'title',
     ]);
+  });
+
+  it('solo actualiza el estado de conservación mediante una inspección verificada', async () => {
+    const location = await createLocation();
+
+    const response = await asAdmin(
+      request(app).patch(`/api/admin/locations/${location.id}`),
+    ).send({ conservationStatus: 'fair' });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.body.error.code, 'VALIDATION_ERROR');
+    assert.equal(
+      response.body.error.details[0],
+      'El estado de conservación solo puede actualizarse desde una inspección verificada',
+    );
+
+    const unchanged = await Location.findById(location.id);
+    assert.equal(unchanged.conservationStatus, 'unknown');
   });
 
   it('archiva con borrado lógico, oculta del API público y restaura', async () => {

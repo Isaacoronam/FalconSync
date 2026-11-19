@@ -34,9 +34,13 @@ Todas las rutas `/api/admin/*` exigen:
 4. contraseña cambiada si el usuario fue creado por bootstrap;
 5. rol `admin`.
 
-El rol `moderator` sigue reservado para el corte de moderación. No se implementó todavía
-edición de cuentas ni asignación de roles desde el panel. El administrador puede consultar
-usuarios registrados, su rol y estado, fecha de registro y último acceso.
+Los roles de producto son `user` (Turista), `historian`, `inspector` y `admin`.
+`moderator` se conserva como legacy temporal hasta ejecutar la migración a `historian`.
+El administrador puede consultar usuarios registrados y, desde la API o la interfaz,
+cambiar rol, activar o desactivar cuentas y revocar sesiones. Esas operaciones exigen la
+contraseña actual del administrador, revocan las sesiones del afectado y registran
+auditoría obligatoria. La propia cuenta del administrador no permite cambiar su rol ni
+desactivarse desde la interfaz.
 
 ## Modelo de POI
 
@@ -95,6 +99,9 @@ administrativo.
 |---|---|---|
 | `GET` | `/api/admin/summary` | Métricas de usuarios y POI, check-ins de los últimos 30 días, visitantes únicos, lugares más visitados, alertas editoriales y últimas seis acciones. |
 | `GET` | `/api/admin/users` | Usuarios paginados; filtros opcionales `q`, `role`, `active`, `page` y `limit` (máximo 50). |
+| `PATCH` | `/api/admin/users/:id/role` | Cambia el rol con `{ role, currentPassword }`; revoca sesiones y audita. |
+| `PATCH` | `/api/admin/users/:id/status` | Activa o desactiva con `{ isActive, currentPassword }`; revoca sesiones y audita. |
+| `POST` | `/api/admin/users/:id/revoke-sessions` | Revoca las sesiones con `{ currentPassword }`; incrementa `tokenVersion` y audita. |
 | `GET` | `/api/admin/locations` | Lista paginada con `q`, `status`, `category`, `circuit`, `tag`, `page`, `limit`. |
 | `GET` | `/api/admin/locations/:id` | Detalle administrativo. |
 | `POST` | `/api/admin/locations` | Crea un POI; por defecto como borrador. |
@@ -108,7 +115,9 @@ administrativo.
 
 Errores propios: `DUPLICATE_SLUG`, `LOCATION_ARCHIVED`, `LOCATION_NOT_ARCHIVED`,
 `LOCATION_IN_USE`, `IMAGE_LIMIT_REACHED`, `IMAGE_NOT_FOUND`, `INVALID_IMAGE`,
-`INVALID_IMAGE_TYPE`, `IMAGE_TOO_LARGE`, `INVALID_QR_FORMAT`.
+`INVALID_IMAGE_TYPE`, `IMAGE_TOO_LARGE`, `INVALID_QR_FORMAT`, `USER_NOT_FOUND`,
+`REAUTHENTICATION_REQUIRED`, `INVALID_CURRENT_PASSWORD`, `LAST_ADMIN_PROTECTED`,
+`SELF_DEMOTION_FORBIDDEN`, `SELF_DEACTIVATION_FORBIDDEN` y `AUDIT_REQUIRED`.
 
 `LOCATION_IN_USE` impide archivar o despublicar un POI que sea parada de una aventura
 publicada. El detalle de aventuras, QR y check-in está en [`AVENTURAS.md`](./AVENTURAS.md).
@@ -132,8 +141,8 @@ Solo se elimina el archivo físico cuando se quita explícitamente una imagen.
 - El tipo declarado por el navegador se contrasta con la firma binaria del archivo.
 - SVG y otros formatos se rechazan para evitar contenido activo.
 - Los archivos se guardan con nombre aleatorio en `UPLOAD_DIR/locations`.
-- El adaptador está en `src/services/storage/localStorageAdapter.js` y se expone mediante
-  `src/services/storage/index.js`. El contrato permite sustituirlo por S3, R2 u otro
+- El adaptador está en `microservices/storage/localStorageAdapter.js` y se expone mediante
+  `microservices/storage/index.js`. El contrato permite sustituirlo por S3, R2 u otro
   almacenamiento de objetos.
 - Las imágenes se sirven en `/api/uploads/...` con caché de 30 días y
   `Cross-Origin-Resource-Policy: cross-origin`.
@@ -153,8 +162,11 @@ Cada operación registra:
 - IP y `user-agent`;
 - fecha de creación.
 
-La auditoría no bloquea la operación principal si falla su escritura, pero el error queda en
-el log del servidor. No se implementó retención, exportación ni firma de logs.
+En las operaciones editoriales la auditoría no bloquea la operación principal si falla su
+escritura, pero el error queda en el log del servidor. Los cambios de rol, estado y la
+revocación de sesiones usan auditoría obligatoria (`recordAudit({ required: true })`): si el
+registro falla, se restauran rol, estado y `tokenVersion` y se devuelve error; las sesiones
+ya revocadas no se restauran. No se implementó retención, exportación ni firma de logs.
 
 ## Frontend
 
@@ -165,14 +177,17 @@ Rutas:
 - `/admin/poi/nuevo`: creación.
 - `/admin/poi/:id/editar`: edición, imágenes y publicación.
 - `/admin/aventuras`: gestión de aventuras, formularios y paradas.
-- `/admin/usuarios`: consulta paginada y filtrable de usuarios.
+- `/admin/usuarios`: consulta paginada y filtrable; cambio de rol, activación/desactivación y
+  revocación de sesiones con reautenticación.
 - `/admin/auditoria`: historial.
 
 El dashboard presenta check-ins reales, visitantes únicos y los lugares más visitados en
 los últimos 30 días, además de pendientes editoriales y actividad administrativa. Si todavía
 no hay check-ins, muestra un estado vacío en vez de simular actividad. La lista de usuarios
 expone únicamente nombre, username, correo, rol, estado, fecha de registro y último acceso;
-no entrega hashes de contraseña, tokens ni otros datos privados del perfil.
+no entrega hashes de contraseña, tokens ni otros datos privados del perfil. Cada fila ofrece
+acciones de rol, activación/desactivación y revocación de sesiones en un diálogo nativo que
+exige la contraseña del administrador; la propia cuenta queda bloqueada para rol y estado.
 
 El formulario usa validación reactiva, un selector Leaflet limitado a Falcón y gestión de
 imágenes en la misma pantalla de edición. Incluye descripción, historia, hechos de interés,
@@ -186,25 +201,30 @@ evitar desplazamiento horizontal.
 
 | Comprobación | Resultado |
 |---|---|
-| Pruebas backend | 79/79 aprobadas |
-| Pruebas frontend | 52/52 aprobadas |
+| Pruebas backend | 110/110 aprobadas, 14 suites (incluye 10 de roles y administración sensible, 4 de conservación, 2 de evidencia, 5 de estructura y 5 de almacenamiento público/privado) |
+| Pruebas frontend | 53/53 aprobadas |
 | Build de producción | Correcto, sin advertencias |
-| E2E | 16/16 en Edge local; corrida Chromium/CI pendiente de repetir |
+| E2E | 19/19 en Edge local (2026-11-18) y 19/19 con `CI=1`/Chromium en copia limpia (2026-11-19); ejecución remota pendiente |
 | Seed y verificación | 23 POI publicados; Gelatería El Sol y la entrada del Parque Nacional Médanos de Coro visibles en el mapa |
 | `npm audit --omit=dev` | 0 vulnerabilidades en backend y frontend |
 
 La prueba E2E `admin-poi.spec.ts` crea un POI, sube una imagen, lo publica, comprueba que
 aparece en el mapa, lo archiva, verifica que desaparece del API público y lo restaura.
+`admin-users.spec.ts` registra una cuenta, cambia su rol a historiador, la desactiva, la
+reactiva y revoca sus sesiones, comprobando los avisos y el estado de la fila.
 
 ## Límites y pendientes
 
-- La lista de usuarios es de solo consulta; no permite cambiar roles, desactivar cuentas,
-  exportar datos ni consultar historial de viajes individuales.
+- La migración de `moderator` a `historian` aún no se ejecutó y no existe exportación de
+  datos de usuario. La UI no permite asignar `moderator`, solo reemplazarlo por un rol
+  vigente. Tampoco existe historial de viajes individuales.
 - Los indicadores de demanda dependen de los check-ins por QR/geocerca; no existen reservas,
   ventas, pagos ni inventario de servicios en el alcance actual.
 - No hay flujo editorial con revisión por un segundo usuario.
-- No se generan miniaturas ni se eliminan metadatos EXIF.
-- No hay análisis antivirus de archivos subidos.
+- Las imágenes de POI no generan miniaturas ni eliminan metadatos EXIF; la evidencia de
+  conservación sí valida el contenido con `sharp` y elimina EXIF.
+- No hay análisis antivirus real. Sin escáner, producción bloquea las cargas de evidencia con
+  `503 EVIDENCE_SCAN_UNAVAILABLE`; desarrollo y pruebas permiten el flujo no escaneado.
 - El almacenamiento es local y no está replicado.
 - El slug archivado no puede reutilizarse sin elegir otro.
 - No se implementó historial visual de versiones ni comparación de cambios.

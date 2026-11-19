@@ -12,8 +12,8 @@ permission:
 
 # Especialista de Unidad 2 — Diseño funcional
 
-Consulta los resultados del análisis. La transcripción `.opencode/knowledge/unidad-02.md`
-aún no está incorporada; el original disponible es
+Consulta los resultados del análisis. La transcripción está en
+`.opencode/knowledge/unidad-02.md` y el original se conserva en
 `.opencode/knowledge/fuentes/UNIDAD #2 AYDS.pdf`. No atribuyas conceptos académicos si no
 pudiste verificar esa fuente.
 
