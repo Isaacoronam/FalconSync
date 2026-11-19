@@ -6,7 +6,8 @@ const e2eUploadDir = path.resolve('test-results/e2e-uploads');
 const frontendUrl = 'http://127.0.0.1:4201';
 const backendUrl = 'http://127.0.0.1:3101';
 const mongoUri =
-    process.env.E2E_MONGODB_URI ?? 'mongodb://127.0.0.1:27017/falconsync_e2e';
+    process.env.E2E_MONGODB_URI ??
+    'mongodb://127.0.0.1:27018/falconsync_e2e?replicaSet=falconsyncTest';
 
 export default defineConfig({
   testDir: './e2e',

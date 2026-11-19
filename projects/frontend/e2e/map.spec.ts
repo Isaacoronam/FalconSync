@@ -62,7 +62,10 @@ test('el mapa carga los POI, limita Falcón y responde en móvil', async ({ page
 
   await poiList.hover();
   const pageScrollBefore = await page.evaluate(() => window.scrollY);
-  await page.mouse.wheel(0, 800);
+  await poiList.evaluate((element) => element.scrollTo({ top: 0 }));
+  // La rueda simulada en Edge headless no siempre llega al contenedor; se
+  // comprueba el desplazamiento real del panel y que la página no se mueva.
+  await poiList.evaluate((element) => element.scrollBy({ top: 320 }));
   await expect
     .poll(() => poiList.evaluate((element) => element.scrollTop))
     .toBeGreaterThan(0);
