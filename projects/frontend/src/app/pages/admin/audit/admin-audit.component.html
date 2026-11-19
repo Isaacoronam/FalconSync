@@ -1,0 +1,73 @@
+<section class="admin-page" aria-labelledby="audit-title">
+  <header class="admin-page__header">
+    <div>
+      <p class="admin-page__eyebrow">Administración</p>
+      <h1 id="audit-title">Auditoría</h1>
+      <p class="admin-page__lead">
+        {{ meta().total }} acciones registradas sobre el contenido patrimonial
+      </p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="admin-alert" role="alert">
+      <p>{{ error() }}</p>
+      <button class="button button--ghost" type="button" (click)="load()">Reintentar</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="admin-state">Cargando auditoría…</p>
+  } @else if (entries().length === 0) {
+    <div class="admin-empty">
+      <p>Todavía no hay acciones registradas.</p>
+    </div>
+  } @else {
+    <div class="admin-table-wrap">
+      <table class="admin-table" aria-labelledby="audit-title">
+        <thead>
+          <tr>
+            <th scope="col">Acción</th>
+            <th scope="col">Responsable</th>
+            <th scope="col">Detalle</th>
+            <th scope="col">Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.id) {
+            <tr>
+              <td data-label="Acción">
+                <span class="admin-badge admin-badge--audit">{{ actionLabel(entry.action) }}</span>
+              </td>
+              <td data-label="Responsable">{{ entry.actorEmail }}</td>
+              <td data-label="Detalle">{{ entry.summary }}</td>
+              <td class="admin-audit__date" data-label="Fecha">{{ formatDate(entry.createdAt) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta().totalPages > 1) {
+      <nav class="admin-pagination" aria-label="Paginación de auditoría">
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          [disabled]="meta().page <= 1 || loading()"
+          (click)="load(meta().page - 1)"
+        >
+          Anterior
+        </button>
+        <span>Página {{ meta().page }} de {{ meta().totalPages }}</span>
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          [disabled]="meta().page >= meta().totalPages || loading()"
+          (click)="load(meta().page + 1)"
+        >
+          Siguiente
+        </button>
+      </nav>
+    }
+  }
+</section>

@@ -1,0 +1,830 @@
+<section class="conservation-page" aria-labelledby="inspection-detail-title">
+  <header class="conservation-header">
+    <div>
+      <p class="conservation-eyebrow">Conservación · Inspección</p>
+      <h1 id="inspection-detail-title" class="conservation-title">
+        @if (inspection(); as item) {
+          {{ assetName(item.assetId) }}
+        } @else {
+          Detalle de la inspección
+        }
+      </h1>
+      <p class="conservation-lead">
+        Ejecuta la inspección, documenta hallazgos con evidencia, revisa severidades, propone
+        intervenciones y cierra solo cuando el expediente esté completo.
+      </p>
+    </div>
+
+    <div class="conservation-actions">
+      <a class="button button--ghost" routerLink="/inspecciones">Volver a inspecciones</a>
+      @if (inspection()?.reportId; as reportId) {
+        <a class="button button--ghost" [routerLink]="['/reportes', reportId]">Ver reporte</a>
+      }
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="conservation-state">Cargando la inspección…</p>
+  } @else if (error()) {
+    <div class="conservation-alert" role="alert">
+      <p>{{ error() }}</p>
+      <div class="conservation-actions">
+        <button class="button button--ghost button--small" type="button" (click)="load()">
+          Reintentar
+        </button>
+        <a class="button button--ghost button--small" routerLink="/inspecciones">Inspecciones</a>
+      </div>
+    </div>
+  } @else if (inspection(); as item) {
+    @if (actionError()) {
+      <div class="conservation-alert" role="alert">
+        <p>{{ actionError() }}</p>
+      </div>
+    }
+
+    @if (notice()) {
+      <p class="conservation-success" role="status">{{ notice() }}</p>
+    }
+
+    @if (refreshing()) {
+      <p class="conservation-state" role="status">Actualizando la inspección…</p>
+    }
+
+    <div class="conservation-grid conservation-grid--detail">
+      <div class="conservation-grid">
+        <section class="conservation-panel" aria-labelledby="inspection-summary-title">
+          <div class="conservation-panel__header">
+            <div>
+              <h2 id="inspection-summary-title">Resumen</h2>
+              <p class="conservation-panel__hint">
+                {{ inspectionTypeLabels[item.type] }} · Inspección {{ shortId(item.id) }}
+              </p>
+            </div>
+            <span [class]="stateClass(item.state)">
+              {{ inspectionStateLabels[item.state] }}
+            </span>
+          </div>
+
+          <p class="conservation-card__body">{{ item.scope }}</p>
+
+          <p class="conservation-meta">
+            <span><strong>Inspector:</strong> {{ inspectorName(item.inspectorId) }}</span>
+            <span><strong>Revisor:</strong> {{ inspectorName(item.reviewerId) }}</span>
+            <span><strong>Versión:</strong> {{ item.version }}</span>
+            @if (item.scheduledAt) {
+              <span
+                ><strong>Prevista:</strong> {{ item.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}</span
+              >
+            }
+            @if (item.startedAt) {
+              <span
+                ><strong>Iniciada:</strong> {{ item.startedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+              >
+            }
+            @if (item.submittedAt) {
+              <span
+                ><strong>Enviada:</strong> {{ item.submittedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+              >
+            }
+            @if (item.reviewedAt) {
+              <span
+                ><strong>Revisada:</strong> {{ item.reviewedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+              >
+            }
+            @if (item.closedAt) {
+              <span><strong>Cerrada:</strong> {{ item.closedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+            }
+            @if (item.result) {
+              <span><strong>Resultado:</strong> {{ inspectionResultLabels[item.result] }}</span>
+            }
+            <span><strong>Evidencia:</strong> {{ item.evidenceIds.length }} archivo(s)</span>
+          </p>
+
+          @if (item.noFindingsDeclared) {
+            <p class="conservation-state">
+              El inspector declaró expresamente que no encontró daños.
+            </p>
+          }
+
+          @if (item.reviewNotes) {
+            <p class="conservation-card__body">
+              <strong>Notas de revisión:</strong> {{ item.reviewNotes }}
+            </p>
+          }
+
+          @if (item.closureJustification) {
+            <p class="conservation-card__body">
+              <strong>Justificación de cierre:</strong> {{ item.closureJustification }}
+            </p>
+          }
+
+          @if (item.cancellationReason) {
+            <p class="conservation-card__body">
+              <strong>Motivo de cancelación:</strong> {{ item.cancellationReason }}
+            </p>
+          }
+        </section>
+
+        <section class="conservation-panel" aria-labelledby="inspection-findings-title">
+          <div class="conservation-panel__header">
+            <div>
+              <h2 id="inspection-findings-title">Hallazgos</h2>
+              <p class="conservation-panel__hint">
+                {{ item.findings.length }} hallazgo(s) registrado(s). La severidad propuesta se
+                confirma en la revisión.
+              </p>
+            </div>
+            <span class="conservation-counter">{{ item.findings.length }}</span>
+          </div>
+
+          @if (item.findings.length === 0) {
+            <div class="conservation-empty">
+              <p>No hay hallazgos registrados.</p>
+              @if (canAddFinding()) {
+                <p>Documenta el primero con el formulario inferior.</p>
+              } @else if (item.noFindingsDeclared) {
+                <p>Se declaró una inspección sin daños.</p>
+              }
+            </div>
+          } @else {
+            <ul class="conservation-finding-list">
+              @for (finding of item.findings; track finding.findingId) {
+                <li class="conservation-finding">
+                  <div class="conservation-finding__header">
+                    <div>
+                      <h3 class="conservation-finding__title">
+                        {{ categoryLabels[finding.category] }}
+                      </h3>
+                      <p class="conservation-card__meta">
+                        Hallazgo {{ shortId(finding.findingId) }} ·
+                        {{
+                          finding.requiresIntervention
+                            ? 'Requiere intervención'
+                            : 'Sin intervención'
+                        }}
+                      </p>
+                    </div>
+                    <div class="conservation-inline">
+                      <span
+                        [class]="
+                          severityClass(finding.severityConfirmed ?? finding.severityProposed)
+                        "
+                      >
+                        {{ severityLabels[finding.severityConfirmed ?? finding.severityProposed] }}
+                      </span>
+                      <span [class]="stateClass(finding.state)">
+                        {{ finding.state }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p class="conservation-finding__body">{{ finding.description }}</p>
+
+                  <p class="conservation-card__meta">
+                    Propuesto por {{ inspectorName(finding.proposedBy) }}
+                    @if (finding.severityConfirmed) {
+                      · Confirmada por {{ inspectorName(finding.confirmedBy) }}
+                    }
+                    @if (finding.evidenceIds.length > 0) {
+                      · {{ finding.evidenceIds.length }} evidencia(s)
+                    }
+                  </p>
+
+                  <details class="conservation-finding__evidence">
+                    <summary>Evidencia del hallazgo</summary>
+                    <app-evidence-panel
+                      ownerType="Inspection"
+                      [ownerId]="item.id"
+                      [findingId]="finding.findingId"
+                      [canUpload]="canUploadInspectionEvidence()"
+                      title="Archivos del hallazgo"
+                      emptyMessage="Este hallazgo no tiene evidencia adjunta."
+                      (uploaded)="load(true)"
+                    />
+                  </details>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (canAddFinding()) {
+            <hr class="conservation-divider" />
+            <form
+              class="conservation-form"
+              [formGroup]="findingForm"
+              (ngSubmit)="addFinding()"
+              novalidate
+            >
+              <div class="conservation-form conservation-form--inline">
+                <div class="conservation-field">
+                  <label for="finding-category">Categoría</label>
+                  <select id="finding-category" formControlName="category">
+                    @for (category of categories; track category) {
+                      <option [value]="category">{{ categoryLabels[category] }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="conservation-field">
+                  <label for="finding-severity">Severidad propuesta</label>
+                  <select id="finding-severity" formControlName="severityProposed">
+                    @for (severity of severities; track severity) {
+                      <option [value]="severity">{{ severityLabels[severity] }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="conservation-field">
+                <label for="finding-description">Descripción</label>
+                <textarea
+                  id="finding-description"
+                  formControlName="description"
+                  rows="3"
+                  maxlength="2000"
+                  placeholder="Qué se observó, dónde y con qué evidencia."
+                ></textarea>
+              </div>
+
+              <label class="conservation-check" for="finding-requires-intervention">
+                <input
+                  id="finding-requires-intervention"
+                  type="checkbox"
+                  formControlName="requiresIntervention"
+                />
+                Requiere intervención antes del cierre
+              </label>
+
+              <div class="conservation-actions">
+                <button
+                  class="button button--primary button--small"
+                  type="submit"
+                  [disabled]="actionLocked()"
+                >
+                  {{ busy() === 'finding' ? 'Registrando…' : 'Registrar hallazgo' }}
+                </button>
+              </div>
+            </form>
+          }
+
+          @if (canSubmit()) {
+            <hr class="conservation-divider" />
+            <div class="conservation-actions">
+              @if (item.findings.length === 0) {
+                <label class="conservation-check" for="inspection-no-findings">
+                  <input
+                    id="inspection-no-findings"
+                    type="checkbox"
+                    [checked]="noFindingsDeclared()"
+                    (change)="setNoFindings($event)"
+                  />
+                  Declaro que no se encontraron daños.
+                </label>
+              }
+              <button
+                class="button button--primary button--small"
+                type="button"
+                [disabled]="actionLocked()"
+                (click)="submitInspection()"
+              >
+                {{ busy() === 'submit' ? 'Enviando…' : 'Enviar a revisión' }}
+              </button>
+            </div>
+          }
+        </section>
+
+        <section class="conservation-panel" aria-labelledby="inspection-interventions-title">
+          <div class="conservation-panel__header">
+            <div>
+              <h2 id="inspection-interventions-title">Intervenciones</h2>
+              <p class="conservation-panel__hint">
+                Cada intervención debe aprobarse, ejecutarse con evidencia y verificarse.
+              </p>
+            </div>
+            <span class="conservation-counter">{{ interventions().length }}</span>
+          </div>
+
+          @if (interventions().length === 0) {
+            <div class="conservation-empty">
+              <p>No hay intervenciones propuestas.</p>
+              @if (canProposeIntervention()) {
+                <p>Selecciona hallazgos y registra la primera propuesta.</p>
+              }
+            </div>
+          } @else {
+            <ul class="conservation-card-list">
+              @for (intervention of interventions(); track intervention.id) {
+                <li class="conservation-card">
+                  <div class="conservation-card__header">
+                    <div>
+                      <h3 class="conservation-card__title">
+                        {{ interventionTypeLabels[intervention.type] }}
+                      </h3>
+                      <p class="conservation-card__meta">
+                        Propuesta por {{ inspectorName(intervention.proposedBy) }} ·
+                        {{ intervention.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                      </p>
+                    </div>
+                    <span [class]="stateClass(intervention.state)">
+                      {{ interventionStateLabels[intervention.state] }}
+                    </span>
+                  </div>
+
+                  <p class="conservation-card__body">{{ intervention.description }}</p>
+
+                  <p class="conservation-card__meta">
+                    <strong>Cubre:</strong>
+                    @for (findingId of intervention.findingIds; track findingId; let last = $last) {
+                      {{ findingName(findingId) }}{{ last ? '' : ', ' }}
+                    }
+                  </p>
+
+                  <p class="conservation-meta">
+                    @if (intervention.approvedAt) {
+                      <span
+                        ><strong>Aprobada:</strong>
+                        {{ intervention.approvedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+                      >
+                    }
+                    @if (intervention.executorId) {
+                      <span
+                        ><strong>Ejecutor:</strong>
+                        {{ inspectorName(intervention.executorId) }}</span
+                      >
+                    }
+                    @if (intervention.completedAt) {
+                      <span
+                        ><strong>Completada:</strong>
+                        {{ intervention.completedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+                      >
+                    }
+                    @if (intervention.verifiedAt) {
+                      <span
+                        ><strong>Verificada:</strong>
+                        {{ intervention.verifiedAt | date: 'dd/MM/yyyy HH:mm' }}</span
+                      >
+                    }
+                    @if (intervention.rejectionReason) {
+                      <span><strong>Rechazo:</strong> {{ intervention.rejectionReason }}</span>
+                    }
+                  </p>
+
+                  @if (
+                    intervention.state === 'proposed' ||
+                    intervention.state === 'approved' ||
+                    intervention.state === 'in_progress'
+                  ) {
+                    <div class="conservation-form conservation-form--inline">
+                      @if (canApproveIntervention(intervention)) {
+                        <button
+                          class="button button--primary button--small"
+                          type="button"
+                          [disabled]="actionLocked()"
+                          (click)="transitionIntervention(intervention, 'approve')"
+                        >
+                          Aprobar
+                        </button>
+                      }
+                      @if (canStartIntervention(intervention)) {
+                        <button
+                          class="button button--primary button--small"
+                          type="button"
+                          [disabled]="actionLocked()"
+                          (click)="transitionIntervention(intervention, 'start')"
+                        >
+                          Iniciar ejecución
+                        </button>
+                      }
+                      @if (canCompleteIntervention(intervention)) {
+                        <button
+                          class="button button--primary button--small"
+                          type="button"
+                          [disabled]="actionLocked()"
+                          (click)="transitionIntervention(intervention, 'complete')"
+                        >
+                          Completar
+                        </button>
+                      }
+                    </div>
+
+                    @if (intervention.state === 'proposed' || intervention.state === 'approved') {
+                      <div class="conservation-form conservation-form--inline">
+                        <div class="conservation-field">
+                          <label [for]="'intervention-reason-' + intervention.id"
+                            >Motivo de rechazo</label
+                          >
+                          <input
+                            [id]="'intervention-reason-' + intervention.id"
+                            [ngModel]="rejectionReason(intervention.id)"
+                            (ngModelChange)="setRejectionReason(intervention.id, $event)"
+                            maxlength="500"
+                            placeholder="Solo si vas a rechazarla"
+                          />
+                        </div>
+                        <button
+                          class="button button--ghost button--small"
+                          type="button"
+                          [disabled]="actionLocked()"
+                          (click)="transitionIntervention(intervention, 'reject')"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    }
+                  }
+
+                  @if (intervention.state === 'completed') {
+                    @if (canVerifyIntervention(intervention)) {
+                      <div class="conservation-actions">
+                        <button
+                          class="button button--primary button--small"
+                          type="button"
+                          [disabled]="actionLocked()"
+                          (click)="transitionIntervention(intervention, 'verify')"
+                        >
+                          Verificar intervención
+                        </button>
+                      </div>
+                    } @else {
+                      <p class="conservation-card__meta">
+                        Pendiente de verificación por otra persona asignada.
+                      </p>
+                    }
+                  }
+
+                  <app-evidence-panel
+                    ownerType="Intervention"
+                    [ownerId]="intervention.id"
+                    [canUpload]="canUploadInterventionEvidence(intervention)"
+                    title="Evidencia de la intervención"
+                    emptyMessage="Sin evidencia no se puede completar ni verificar la intervención."
+                    (uploaded)="load(true)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+
+          @if (canProposeIntervention()) {
+            <hr class="conservation-divider" />
+            <form
+              class="conservation-form"
+              [formGroup]="interventionForm"
+              (ngSubmit)="proposeIntervention()"
+              novalidate
+            >
+              <div class="conservation-field">
+                <span class="conservation-field__label">Hallazgos que cubre</span>
+                @if (availableFindings().length === 0) {
+                  <p class="conservation-state">No hay hallazgos disponibles.</p>
+                } @else {
+                  <div class="conservation-check-list">
+                    @for (finding of availableFindings(); track finding.findingId) {
+                      <label
+                        class="conservation-check"
+                        [for]="'intervention-finding-' + finding.findingId"
+                      >
+                        <input
+                          [id]="'intervention-finding-' + finding.findingId"
+                          type="checkbox"
+                          [checked]="isFindingSelected(finding.findingId)"
+                          (change)="toggleFinding(finding.findingId)"
+                        />
+                        {{ categoryLabels[finding.category] }} ·
+                        {{
+                          severityLabels[finding.severityConfirmed ?? finding.severityProposed]
+                        }}
+                        ·
+                        {{ finding.description }}
+                      </label>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="conservation-form conservation-form--inline">
+                <div class="conservation-field">
+                  <label for="intervention-type">Tipo</label>
+                  <select id="intervention-type" formControlName="type">
+                    @for (type of interventionTypes; track type) {
+                      <option [value]="type">{{ interventionTypeLabels[type] }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="conservation-field">
+                <label for="intervention-description">Descripción</label>
+                <textarea
+                  id="intervention-description"
+                  formControlName="description"
+                  rows="3"
+                  maxlength="4000"
+                  placeholder="Trabajo propuesto, materiales y criterio de aceptación."
+                ></textarea>
+              </div>
+
+              <div class="conservation-actions">
+                <button
+                  class="button button--primary button--small"
+                  type="submit"
+                  [disabled]="actionLocked()"
+                >
+                  {{ busy() === 'intervention' ? 'Proponiendo…' : 'Proponer intervención' }}
+                </button>
+              </div>
+            </form>
+          }
+        </section>
+
+        <app-evidence-panel
+          ownerType="Inspection"
+          [ownerId]="item.id"
+          [canUpload]="canUploadInspectionEvidence()"
+          title="Evidencia general de la inspección"
+          emptyMessage="La inspección todavía no tiene evidencia general."
+          (uploaded)="load(true)"
+        />
+
+        <section class="conservation-panel" aria-labelledby="inspection-history-title">
+          <div class="conservation-panel__header">
+            <div>
+              <h2 id="inspection-history-title">Trazabilidad</h2>
+              <p class="conservation-panel__hint">
+                Eventos de dominio registrados para esta inspección.
+              </p>
+            </div>
+          </div>
+
+          @if (history().length === 0) {
+            <p class="conservation-state">Todavía no hay eventos registrados.</p>
+          } @else {
+            <ol class="conservation-timeline">
+              @for (event of history(); track event.eventId) {
+                <li>
+                  <span class="conservation-timeline__event">{{
+                    eventLabel(event.eventType)
+                  }}</span>
+                  <span class="conservation-timeline__meta">
+                    {{ event.occurredAt | date: 'dd/MM/yyyy HH:mm' }} ·
+                    {{ inspectorName(event.actorId) }}
+                    @if (event.fromState || event.toState) {
+                      · {{ event.fromState ?? '—' }} → {{ event.toState ?? '—' }}
+                    }
+                  </span>
+                  @if (event.reason) {
+                    <span class="conservation-timeline__meta">{{ event.reason }}</span>
+                  }
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      </div>
+
+      <div class="conservation-grid">
+        <section class="conservation-panel" aria-labelledby="inspection-workflow-title">
+          <div class="conservation-panel__header">
+            <div>
+              <h2 id="inspection-workflow-title">Siguiente paso</h2>
+              <p class="conservation-panel__hint">
+                Estado: {{ inspectionStateLabels[item.state] }}
+              </p>
+            </div>
+          </div>
+
+          @switch (item.state) {
+            @case ('planned') {
+              @if (canStart()) {
+                <p class="conservation-state">
+                  Inicia la inspección cuando estés en el sitio. Después podrás registrar hallazgos
+                  y evidencia.
+                </p>
+                <div class="conservation-actions">
+                  <button
+                    class="button button--primary"
+                    type="button"
+                    [disabled]="actionLocked()"
+                    (click)="start()"
+                  >
+                    {{ busy() === 'start' ? 'Iniciando…' : 'Iniciar inspección' }}
+                  </button>
+                </div>
+              } @else {
+                <p class="conservation-state">
+                  Planificada y asignada a {{ inspectorName(item.inspectorId) }}. Solo el inspector
+                  asignado puede iniciarla.
+                </p>
+              }
+            }
+            @case ('in_progress') {
+              <p class="conservation-state">
+                Registra todos los hallazgos y adjunta evidencia. Cuando termines, envía la
+                inspección a revisión.
+              </p>
+              @if (!isInspector()) {
+                <p class="conservation-panel__hint">
+                  La inspección está en ejecución por {{ inspectorName(item.inspectorId) }}.
+                </p>
+              }
+            }
+            @case ('submitted') {
+              <p class="conservation-state">
+                En espera de revisión por {{ inspectorName(item.reviewerId) }}. El revisor confirma
+                severidades y decide si aprueba o devuelve.
+              </p>
+            }
+            @case ('returned') {
+              <p class="conservation-state">
+                Devuelta por el revisor. Corrige lo solicitado y vuelve a enviarla.
+              </p>
+              @if (item.reviewNotes) {
+                <p class="conservation-card__body">{{ item.reviewNotes }}</p>
+              }
+              @if (canResume()) {
+                <div class="conservation-actions">
+                  <button
+                    class="button button--primary"
+                    type="button"
+                    [disabled]="actionLocked()"
+                    (click)="resume()"
+                  >
+                    {{ busy() === 'resume' ? 'Reanudando…' : 'Reanudar inspección' }}
+                  </button>
+                </div>
+              }
+            }
+            @case ('reviewed') {
+              <p class="conservation-state">
+                Revisada. Propón las intervenciones necesarias; el cierre requiere cubrir todos los
+                hallazgos que requieren intervención con una intervención verificada.
+              </p>
+              @if (closureBlocked().length > 0) {
+                <div class="conservation-alert" role="status">
+                  <p><strong>Cierre bloqueado.</strong> Faltan intervenciones verificadas para:</p>
+                  <ul class="conservation-plain-list">
+                    @for (finding of closureBlocked(); track finding.findingId) {
+                      <li>
+                        {{ categoryLabels[finding.category] }} · {{ shortId(finding.findingId) }}
+                      </li>
+                    }
+                  </ul>
+                </div>
+              } @else {
+                <p class="conservation-success" role="status">
+                  Todos los hallazgos que requieren intervención están cubiertos por una
+                  intervención verificada.
+                </p>
+              }
+            }
+            @case ('closed') {
+              <p class="conservation-success" role="status">
+                Inspección cerrada. El estado público de conservación del POI se actualizó con el
+                resultado revisado.
+              </p>
+            }
+            @case ('cancelled') {
+              <p class="conservation-state">Inspección cancelada.</p>
+              @if (item.cancellationReason) {
+                <p class="conservation-card__body">{{ item.cancellationReason }}</p>
+              }
+            }
+          }
+        </section>
+
+        @if (canReview()) {
+          <section class="conservation-panel" aria-labelledby="inspection-review-title">
+            <div class="conservation-panel__header">
+              <div>
+                <h2 id="inspection-review-title">Revisión</h2>
+                <p class="conservation-panel__hint">
+                  Confirma la severidad de cada hallazgo. No puedes revisar tu propia inspección.
+                </p>
+              </div>
+            </div>
+
+            <form
+              class="conservation-form"
+              [formGroup]="reviewForm"
+              (ngSubmit)="submitReview()"
+              novalidate
+            >
+              <div class="conservation-form conservation-form--inline">
+                <div class="conservation-field">
+                  <label for="review-decision">Decisión</label>
+                  <select id="review-decision" formControlName="decision">
+                    <option value="approve">Aprobar</option>
+                    <option value="return">Devolver para corrección</option>
+                  </select>
+                </div>
+                @if (reviewForm.controls.decision.value === 'approve') {
+                  <div class="conservation-field">
+                    <label for="review-result">Resultado</label>
+                    <select id="review-result" formControlName="result">
+                      @for (result of inspectionResults; track result) {
+                        <option [value]="result">{{ inspectionResultLabels[result] }}</option>
+                      }
+                    </select>
+                  </div>
+                }
+              </div>
+
+              @if (
+                reviewForm.controls.decision.value === 'approve' && proposedFindings().length > 0
+              ) {
+                <div class="conservation-field">
+                  <span class="conservation-field__label">Severidad confirmada</span>
+                  @for (finding of proposedFindings(); track finding.findingId) {
+                    <div class="conservation-field">
+                      <label [for]="'review-severity-' + finding.findingId">
+                        {{ categoryLabels[finding.category] }} · {{ finding.description }}
+                      </label>
+                      <select
+                        [id]="'review-severity-' + finding.findingId"
+                        [ngModel]="severityFor(finding)"
+                        (ngModelChange)="setSeverity(finding.findingId, $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        @for (severity of severities; track severity) {
+                          <option [value]="severity">{{ severityLabels[severity] }}</option>
+                        }
+                      </select>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="conservation-field">
+                <label for="review-notes">Notas</label>
+                <textarea
+                  id="review-notes"
+                  formControlName="notes"
+                  rows="3"
+                  maxlength="2000"
+                  placeholder="Obligatorio si devuelves la inspección."
+                ></textarea>
+              </div>
+
+              <div class="conservation-actions">
+                <button class="button button--primary" type="submit" [disabled]="actionLocked()">
+                  {{ busy() === 'review' ? 'Guardando…' : 'Registrar revisión' }}
+                </button>
+              </div>
+            </form>
+          </section>
+        }
+
+        @if (canClose()) {
+          <section class="conservation-panel" aria-labelledby="inspection-close-title">
+            <div class="conservation-panel__header">
+              <div>
+                <h2 id="inspection-close-title">Cierre</h2>
+                <p class="conservation-panel__hint">
+                  Solo el revisor puede cerrar. El cierre es final y trazable.
+                </p>
+              </div>
+            </div>
+
+            @if (needsClosureJustification()) {
+              <div class="conservation-field">
+                <label for="close-justification">Justificación</label>
+                <textarea
+                  id="close-justification"
+                  [formControl]="closeForm.controls.justification"
+                  rows="3"
+                  maxlength="2000"
+                  placeholder="Explica por qué se cierran hallazgos sin intervención."
+                ></textarea>
+              </div>
+            }
+
+            <div class="conservation-actions">
+              <button
+                class="button button--primary"
+                type="button"
+                [disabled]="actionLocked()"
+                (click)="closeInspection()"
+              >
+                {{ busy() === 'close' ? 'Cerrando…' : 'Cerrar inspección' }}
+              </button>
+            </div>
+          </section>
+        } @else if (item.state === 'reviewed') {
+          <section
+            class="conservation-panel conservation-panel--flat"
+            aria-labelledby="inspection-close-pending-title"
+          >
+            <div class="conservation-panel__header">
+              <div>
+                <h2 id="inspection-close-pending-title">Cierre pendiente</h2>
+                <p class="conservation-panel__hint">
+                  El revisor asignado ({{ inspectorName(item.reviewerId) }}) es quien puede cerrar
+                  esta inspección.
+                </p>
+              </div>
+            </div>
+          </section>
+        }
+      </div>
+    </div>
+  }
+</section>

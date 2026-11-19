@@ -1,0 +1,201 @@
+<section class="admin-page" aria-labelledby="poi-title">
+  <header class="admin-page__header">
+    <div>
+      <p class="admin-page__eyebrow">Administración</p>
+      <h1 id="poi-title">Puntos de interés</h1>
+      <p class="admin-page__lead">
+        @if (loading()) {
+          Cargando registros…
+        } @else {
+          {{ meta().total }} registros · borradores, publicados y archivados
+        }
+      </p>
+    </div>
+    <a class="button button--primary" routerLink="/admin/poi/nuevo">Nuevo POI</a>
+  </header>
+
+  @if (notice()) {
+    <p class="form-success" role="status">{{ notice() }}</p>
+  }
+
+  <form class="admin-toolbar" [formGroup]="filters" (ngSubmit)="applyFilters()">
+    <div class="admin-field admin-field--grow">
+      <label for="poi-search">Buscar por título o slug</label>
+      <input id="poi-search" type="search" formControlName="q" placeholder="Catedral, plaza…" />
+    </div>
+
+    <div class="admin-field">
+      <label for="poi-status">Estado</label>
+      <select id="poi-status" formControlName="status">
+        @for (status of statuses; track status.value) {
+          <option [value]="status.value">{{ status.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="admin-field">
+      <label for="poi-category">Categoría</label>
+      <select id="poi-category" formControlName="category">
+        @for (category of categories; track category.value) {
+          <option [value]="category.value">{{ category.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="admin-field">
+      <label for="poi-circuit">Circuito</label>
+      <select id="poi-circuit" formControlName="circuit">
+        @for (circuit of circuits; track circuit.value) {
+          <option [value]="circuit.value">{{ circuit.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="admin-field">
+      <label for="poi-tag">Etiqueta</label>
+      <select id="poi-tag" formControlName="tag">
+        @for (tag of tags; track tag.value) {
+          <option [value]="tag.value">{{ tag.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="admin-toolbar__actions">
+      <button class="button button--primary" type="submit" [disabled]="loading()">Filtrar</button>
+      <button class="button button--ghost" type="button" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <div class="admin-alert" role="alert">
+      <p>{{ error() }}</p>
+      <button class="button button--ghost" type="button" (click)="load()">Reintentar</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="admin-state">Cargando puntos de interés…</p>
+  } @else if (locations().length === 0) {
+    <div class="admin-empty">
+      <p>No hay puntos de interés con estos filtros.</p>
+      <a class="button button--primary" routerLink="/admin/poi/nuevo">Crear el primero</a>
+    </div>
+  } @else {
+    <div class="admin-table-wrap">
+      <table class="admin-table" aria-labelledby="poi-title">
+        <thead>
+          <tr>
+            <th scope="col">POI</th>
+            <th scope="col">Categoría</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Actualizado</th>
+            <th scope="col"><span class="admin-table__actions-label">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (location of locations(); track location.id) {
+            <tr>
+              <td data-label="POI">
+                <span class="admin-table__title">{{ location.title }}</span>
+                <span class="admin-table__meta">/{{ location.slug }}</span>
+              </td>
+              <td data-label="Categoría">{{ categoryLabel(location.category) }}</td>
+              <td data-label="Estado">
+                <span class="admin-badge admin-badge--{{ location.status }}">
+                  {{ statusLabel(location.status) }}
+                </span>
+              </td>
+              <td class="admin-table__date" data-label="Actualizado">
+                {{ formatDate(location.updatedAt) }}
+              </td>
+              <td data-label="Acciones">
+                <div class="admin-actions">
+                  @if (location.status === 'archived') {
+                    <button
+                      class="button button--ghost button--small"
+                      type="button"
+                      [disabled]="busy() === location.id"
+                      [attr.aria-label]="'Restaurar ' + location.title"
+                      (click)="restore(location)"
+                    >
+                      {{ busy() === location.id ? 'Restaurando…' : 'Restaurar' }}
+                    </button>
+                  } @else {
+                    @if (location.status === 'published') {
+                      <a
+                        class="button button--ghost button--small"
+                        [routerLink]="['/admin/locations', location.id, 'qr']"
+                        [attr.aria-label]="'Generar QR para ' + location.title"
+                      >
+                        QR
+                      </a>
+                    }
+                    <a
+                      class="button button--ghost button--small"
+                      [routerLink]="['/admin/poi', location.id, 'editar']"
+                      [attr.aria-label]="'Editar ' + location.title"
+                    >
+                      Editar
+                    </a>
+
+                    @if (pendingArchive() === location.id) {
+                      <span class="admin-actions__confirm">
+                        <span>¿Archivar?</span>
+                        <button
+                          class="button button--danger button--small"
+                          type="button"
+                          [disabled]="busy() === location.id"
+                          (click)="archive(location)"
+                        >
+                          Sí, archivar
+                        </button>
+                        <button
+                          class="button button--ghost button--small"
+                          type="button"
+                          (click)="cancelArchive()"
+                        >
+                          Cancelar
+                        </button>
+                      </span>
+                    } @else {
+                      <button
+                        class="button button--ghost button--small"
+                        type="button"
+                        [attr.aria-label]="'Archivar ' + location.title"
+                        (click)="requestArchive(location)"
+                      >
+                        Archivar
+                      </button>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (meta().totalPages > 1) {
+      <nav class="admin-pagination" aria-label="Paginación de puntos de interés">
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          [disabled]="meta().page <= 1 || loading()"
+          (click)="load(meta().page - 1)"
+        >
+          Anterior
+        </button>
+        <span>Página {{ meta().page }} de {{ meta().totalPages }}</span>
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          [disabled]="meta().page >= meta().totalPages || loading()"
+          (click)="load(meta().page + 1)"
+        >
+          Siguiente
+        </button>
+      </nav>
+    }
+  }
+</section>

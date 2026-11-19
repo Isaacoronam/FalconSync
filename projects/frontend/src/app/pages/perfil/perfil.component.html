@@ -1,0 +1,453 @@
+@if (loading()) {
+  <p>Cargando tu perfil…</p>
+} @else if (error()) {
+  <h1>Mi perfil</h1>
+  <p class="form-error" role="alert">{{ error() }}</p>
+  <button type="button" class="button button--ghost" (click)="loadProfile()">
+    Reintentar
+  </button>
+} @else if (profile(); as user) {
+  <section class="perfil">
+    <header class="perfil__cabecera">
+      <div class="perfil__avatar" aria-hidden="true">
+        @if (avatarUrl(); as avatar) {
+          <img [src]="avatar" alt="" />
+        } @else {
+          <span>{{ initials() }}</span>
+        }
+      </div>
+
+      <div class="perfil__identidad">
+        <p class="perfil__eyebrow">Perfil privado</p>
+        <h1>{{ user.name }}</h1>
+        <p class="perfil__usuario">
+          <span aria-hidden="true">&#64;</span>{{ user.username ?? 'sin-usuario' }}
+        </p>
+        <p class="perfil__email">{{ user.email }}</p>
+      </div>
+
+      <div class="perfil__avatar-acciones">
+        <label class="button button--ghost" for="perfil-avatar">
+          {{ uploading() ? 'Subiendo…' : 'Cambiar avatar' }}
+        </label>
+        <input
+          id="perfil-avatar"
+          class="perfil__file-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          [disabled]="uploading()"
+          (change)="onAvatarSelected($event)"
+        />
+        @if (user.hasAvatar) {
+          <button
+            type="button"
+            class="button button--ghost"
+            [disabled]="uploading()"
+            (click)="removeAvatar()"
+          >
+            Quitar avatar
+          </button>
+        }
+      </div>
+    </header>
+
+    <p class="perfil__privacidad">
+      Tu perfil, tus insignias y tus fotos son privados. Las imágenes se sirven mediante
+      endpoints autenticados y no se publican hasta que existan moderación, eliminación
+      de EXIF y roles de cuenta.
+    </p>
+
+    @if (message()) {
+      <p
+        class="form-message"
+        [class.form-message--success]="messageType() === 'success'"
+        [class.form-message--error]="messageType() === 'error'"
+        role="alert"
+      >
+        {{ message() }}
+      </p>
+    }
+
+    <aside class="perfil__chivito" aria-label="Mensaje de Chivito">
+      <span class="perfil__chivito-mascota" aria-hidden="true">🐐</span>
+      <span class="perfil__chivito-nombre">Chivito</span>
+      <p>{{ chivitoMessage() }}</p>
+    </aside>
+
+    <section class="perfil__stats" aria-label="Resumen de tu actividad">
+      <article class="perfil__stat">
+        <span class="perfil__stat-etiqueta">Check-in</span>
+        <span class="perfil__stat-valor">{{ stats()?.totalCheckIns ?? 0 }}</span>
+      </article>
+      <article class="perfil__stat">
+        <span class="perfil__stat-etiqueta">Lugares descubiertos</span>
+        <span class="perfil__stat-valor">{{ stats()?.uniqueLocations ?? 0 }}</span>
+      </article>
+      <article class="perfil__stat perfil__stat--insignias">
+        <span class="perfil__stat-etiqueta">Insignias</span>
+        <span class="perfil__stat-valor">{{ stats()?.locationAchievements ?? 0 }}</span>
+      </article>
+    </section>
+
+    <section class="perfil__panel perfil__insignias" aria-labelledby="perfil-insignias">
+      <div class="perfil__panel-cabecera">
+        <h2 id="perfil-insignias">Mis insignias</h2>
+        <span class="perfil__contador" aria-label="Total de insignias">
+          {{ achievements().length }}
+        </span>
+      </div>
+
+      @if (achievements().length === 0) {
+        <p class="perfil__vacio">
+          Aún no tienes insignias. Escanea el QR oficial cuando visites un punto de interés
+          para guardar su insignia en tu perfil.
+        </p>
+      } @else {
+        <ul class="perfil__insignias-lista">
+          @for (achievement of achievements(); track achievement.id) {
+            <li
+              class="perfil__insignia"
+              [class.perfil__insignia--archivada]="!achievement.sourceActive"
+            >
+              <div class="perfil__insignia-icono">
+                @if (achievementImage(achievement); as image) {
+                  <img
+                    [src]="image"
+                    alt=""
+                    loading="lazy"
+                    (error)="onAchievementImageError(achievement.id)"
+                  />
+                } @else {
+                  <span aria-hidden="true">{{ achievementIcon(achievement) }}</span>
+                }
+              </div>
+
+              <div class="perfil__insignia-texto">
+                <span class="perfil__insignia-tipo">
+                  {{ achievementCategoryLabel(achievement) }}
+                </span>
+                <h3>{{ achievement.name }}</h3>
+                @if (achievement.description) {
+                  <p class="perfil__insignia-descripcion">
+                    {{ achievement.description }}
+                  </p>
+                }
+                <p class="perfil__insignia-fecha">
+                  Obtenida el {{ formatDate(achievement.awardedAt) }}
+                </p>
+
+                @if (!achievement.sourceActive) {
+                  <span class="perfil__insignia-archivada">
+                    Origen archivado; la insignia se conserva.
+                  </span>
+                }
+
+                @if (achievementLink(achievement); as link) {
+                  <a class="perfil__insignia-enlace" [routerLink]="link">
+                    Leer historia del lugar
+                  </a>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <div class="perfil__columnas">
+      <section class="perfil__panel" aria-labelledby="perfil-datos">
+        <h2 id="perfil-datos">Datos personales</h2>
+
+        <form class="perfil__form" (ngSubmit)="saveProfile()" novalidate>
+          <div class="form-field">
+            <label for="perfil-nombre">Nombre</label>
+            <input
+              id="perfil-nombre"
+              name="name"
+              type="text"
+              autocomplete="name"
+              minlength="2"
+              maxlength="80"
+              required
+              [(ngModel)]="form.name"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="perfil-usuario">Nombre de usuario</label>
+            <input
+              id="perfil-usuario"
+              name="username"
+              type="text"
+              autocomplete="username"
+              minlength="3"
+              maxlength="30"
+              pattern="[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]"
+              required
+              [(ngModel)]="form.username"
+            />
+            <p class="form-field__help">
+              Minúsculas, números, puntos, guiones y guiones bajos. No se muestra en un
+              directorio público.
+            </p>
+          </div>
+
+          <div class="form-field">
+            <label for="perfil-bio">Biografía</label>
+            <textarea
+              id="perfil-bio"
+              name="bio"
+              rows="4"
+              maxlength="280"
+              [(ngModel)]="form.bio"
+            ></textarea>
+            <p class="form-field__help">{{ form.bio.length }} / 280 caracteres</p>
+          </div>
+
+          <div class="perfil__form-acciones">
+            <button class="button button--primary" type="submit" [disabled]="saving()">
+              {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
+            <a class="button button--ghost" routerLink="/cambiar-contrasena">
+              Cambiar contraseña
+            </a>
+          </div>
+        </form>
+      </section>
+
+    </div>
+
+    <section class="perfil__panel perfil__galeria" aria-labelledby="perfil-galeria">
+      <div class="perfil__panel-cabecera">
+        <h2 id="perfil-galeria">Galería de visitas</h2>
+        <span class="perfil__contador" aria-label="Total de visitas">
+          {{ galleryMeta().total }}
+        </span>
+      </div>
+
+      <p class="perfil__galeria-privacidad">
+        Solo tú puedes ver estas fotos. Cada visita permite una foto; puedes cambiarla o
+        quitarla sin borrar el check-in ni las insignias.
+      </p>
+
+      <div class="perfil__filtros" role="group" aria-label="Filtrar la galería">
+        @for (filter of galleryFilters; track filter.value) {
+          <button
+            type="button"
+            class="perfil__filtro"
+            [class.perfil__filtro--activo]="galleryFilter() === filter.value"
+            [attr.aria-pressed]="galleryFilter() === filter.value"
+            (click)="setGalleryFilter(filter.value)"
+          >
+            {{ filter.label }}
+          </button>
+        }
+      </div>
+
+      @if (photoActionError()) {
+        <p class="form-message form-message--error" role="alert">
+          {{ photoActionError() }}
+        </p>
+      }
+
+      @if (galleryLoading()) {
+        <p role="status">Cargando galería…</p>
+      } @else if (galleryError()) {
+        <p class="form-message form-message--error" role="alert">{{ galleryError() }}</p>
+        <button
+          type="button"
+          class="button button--ghost"
+          (click)="loadGallery(galleryMeta().page)"
+        >
+          Reintentar
+        </button>
+      } @else if (gallery().length === 0) {
+        <p class="perfil__vacio">{{ galleryEmptyMessage() }}</p>
+      } @else {
+        <div class="perfil__galeria-grid">
+          @for (checkIn of gallery(); track checkIn.id) {
+            <article
+              class="perfil__visita"
+              [attr.aria-busy]="photoActionId() === checkIn.id"
+            >
+              <div class="perfil__visita-foto">
+                @if (photoUrl(checkIn.id); as photo) {
+                  <button
+                    type="button"
+                    class="perfil__foto-boton"
+                    [attr.aria-label]="
+                      'Ampliar foto de tu visita a ' + checkIn.location.title
+                    "
+                    (click)="openViewer(checkIn)"
+                  >
+                    <img
+                      [src]="photo"
+                      [alt]="'Foto de tu visita a ' + checkIn.location.title"
+                    />
+                  </button>
+                } @else if (checkIn.location.images[0]; as image) {
+                  <img [src]="image" alt="" />
+                } @else {
+                  <span>Sin foto</span>
+                }
+
+                @if (checkIn.photoAvailable) {
+                  <span class="perfil__visita-chip">Foto privada</span>
+                }
+              </div>
+
+              <div class="perfil__visita-texto">
+                <h3>{{ checkIn.location.title }}</h3>
+                <p>
+                  {{ formatDate(checkIn.createdAt) }} · a
+                  {{ checkIn.distanceMeters }} m
+                </p>
+              </div>
+
+              <div class="perfil__visita-acciones">
+                <label
+                  class="button button--ghost perfil__foto-accion"
+                  [attr.for]="'perfil-foto-' + checkIn.id"
+                >
+                  {{
+                    photoActionId() === checkIn.id
+                      ? 'Guardando…'
+                      : checkIn.photoAvailable
+                        ? 'Cambiar foto'
+                        : 'Añadir foto'
+                  }}
+                </label>
+                <input
+                  [id]="'perfil-foto-' + checkIn.id"
+                  class="perfil__file-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  [disabled]="photoActionId() === checkIn.id"
+                  (change)="onCheckInPhotoSelected(checkIn, $event)"
+                />
+
+                @if (checkIn.photoAvailable) {
+                  @if (pendingDeleteId() === checkIn.id) {
+                    <span class="perfil__confirmar" role="group" aria-label="Confirmar quitar foto">
+                      <button
+                        type="button"
+                        class="button perfil__accion--peligro"
+                        [disabled]="photoActionId() === checkIn.id"
+                        (click)="confirmPhotoDelete(checkIn)"
+                      >
+                        Sí, quitar
+                      </button>
+                      <button
+                        type="button"
+                        class="button button--ghost"
+                        (click)="cancelPhotoDelete()"
+                      >
+                        Cancelar
+                      </button>
+                    </span>
+                  } @else {
+                    <button
+                      type="button"
+                      class="button button--ghost"
+                      [disabled]="photoActionId() === checkIn.id"
+                      (click)="requestPhotoDelete(checkIn)"
+                    >
+                      Quitar foto
+                    </button>
+                  }
+                }
+              </div>
+            </article>
+          }
+        </div>
+
+        @if (galleryMeta().totalPages > 1) {
+          <nav class="perfil__paginacion" aria-label="Paginación de la galería">
+            <button
+              type="button"
+              class="button button--ghost"
+              [disabled]="galleryMeta().page <= 1 || galleryLoading()"
+              (click)="goToGalleryPage(galleryMeta().page - 1)"
+            >
+              Anterior
+            </button>
+            <span aria-live="polite">
+              Página {{ galleryMeta().page }} de {{ galleryMeta().totalPages }}
+            </span>
+            <button
+              type="button"
+              class="button button--ghost"
+              [disabled]="
+                galleryMeta().page >= galleryMeta().totalPages || galleryLoading()
+              "
+              (click)="goToGalleryPage(galleryMeta().page + 1)"
+            >
+              Siguiente
+            </button>
+          </nav>
+        }
+      }
+    </section>
+  </section>
+
+  @if (viewerCheckIn(); as viewer) {
+    <div
+      class="perfil__visor"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'Foto de tu visita a ' + viewer.location.title"
+      (click)="closeViewer()"
+    >
+      <div class="perfil__visor-contenido" (click)="$event.stopPropagation()">
+        <header class="perfil__visor-cabecera">
+          <div>
+            <h2>{{ viewer.location.title }}</h2>
+            <p>{{ formatDate(viewer.createdAt) }}</p>
+          </div>
+          <button
+            #viewerClose
+            type="button"
+            class="button button--ghost"
+            aria-label="Cerrar foto ampliada"
+            (click)="closeViewer()"
+          >
+            Cerrar
+          </button>
+        </header>
+
+        <div class="perfil__visor-imagen">
+          @if (photoUrl(viewer.id); as photo) {
+            <img
+              [src]="photo"
+              [alt]="'Foto ampliada de tu visita a ' + viewer.location.title"
+            />
+          } @else {
+            <p role="status">Cargando foto…</p>
+          }
+        </div>
+
+        <footer class="perfil__visor-pie">
+          <button
+            type="button"
+            class="button button--ghost"
+            [disabled]="galleryPhotos().length < 2"
+            aria-label="Foto anterior"
+            (click)="moveViewer(-1)"
+          >
+            Anterior
+          </button>
+          <span aria-live="polite">{{ viewerPositionLabel() }}</span>
+          <button
+            type="button"
+            class="button button--ghost"
+            [disabled]="galleryPhotos().length < 2"
+            aria-label="Foto siguiente"
+            (click)="moveViewer(1)"
+          >
+            Siguiente
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+}

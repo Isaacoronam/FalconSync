@@ -1,0 +1,47 @@
+{
+  "name": "falcon-sync-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "description": "API REST de FalconSync para el patrimonio de Coro",
+  "engines": {
+    "node": ">=26.13.0"
+  },
+  "scripts": {
+    "dev": "node --watch bin/server.js",
+    "start": "node bin/server.js",
+    "seed": "node seeders/seedLocations.js",
+    "seed:sync": "node seeders/seedLocations.js --sync",
+    "seed:editorial": "node seeders/seedLocations.js --sync-editorial",
+    "seed:verify": "node seeders/seedLocations.js --verify",
+    "publish:pois": "node scripts/publishLocations.js",
+    "qr:generate": "node scripts/generateCheckInQr.js",
+    "seed:adventures": "node seeders/seedAdventures.js",
+    "seed:adventures:verify": "node seeders/seedAdventures.js --verify",
+    "backfill:usernames": "node scripts/backfillUsernames.js",
+    "backfill:achievements": "node scripts/backfillAchievements.js",
+    "migrate:roles": "node scripts/migrateRoles.js",
+    "verify:roles": "node scripts/verifyRoles.js",
+    "create-admin": "node scripts/createAdmin.js",
+    "test": "node --test --test-concurrency=1",
+    "test:watch": "node --test --watch --test-concurrency=1"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.3",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.12.0",
+    "multer": "^2.5.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.4"
+  }
+}

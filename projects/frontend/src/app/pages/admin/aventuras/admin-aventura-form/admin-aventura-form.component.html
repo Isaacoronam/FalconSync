@@ -1,0 +1,175 @@
+<h1>{{ isEditing() ? 'Editar aventura' : 'Nueva aventura' }}</h1>
+
+@if (createdNotice()) {
+  <p class="form-success" role="status">Aventura creada. Ya puedes añadir paradas y publicarla cuando esté lista.</p>
+}
+@if (error()) {
+  <p class="form-error" role="alert">{{ error() }}</p>
+}
+@if (success()) {
+  <p class="form-success" role="status">{{ success() }}</p>
+}
+
+<form class="admin-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="form-field">
+    <label for="aventura-titulo">Título <span class="requerido">*</span></label>
+    <input
+      id="aventura-titulo"
+      formControlName="title"
+      [attr.aria-invalid]="titleError() ? 'true' : null"
+      [attr.aria-describedby]="titleError() ? 'aventura-titulo-error' : null"
+    />
+    @if (titleError()) {
+      <p id="aventura-titulo-error" class="form-field__error">{{ titleError() }}</p>
+    }
+  </div>
+
+  <div class="form-field">
+    <label for="aventura-slug">Slug</label>
+    <input
+      id="aventura-slug"
+      formControlName="slug"
+      placeholder="Se autogenera desde el título"
+      [attr.aria-invalid]="slugError() ? 'true' : null"
+      [attr.aria-describedby]="slugError() ? 'aventura-slug-error' : null"
+    />
+    @if (slugError()) {
+      <p id="aventura-slug-error" class="form-field__error">{{ slugError() }}</p>
+    }
+    <p class="form-field__help">Solo minúsculas, números y guiones.</p>
+  </div>
+
+  <div class="form-field">
+    <label for="aventura-resumen">Resumen <span class="requerido">*</span></label>
+    <textarea
+      id="aventura-resumen"
+      formControlName="summary"
+      rows="3"
+      [attr.aria-invalid]="summaryError() ? 'true' : null"
+      [attr.aria-describedby]="summaryError() ? 'aventura-resumen-error' : null"
+    ></textarea>
+    @if (summaryError()) {
+      <p id="aventura-resumen-error" class="form-field__error">{{ summaryError() }}</p>
+    }
+    <p class="form-field__help">Entre 10 y 280 caracteres.</p>
+  </div>
+
+  <div class="form-field">
+    <label for="aventura-descripcion">Descripción <span class="requerido">*</span></label>
+    <textarea
+      id="aventura-descripcion"
+      formControlName="description"
+      rows="6"
+      [attr.aria-invalid]="descriptionError() ? 'true' : null"
+      [attr.aria-describedby]="descriptionError() ? 'aventura-descripcion-error' : null"
+    ></textarea>
+    @if (descriptionError()) {
+      <p id="aventura-descripcion-error" class="form-field__error">{{ descriptionError() }}</p>
+    }
+    <p class="form-field__help">Entre 20 y 10000 caracteres.</p>
+  </div>
+
+  <div class="form-field">
+    <label for="aventura-dificultad">Dificultad</label>
+    <select id="aventura-dificultad" formControlName="difficulty">
+      @for (opcion of difficulties; track opcion.value) {
+        <option [value]="opcion.value">{{ opcion.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="form-field">
+    <label for="aventura-duracion">Duración estimada (minutos)</label>
+    <input
+      id="aventura-duracion"
+      type="number"
+      formControlName="estimatedMinutes"
+      min="1"
+      max="1440"
+      [attr.aria-invalid]="minutesError() ? 'true' : null"
+      [attr.aria-describedby]="minutesError() ? 'aventura-duracion-error' : null"
+    />
+    @if (minutesError()) {
+      <p id="aventura-duracion-error" class="form-field__error">{{ minutesError() }}</p>
+    }
+  </div>
+
+  <div class="form-field">
+    <label for="aventura-portada">Portada (URL o ruta local)</label>
+    <input
+      id="aventura-portada"
+      formControlName="coverImage"
+      placeholder="https://ejemplo.com/portada.jpg o /api/uploads/locations/..."
+      [attr.aria-invalid]="urlError('coverImage') ? 'true' : null"
+      [attr.aria-describedby]="urlError('coverImage') ? 'aventura-portada-error' : null"
+    />
+    @if (urlError('coverImage')) {
+      <p id="aventura-portada-error" class="form-field__error">{{ urlError('coverImage') }}</p>
+    }
+  </div>
+
+  <fieldset class="insignia-fieldset">
+    <legend class="insignia-fieldset__legend">Insignia (opcional)</legend>
+    <div class="form-field">
+      <label for="aventura-insignia-nombre">Nombre</label>
+      <input id="aventura-insignia-nombre" formControlName="badgeName" />
+    </div>
+    <div class="form-field">
+      <label for="aventura-insignia-descripcion">Descripción</label>
+      <input id="aventura-insignia-descripcion" formControlName="badgeDescription" />
+    </div>
+    <div class="form-field">
+      <label for="aventura-insignia-imagen">Imagen (URL o ruta local)</label>
+      <input
+        id="aventura-insignia-imagen"
+        formControlName="badgeImage"
+        [attr.aria-invalid]="urlError('badgeImage') ? 'true' : null"
+      />
+      @if (urlError('badgeImage')) {
+        <p class="form-field__error">{{ urlError('badgeImage') }}</p>
+      }
+    </div>
+  </fieldset>
+
+  <div class="admin-form__actions">
+    <button
+      class="button button--primary"
+      type="submit"
+      [disabled]="saving()"
+    >
+      {{ saving() ? 'Guardando…' : isEditing() ? 'Guardar cambios' : 'Crear aventura' }}
+    </button>
+
+    @if (isEditing()) {
+      <button
+        class="button button--ghost"
+        type="button"
+        [disabled]="saving()"
+        (click)="publish()"
+      >
+        {{ saving() ? 'Procesando…' : 'Publicar' }}
+      </button>
+      <button
+        class="button button--ghost"
+        type="button"
+        [disabled]="saving()"
+        (click)="archive()"
+      >
+        Archivar
+      </button>
+      @if (adventureStatus() === 'archived') {
+        <button
+          class="button button--ghost"
+          type="button"
+          [disabled]="saving()"
+          (click)="restore()"
+        >
+          Restaurar como borrador
+        </button>
+      }
+      <a class="button button--ghost" routerLink="../">Volver al listado</a>
+    } @else {
+      <a class="button button--ghost" routerLink="../">Volver al listado</a>
+    }
+  </div>
+</form>

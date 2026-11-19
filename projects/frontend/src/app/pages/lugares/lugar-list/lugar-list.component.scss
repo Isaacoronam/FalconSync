@@ -1,0 +1,128 @@
+.lugares-hero {
+  margin: 0 0 2rem;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 88% 0, rgb(195 145 77 / 18%), transparent 42%),
+    #f4efe4;
+}
+
+.lugares-hero__eyebrow,
+.lugar-card__eyebrow {
+  margin: 0 0 0.55rem;
+  color: var(--terracotta-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lugares-hero h1 {
+  max-width: 16ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+}
+
+.lugares-hero > p:not(.lugares-hero__eyebrow) {
+  max-width: 42rem;
+  margin: 1rem 0 1.4rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.lugares-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1.1rem;
+}
+
+.lugar-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffdf8;
+  box-shadow: 0 8px 24px rgb(42 35 25 / 5%);
+}
+
+.lugar-card__media {
+  display: grid;
+  height: 13rem;
+  place-items: center;
+  overflow: hidden;
+  background: #e8dfce;
+  color: var(--terracotta-dark);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  text-decoration: none;
+}
+
+.lugar-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 220ms ease;
+}
+
+.lugar-card:hover .lugar-card__media img {
+  transform: scale(1.035);
+}
+
+.lugar-card__body {
+  padding: 1.1rem 1.2rem 1.25rem;
+}
+
+.lugar-card__body h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.lugar-card__body h2 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.lugar-card__summary {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0.65rem 0;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.lugar-card__context {
+  margin: 0.7rem 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.lugar-card__link {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.4rem;
+  color: var(--terracotta-dark);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.lugar-card__link:hover,
+.lugar-card__body h2 a:hover {
+  text-decoration: underline;
+}
+
+.lugares-state {
+  padding: 1.5rem;
+  color: var(--ink-soft);
+}
+
+.lugares-state--error {
+  color: #7d2418;
+}

@@ -1,0 +1,60 @@
+<header class="lugares-hero">
+  <p class="lugares-hero__eyebrow">Santa Ana de Coro · Patrimonio por descubrir</p>
+  <h1>Explora los lugares de Coro</h1>
+  <p>
+    Conoce la historia, los detalles y el valor de cada punto de interés. Visita los lugares a
+    tu ritmo; no hay rutas que completar.
+  </p>
+  <a class="button button--primary" routerLink="/checkin">Escanear el QR de un lugar</a>
+</header>
+
+@if (loading()) {
+  <p class="lugares-state" role="status">Cargando lugares…</p>
+} @else if (error()) {
+  <p class="lugares-state lugares-state--error" role="alert">{{ error() }}</p>
+} @else if (locations().length === 0) {
+  <p class="lugares-state">Todavía no hay lugares publicados.</p>
+} @else {
+  <section class="lugares-grid" aria-label="Puntos de interés publicados">
+    @for (location of locations(); track location.id) {
+      <article class="lugar-card">
+        <a
+          class="lugar-card__media"
+          [routerLink]="['/lugares', location.slug]"
+          [attr.aria-label]="'Conocer ' + location.title"
+        >
+          @if (location.images[0]) {
+            <img
+              [src]="location.images[0]"
+              [alt]="'Vista de ' + location.title"
+              loading="lazy"
+              (error)="onImageError($event)"
+            />
+          } @else {
+            <span class="lugar-card__placeholder" aria-hidden="true">Coro</span>
+          }
+        </a>
+        <div class="lugar-card__body">
+          <p class="lugar-card__eyebrow">
+            {{ categoryLabel(location.category) }}
+            @if (location.historicalPeriod) {
+              · {{ location.historicalPeriod }}
+            }
+          </p>
+          <h2>
+            <a [routerLink]="['/lugares', location.slug]">{{ location.title }}</a>
+          </h2>
+          <p class="lugar-card__summary">{{ location.description }}</p>
+          @if (location.circuits.length > 0) {
+            <p class="lugar-card__context">
+              {{ circuitLabel(location.circuits[0]) }}
+            </p>
+          }
+          <a class="lugar-card__link" [routerLink]="['/lugares', location.slug]">
+            Leer historia <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      </article>
+    }
+  </section>
+}

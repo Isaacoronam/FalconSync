@@ -1,0 +1,122 @@
+<section class="map-hero" aria-labelledby="map-title">
+  <div class="map-hero__copy">
+    <p class="map-hero__eyebrow">CoroMap · Geonodo histórico</p>
+    <h1 id="map-title">El patrimonio de Coro, <em>en su territorio</em></h1>
+    <p class="map-hero__lead">
+      Explora los hitos del casco histórico y su entorno natural. Cada punto reúne contexto
+      arquitectónico, periodo histórico y la fuente del dato cartográfico.
+    </p>
+  </div>
+
+  <div class="map-hero__stats" aria-label="Resumen del mapa">
+    <span class="map-hero__stat">
+      <strong>{{ total() }}</strong>
+      lugares registrados
+    </span>
+    <span class="map-hero__badge">Datos abiertos</span>
+  </div>
+</section>
+
+<section class="map-layout">
+  <aside class="map-panel" aria-label="Filtros y listado de lugares">
+    <div class="map-panel__section">
+      <h2>Explorar por categoría</h2>
+      <div class="filter-list" role="group" aria-label="Filtrar por categoría">
+        @for (category of categories; track category.value) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.filter-chip--active]="selectedCategory() === category.value"
+            [attr.aria-pressed]="selectedCategory() === category.value"
+            (click)="selectCategory(category.value)"
+          >
+            {{ category.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="map-panel__section map-panel__section--list">
+      <div class="map-panel__heading">
+        <h2>Puntos de interés</h2>
+        <span class="map-panel__count">{{ total() }}</span>
+      </div>
+
+      @if (loading()) {
+        <p class="state">Cargando lugares…</p>
+      } @else if (error()) {
+        <div class="state state--error">
+          <p>{{ error() }}</p>
+          <button type="button" class="state__retry" (click)="loadLocations()">Reintentar</button>
+        </div>
+      } @else if (!hasLocations()) {
+        <p class="state">No hay lugares para estos filtros.</p>
+      } @else {
+        <ul class="location-list">
+          @for (location of locations(); track location.id) {
+            <li>
+              <button type="button" class="location-card" (click)="focusLocation(location)">
+                <span class="location-card__media">
+                  <span
+                    class="location-card__dot"
+                    [class]="['location-card__dot', 'location-card__dot--' + location.category]"
+                    aria-hidden="true"
+                  ></span>
+                  @if (location.images.length) {
+                    <img
+                      class="location-card__thumb"
+                      [src]="location.images[0]"
+                      alt=""
+                      width="56"
+                      height="56"
+                      loading="lazy"
+                      (error)="hideBrokenThumbnail($event)"
+                    />
+                  }
+                </span>
+                <span class="location-card__body">
+                  <span class="location-card__title">{{ location.title }}</span>
+                  <span class="location-card__meta">
+                    {{ categoryLabel(location.category) }}
+                    @if (location.circuits.length) {
+                      · {{ circuitLabel(location.circuits[0]) }}
+                    }
+                    @if (location.historicalPeriod) {
+                      · {{ location.historicalPeriod }}
+                    }
+                  </span>
+                </span>
+                <span class="location-card__arrow" aria-hidden="true">→</span>
+              </button>
+              <a class="location-card__detail-link" [routerLink]="['/lugares', location.slug]">
+                Leer historia
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </aside>
+
+  <div class="map-stage">
+    <div
+      id="coro-map"
+      class="map-canvas"
+      role="application"
+      aria-label="Mapa interactivo del patrimonio de Coro"
+    ></div>
+    <div class="map-stage__actions">
+      <button
+        type="button"
+        class="map-stage__action"
+        title="Ajustar el mapa al límite operativo del estado Falcón"
+        (click)="showFalconOverview()"
+      >
+        Ver todo Falcón
+      </button>
+    </div>
+    <div class="map-stage__overlay" aria-hidden="true">
+      <span class="map-stage__hint">Selecciona un punto para ver su ficha</span>
+    </div>
+  </div>
+</section>

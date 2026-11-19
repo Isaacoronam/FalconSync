@@ -1,0 +1,62 @@
+<div class="admin-shell">
+  <aside class="admin-sidebar" aria-label="Navegación de administración">
+    <div class="admin-sidebar__heading">
+      <p class="admin-sidebar__eyebrow">Administración</p>
+      <p class="admin-sidebar__title">FalconSync</p>
+    </div>
+
+    <nav class="admin-nav">
+      <a
+        class="admin-nav__link"
+        routerLink="/admin"
+        routerLinkActive="admin-nav__link--active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+      >
+        Panel
+      </a>
+      <a
+        class="admin-nav__link"
+        routerLink="/admin/poi"
+        routerLinkActive="admin-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Puntos de interés
+      </a>
+      <a
+        class="admin-nav__link"
+        routerLink="/admin/aventuras"
+        routerLinkActive="admin-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Aventuras
+      </a>
+      <a
+        class="admin-nav__link"
+        routerLink="/admin/usuarios"
+        routerLinkActive="admin-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Usuarios
+      </a>
+      <a
+        class="admin-nav__link"
+        routerLink="/admin/auditoria"
+        routerLinkActive="admin-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Auditoría
+      </a>
+    </nav>
+
+    <div class="admin-sidebar__footer">
+      <p class="admin-sidebar__user">{{ auth.currentUser()?.name }}</p>
+      <p class="admin-sidebar__role">{{ roleLabel() }}</p>
+      <a class="admin-sidebar__map-link" routerLink="/">Volver al mapa</a>
+    </div>
+  </aside>
+
+  <div class="admin-content">
+    <router-outlet />
+  </div>
+</div>
