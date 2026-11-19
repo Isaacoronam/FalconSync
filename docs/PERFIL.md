@@ -28,7 +28,7 @@ real del repositorio y por buenas prácticas de ingeniería.
 - `GET /api/profile/me` siempre resuelve el usuario autenticado; no acepta un identificador
   de otro usuario.
 - No se creó `/api/profile/:username` ni una página pública de perfil.
-- El avatar y las fotos de check-in se guardan en `uploads-private/`, no en `uploads/`.
+- El avatar y las fotos de check-in se guardan en `uploads/documents/`, no en `uploads/`.
 - `/api/uploads/...` solo sirve las imágenes públicas de los POI. No existe una URL estática
   para avatares o fotos de check-in.
 - Las fotos de check-in se sirven solo si el check-in pertenece al usuario autenticado. Si
@@ -225,7 +225,7 @@ Reglas principales:
 - Campo multipart: `image`.
 - Formatos: JPEG, PNG o WebP, validados por MIME declarado y firma binaria.
 - Tamaño máximo: 5 MB (`UPLOAD_MAX_IMAGE_BYTES`).
-- El archivo se guarda en `uploads-private/avatars/` con nombre aleatorio.
+- El archivo se guarda en `uploads/documents/avatars/` con nombre aleatorio.
 - Al reemplazar el avatar se elimina el archivo anterior después de guardar el nuevo.
 - Si falla la persistencia del usuario, se elimina el archivo recién escrito.
 - Rate limit: 30 cargas por IP cada 15 minutos; se desactiva en `NODE_ENV=test`.
@@ -295,7 +295,7 @@ Reglas de la foto:
 
 - Formatos: JPEG, PNG o WebP, validados por MIME declarado y firma binaria.
 - Tamaño máximo: 5 MB.
-- Se guarda en `uploads-private/check-ins/` con nombre aleatorio.
+- Se guarda en `uploads/documents/check-ins/` con nombre aleatorio.
 - `CheckIn.photo` guarda `{ filename, mimeType, size, updatedAt, visibility, moderationStatus }`,
   sin URL pública. Los campos `visibility` y `moderationStatus` quedan reservados para la
   fase de moderación.
@@ -340,8 +340,8 @@ Si falta un POI o no está disponible, el script falla y pide publicar primero e
 | Carpeta | Contenido | Acceso |
 |---|---|---|
 | `uploads/locations/` | Imágenes de POI | Público en `/api/uploads/locations/...` |
-| `uploads-private/avatars/` | Avatares | Endpoint autenticado del dueño |
-| `uploads-private/check-ins/` | Fotos de check-in | Endpoint autenticado del dueño |
+| `uploads/documents/avatars/` | Avatares | Endpoint autenticado del dueño |
+| `uploads/documents/check-ins/` | Fotos de check-in | Endpoint autenticado del dueño |
 
 `UPLOAD_DIR` define la carpeta pública y `UPLOAD_PRIVATE_DIR` la privada. Ambas están
 ignoradas por Git. En la suite E2E se usan `test-results/e2e-uploads` y
@@ -350,9 +350,9 @@ ignoradas por Git. En la suite E2E se usan `test-results/e2e-uploads` y
 ## Frontend
 
 - Ruta protegida `/perfil`; el nombre del header enlaza a ella.
-- Componente `features/perfil/perfil.component.ts`.
-- Servicio `core/services/profile-api.service.ts`.
-- Modelos `core/models/profile.model.ts` y `core/models/achievement.model.ts`.
+- Componente `pages/perfil/perfil.component.ts`.
+- Servicio `services/profile-api.service.ts`.
+- Modelos `models/profile.model.ts` y `models/achievement.model.ts`.
 - El cambio de contraseña se enlaza desde el perfil.
 - Las imágenes privadas se solicitan como `Blob` y se muestran con URLs de objeto; el
   componente las revoca al destruirse, al reemplazarlas o al eliminarlas.
@@ -373,9 +373,9 @@ ignoradas por Git. En la suite E2E se usan `test-results/e2e-uploads` y
 | Comprobación | Comando | Resultado |
 |---|---|---|
 | Pruebas de perfil y logros | `node --test test/achievements.test.js` | Aprobadas |
-| Suite backend completa | `npm test` en `projects/backend` | 75/75 aprobadas |
+| Suite backend completa | `npm test` en `projects/backend` | 89/89 aprobadas |
 | Pruebas del seed de aventura | `node --test test/seedAdventures.test.js` | 2/2 aprobadas |
-| Pruebas frontend | `npm test -- --watch=false` | 51/51 aprobadas |
+| Pruebas frontend | `npm test -- --watch=false` | 53/53 aprobadas |
 | Build de producción | `npm run build` | Correcto, sin advertencias |
 | E2E de perfil | `npx playwright test e2e/perfil.spec.ts` | Ver `docs/FALCONSYNC.md` |
 | Seed local | `npm run seed:adventures` + `--verify` | Aventura con 5 paradas, publicada y verificada |

@@ -77,4 +77,4 @@ Si tus permisos existentes en `opencode.json` bloquean la herramienta `task` o `
 
 ## Importante sobre el material académico
 
-Los archivos `unidad-02.md` a `unidad-07.md` siguen siendo marcadores de preparación, no transcripciones completas. Coloca los documentos originales de las Unidades 2 a 7 en `.opencode/knowledge/fuentes/` y completa los archivos a partir de ellos. La Unidad 1 no fue proporcionada y no se inventa.
+Las transcripciones `unidad-02.md` a `unidad-07.md` ya están incorporadas en `.opencode/knowledge/` a partir de los documentos originales de las Unidades 2 a 7, que se conservan en `.opencode/knowledge/fuentes/`. La Unidad 1 no fue proporcionada y no se inventa.
