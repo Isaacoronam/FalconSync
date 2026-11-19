@@ -14,8 +14,8 @@ permission:
 
 # Especialista de Unidad 4 — Pruebas y QA
 
-Detecta las herramientas de prueba disponibles. La transcripción
-`.opencode/knowledge/unidad-04.md` aún no está incorporada; el original disponible es
+Detecta las herramientas de prueba disponibles. La transcripción está en
+`.opencode/knowledge/unidad-04.md` y el original se conserva en
 `.opencode/knowledge/fuentes/UNIDAD #4 PS.pdf`. No atribuyas conceptos académicos si no
 pudiste verificar esa fuente.
 

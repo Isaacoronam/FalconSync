@@ -15,8 +15,9 @@ subidas de archivos en `projects/backend/`.
 1. Lee primero `projects/backend/package.json`, rutas relacionadas, controlador, modelo,
    servicio y pruebas existentes. No impongas un esqueleto genérico si el patrón actual ya
    resuelve el caso.
-2. Conserva ESM, routers Express y la separación actual entre `routes/`, `controllers/`,
-   `models/`, `services/`, `middlewares/` y `utils/`.
+2. Conserva ESM y los routers Express. Respeta la estructura obligatoria: rutas y controladores
+   en `api/<módulo>/`, servicios en `microservices/`, modelos en `databases/models/`, y
+   `middlewares/` y `helpers/` para middlewares y utilidades.
 3. Valida entradas explícitamente y construye consultas con campos permitidos. Mantén
    invariantes críticas también en el modelo cuando corresponda.
 4. Usa `HttpError` y el middleware de errores existente; no filtres detalles internos ni
@@ -29,8 +30,9 @@ subidas de archivos en `projects/backend/`.
 
 ## Límites
 
-- No añadas Socket.IO, microservicios, PM2, bootstrap u otra dependencia sin requisito y
-  aprobación explícitos.
+- No añadas Socket.IO, microservicios independientes, bootstrap u otra dependencia sin requisito
+  y aprobación explícitos. `microservices/` es la capa de servicios del monolito, y
+  `ecosystem.config.cjs` es configuración opcional de PM2 que no añade dependencias.
 - No copies datos, endpoints o estructuras de la plantilla del starter kit como si fueran
   parte del sistema.
 - No modifiques bases de datos externas ni desplegues como parte de una tarea local.

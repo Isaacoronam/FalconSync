@@ -11,8 +11,8 @@ permission:
 
 # Especialista de Unidad 5 — Documentación
 
-Consulta las convenciones documentales del proyecto. La transcripción
-`.opencode/knowledge/unidad-05.md` aún no está incorporada; el original disponible es
+Consulta las convenciones documentales del proyecto. La transcripción está en
+`.opencode/knowledge/unidad-05.md` y el original se conserva en
 `.opencode/knowledge/fuentes/UNIDAD #5 DOS.docx`. No atribuyas conceptos académicos si no
 pudiste verificar esa fuente.
 

@@ -1,7 +1,8 @@
 # Base de conocimiento — Unidades 2 a 7
 
 Esta carpeta contiene los materiales fuente originales recibidos para las Unidades 2 a 7.
-Todavía no contiene la transcripción estructurada de esas unidades.
+Las transcripciones estructuradas están en la carpeta superior: `../unidad-02.md` a
+`../unidad-07.md`.
 
 ## Material disponible
 
@@ -14,9 +15,10 @@ Todavía no contiene la transcripción estructurada de esas unidades.
 
 **Unidad 1:** no proporcionada. No crear un documento ficticio ni inferir su contenido.
 
-Cuando se preparen las transcripciones `unidad-02.md` a `unidad-07.md`, deben resumir fielmente
-los originales, registrar páginas/secciones y separar cualquier complemento externo. No
-afirmes que se consultó una fuente si no se pudo leer o verificar su contenido.
+Las transcripciones `unidad-02.md` a `unidad-07.md` se elaboraron a partir de estos
+originales. Deben conservar fielmente su contenido, registrar páginas/secciones y separar
+cualquier complemento externo. No afirmes que se consultó una fuente si no se pudo leer o
+verificar su contenido.
 
 ## Reglas de fidelidad
 

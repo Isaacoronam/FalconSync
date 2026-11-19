@@ -34,6 +34,6 @@ agente (las demás quedan denegadas).
 - `external-integrations`: solo para conectores aprobados; no hay uno activo por defecto.
 
 El kit se adaptó según evidencia real en
-[`context/unefa-starter-kit-adaptation.md`](../context/unefa-starter-kit-adaptation.md).
+[`memory/unefa-starter-kit-adaptation.md`](../memory/unefa-starter-kit-adaptation.md).
 `web-design-guidelines`, `webapp-testing` y `deployment-readiness` cubren las áreas de UX,
 pruebas y despliegue que el starter kit planteaba sin material operativo suficiente.

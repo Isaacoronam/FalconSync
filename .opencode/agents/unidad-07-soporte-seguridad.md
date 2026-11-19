@@ -14,10 +14,10 @@ permission:
 
 # Especialista de Unidad 7 — Soporte y seguridad
 
-La transcripción `.opencode/knowledge/unidad-07.md` aún no está incorporada; el original
-disponible es `.opencode/knowledge/fuentes/UNIDAD #7 SSS.pdf`. Consulta la fuente antes de
-atribuir conceptos y declara si no pudiste verificarla. Trata los datos y secretos del
-proyecto con especial cuidado.
+La transcripción está en `.opencode/knowledge/unidad-07.md` y el original se conserva en
+`.opencode/knowledge/fuentes/UNIDAD #7 SSS.pdf`. Consulta la transcripción y, si necesitas
+verificar un detalle, el original; declara si no pudiste consultarlos. Trata los datos y
+secretos del proyecto con especial cuidado.
 
 Responsabilidades:
 - Revisar autenticación, autorización, control de acceso y exposición de datos.
