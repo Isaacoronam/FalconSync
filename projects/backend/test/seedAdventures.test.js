@@ -3,8 +3,8 @@ import { describe, it } from 'node:test';
 
 process.env.NODE_ENV = 'test';
 
-const { adventures } = await import('../scripts/seedAdventures.js');
-const { locations } = await import('../scripts/seedLocations.js');
+const { adventures } = await import('../seeders/seedAdventures.js');
+const { locations } = await import('../seeders/seedLocations.js');
 
 const locationBySlug = new Map(
   locations.map((location) => [location.slug, location]),

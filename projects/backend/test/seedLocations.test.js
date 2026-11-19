@@ -13,9 +13,9 @@ const {
   syncEditorialContent,
   verifyLocations,
   locations,
-} = await import("../scripts/seedLocations.js");
-const { connectDB, disconnectDB } = await import("../src/config/db.js");
-const { default: Location } = await import("../src/models/Location.js");
+} = await import("../seeders/seedLocations.js");
+const { connectDB, disconnectDB } = await import("../databases/db.js");
+const { default: Location } = await import("../databases/models/Location.js");
 
 describe("Seed de POI", () => {
   before(async () => {
@@ -229,7 +229,7 @@ describe("Seed de POI", () => {
 
       for (const image of location.images) {
         const imagePath = new URL(
-          `../../frontend/public${image}`,
+          `../../frontend/src/assets${image}`,
           import.meta.url,
         );
         assert.ok(existsSync(imagePath), `${location.title}: falta ${image}`);

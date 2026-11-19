@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
-import { connectDB, disconnectDB } from '../src/config/db.js';
-import { config } from '../src/config/env.js';
-import Adventure from '../src/models/Adventure.js';
-import AdventureStop from '../src/models/AdventureStop.js';
-import CheckIn from '../src/models/CheckIn.js';
-import Location from '../src/models/Location.js';
-import User from '../src/models/User.js';
-import UserAchievement from '../src/models/UserAchievement.js';
-import { reconcileUserAchievements } from '../src/services/achievementService.js';
+import { connectDB, disconnectDB } from '../databases/db.js';
+import { config } from '../helpers/env.js';
+import Adventure from '../databases/models/Adventure.js';
+import AdventureStop from '../databases/models/AdventureStop.js';
+import CheckIn from '../databases/models/CheckIn.js';
+import Location from '../databases/models/Location.js';
+import User from '../databases/models/User.js';
+import UserAchievement from '../databases/models/UserAchievement.js';
+import { reconcileUserAchievements } from '../microservices/achievementService.js';
 
 const APPLY = process.argv.includes('--apply');
 const ALLOW_PRODUCTION = process.argv.includes('--allow-production');

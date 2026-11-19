@@ -1,5 +1,5 @@
-import { connectDB, disconnectDB } from '../src/config/db.js';
-import { ensureAdmin } from '../src/services/adminBootstrap.js';
+import { connectDB, disconnectDB } from '../databases/db.js';
+import { ensureAdmin } from '../microservices/adminBootstrap.js';
 
 const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
