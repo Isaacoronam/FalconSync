@@ -167,6 +167,97 @@
   border-top: 1px solid var(--line);
 }
 
+.lugar-article__panoramas {
+  margin: 0 0 1.8rem;
+  padding: 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(251, 247, 239, 0.9);
+}
+
+.lugar-article__panoramas-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.lugar-article__panoramas-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+}
+
+.lugar-article__panoramas-state {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.lugar-article__panoramas-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lugar-panorama-card {
+  display: grid;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: inherit;
+  background: #fffdf8;
+  text-decoration: none;
+  transition: box-shadow 160ms ease;
+}
+
+.lugar-panorama-card:hover {
+  box-shadow: 0 10px 26px rgba(43, 26, 19, 0.12);
+}
+
+.lugar-panorama-card img,
+.lugar-panorama-card__placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  background: #16110e;
+}
+
+.lugar-panorama-card__placeholder {
+  color: var(--sand);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+}
+
+.lugar-panorama-card__body {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem 0.9rem;
+}
+
+.lugar-panorama-card__title {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.lugar-panorama-card__meta,
+.lugar-panorama-card__credits {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 @media (max-width: 760px) {
   .lugar-article__layout {
     grid-template-columns: 1fr;
@@ -175,5 +266,11 @@
   .lugar-article__aside {
     position: static;
     grid-row: 1;
+  }
+
+  .lugar-article__panoramas-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.6rem;
   }
 }

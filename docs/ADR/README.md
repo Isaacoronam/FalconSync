@@ -18,17 +18,17 @@
 | ADR | Tema | Estado |
 |---|---|---|
 | [ADR-001](./ADR-001-separacion-dominio.md) | Separación entre POI, activo, reporte, inspección, hallazgo e intervención | Aceptada por el plan |
-| [ADR-002](./ADR-002-roles-capacidades.md) | Roles por capacidades y migración expand-contract | Propuesta; backend y UI de Fase 2 implementados |
-| [ADR-003](./ADR-003-evidencia-auditoria.md) | Evidencia privada y auditoría obligatoria | Propuesta |
+| [ADR-002](./ADR-002-roles-capacidades.md) | Roles por capacidades y migración expand-contract | Propuesta; backend y UI implementados; migración de datos pendiente |
+| [ADR-003](./ADR-003-evidencia-auditoria.md) | Evidencia privada y auditoría obligatoria | Propuesta; backend implementado; antimalware y retención pendientes |
 | [ADR-004](./ADR-004-tiempo-real.md) | Socket.IO, ticket y notificaciones persistidas | Aceptada; diseño propuesto |
 | [ADR-005](./ADR-005-rag-fuentes.md) | RAG con fuentes verificadas, citas y abstención | Aceptada (revisada 2026-11-17): RAG v1 sin proveedor externo y con respuesta extractiva |
-| [ADR-006](./ADR-006-visita-360.md) | Visita 360° obligatoria con derechos y fallback | Aceptada; contenido pendiente |
+| [ADR-006](./ADR-006-visita-360.md) | Visita 360° obligatoria con derechos y fallback | Aceptada e implementada; contenido real pendiente |
 | [ADR-007](./ADR-007-operacion-slo.md) | SLO, RPO/RTO, backups y rollback | Propuesta |
 
 ## Diseño de Fase 1
 
-Los siguientes documentos desarrollan las decisiones anteriores. Son propuestas de diseño,
-no implementación:
+Los siguientes documentos desarrollan las decisiones anteriores. Describen el diseño y, cuando
+corresponde, indican qué partes ya están implementadas y cuáles siguen pendientes:
 
 | Documento | Contenido |
 |---|---|

@@ -35,6 +35,15 @@ export const inspectorGuard: CanActivateFn = () => {
   return auth.isInspector() ? true : router.createUrlTree(['/acceso-denegado']);
 };
 
+export const curatorGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  return auth.canCuratePanoramas()
+    ? true
+    : router.createUrlTree(['/acceso-denegado']);
+};
+
 export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);

@@ -35,6 +35,7 @@ const API_MODULES = [
   'conservation',
   'evidence',
   'locations',
+  'panoramas',
   'uploads',
   'users',
 ];

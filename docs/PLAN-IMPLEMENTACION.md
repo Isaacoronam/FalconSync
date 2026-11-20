@@ -146,9 +146,13 @@ baseline real; esta tabla se conserva como evidencia histórica de la deriva.
   prefijo público, validación de contenido, eliminación de EXIF, hash SHA-256, idempotencia,
   autorización por recurso, registro append-only de accesos y retención configurable. La
   consulta de accesos está en `/api/admin/evidence/:id/access-log`.
-- No se encontraron en el backend notificaciones, Socket.IO, RAG ni panoramas 360°. La UI de
-  reportes e inspecciones existe en `projects/frontend/src/app/pages/conservation/` y está
-  cubierta por `e2e/conservation.spec.ts`.
+- No se encontraron en el backend notificaciones, Socket.IO ni RAG. La UI de reportes e
+  inspecciones existe en `projects/frontend/src/app/pages/conservation/` y está cubierta por
+  `e2e/conservation.spec.ts`.
+- La visita 360° ya tiene modelo `Panorama`, original privado, derivados con `sharp`, API
+  pública y administrativa, visor WebGL propio con fallback, flujo editorial separado y
+  pruebas. No hay panorámicas reales con derechos verificados; la galería pública queda vacía
+  y no se publicará contenido sintético.
 - `Intervention` exige evidencia para completar o verificar; con la carga y consulta ya
   implementadas, el camino puede terminar y cerrar hallazgos que requieren intervención.
 - Las rutas de conservación usan `requireAnyCapability`; los servicios comprueban propietario,
@@ -361,7 +365,7 @@ Convenciones existentes que se conservan: Mongoose 9, ESM, `timestamps`, `versio
 | `SourceChunk` | `documentId`, `ordinal`, `page`, `section`, `text`, `tokens`, `checksum`, `embedding?` | `documentId + ordinal`; `page`; texto completo o vector según almacén |
 | `Conversation` | `userId?`, `assistant`, `startedAt`, `lastMessageAt`, `retentionUntil` | `userId + startedAt`; TTL de retención |
 | `Message` | `conversationId`, `role`, `content`, `citations[]`, `createdAt`, `model`, `latencyMs` | `conversationId + createdAt` |
-| `Panorama` | `assetId?`, `locationId?`, `title`, `imageKey`, `projection`, `width`, `height`, `checksum`, `license`, `author`, `capturedAt`, `status`, `hotspots[]` | `assetId`; `locationId`; `status` |
+| `Panorama` | `assetId?`, `locationId?`, `title`, `description`, `imageKey`, `derivativeKey`, `thumbnailKey`, `projection`, `width`, `height`, `checksum`, `derivativeChecksum`, `thumbnailChecksum`, `bytes`, `license`, `licenseUrl`, `author`, `credit`, `capturedAt`, `status`, `visibility`, `hotspots[]`, `fallback`, `rights*`, `consent*`, `version` | `assetId`; `locationId`; `status + visibility`; `version` |
 | `AudioGuide` (condicional) | `assetId`, `language`, `audioKey`, `transcript`, `durationSeconds`, `license`, `status` | `assetId + language` |
 
 Reglas transversales:
@@ -403,6 +407,11 @@ Se conservan las rutas actuales. Las nuevas rutas se montan en `createApp()` y c
 | `POST /api/assistant/inspection/query` | inspector | Asistente técnico con citas. |
 | `GET /api/panoramas` | público | Panoramas publicados. |
 | `GET /api/panoramas/:id` | público | Escena, hotspots y créditos. |
+| `GET /api/panoramas/:id/image`, `/:id/thumbnail` | público | Derivados verificados por checksum. |
+| `GET/POST /api/admin/panoramas` | `panorama.manage` / `panorama.publish` | Inventario; alta multipart con `panorama.manage`. |
+| `GET/PATCH /api/admin/panoramas/:id` | `panorama.manage` / `panorama.publish` | Detalle y edición con `If-Match`. |
+| `GET /api/admin/panoramas/:id/image`, `/:id/thumbnail` | `panorama.manage` / `panorama.publish` | Derivados autenticados. |
+| `POST /api/admin/panoramas/:id/{approve,publish,archive}` | `panorama.publish` (público) / `panorama.manage` (inspección) | Transiciones con `If-Match`. |
 | `PATCH /api/admin/users/:id/role` | admin | Cambiar rol con reautenticación. |
 | `PATCH /api/admin/users/:id/status` | admin | Activar/desactivar con protecciones. |
 | `POST /api/admin/users/:id/revoke-sessions` | admin | Revocar sesiones. |
@@ -545,17 +554,31 @@ latencia p50/p95 de recuperación, primer token y respuesta completa, y coste po
 
 ## 12. Visita 360°, audio e idiomas
 
-- `Panorama` equirectangular con `assetId` o `locationId`, créditos, licencia, checksum,
-  fecha y estado.
-- Hotspots con destino, etiqueta, tipo y coordenadas; navegación por teclado.
-- Fallback obligatorio: imagen estática, texto descriptivo y transcripción si hay audio.
+Implementado:
+
+- `Panorama` equirectangular con `assetId` o `locationId`, créditos, licencia, checksums,
+  fecha, estado, visibilidad, versión y auditoría.
+- Original privado y derivados generados con `sharp`; el EXIF se elimina y el checksum se
+  verifica al servir.
+- API pública (`/api/panoramas`) limitada a `published + public` y API administrativa
+  (`/api/admin/panoramas`) con capacidades separadas.
+- Visor WebGL 1 propio, sin dependencia externa: activación explícita, fallback estático
+  primero, teclado, hotspots como enlaces accesibles y sin autogiro ni autoplay.
+- Flujo editorial: administración configura y sube (`panorama.manage`); historiador aprueba,
+  publica y archiva panoramas turísticos (`panorama.publish`); administración gestiona por
+  completo los de inspección.
 - Derechos documentados antes de publicar; consentimiento para imágenes de personas;
   difuminado cuando corresponda.
-- Panoramas de inspección separados de los públicos; nunca expuestos por la API turística.
-- La biblioteca de visualización se elige tras verificar licencia y accesibilidad; no se
-  afirma una elección antes de esa verificación.
-- Audio y multilingüe solo si se confirman: `AudioGuide` con transcripción, idioma, duración,
-  licencia y estado; sin autoplay; subtítulos.
+- Panoramas de inspección separados de los públicos; nunca expuestos por la API turística ni
+  a la curaduría.
+- Pruebas backend (`test/panorama.test.js`), unitarias de SPA y E2E (`panoramas.spec.ts`).
+
+Pendiente:
+
+- Contenido real con derechos verificados; no se publica material sintético.
+- Medición de rendimiento, revisión manual de accesibilidad y prueba en móvil.
+- Audio y multilingüe solo si se confirman (D-18): `AudioGuide` con transcripción, idioma,
+  duración, licencia y estado; sin autoplay; subtítulos.
 
 ## 13. UI, identidad visual y accesibilidad
 
@@ -618,7 +641,7 @@ modelo, hardware, red, top-k y caché concretos; no se promete antes.
 | 3. Núcleo de conservación | Modelos, servicios, API y UI mínima del flujo vertical; evidencia privada; historial | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-07-soporte-seguridad` | E2E completo; historial conservado; evidencia inaccesible sin permiso; transiciones inválidas rechazadas |
 | 4. Socket.IO | Ticket, salas, notificaciones persistidas, reconexión, deduplicación, carga | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-06-despliegue` | Handshake autorizado; alertas pertinentes; recuperación tras reconexión; carga medida |
 | 5. RAG | Registro de fuentes, ingesta, recuperación, evaluación, asistentes con citas y abstención | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-07-soporte-seguridad` | Citas correctas; abstención sin evidencia; p95 medido; fuentes autorizadas |
-| 6. Visita 360° | Modelo, derechos, visor, hotspots, fallback, accesibilidad y aislamiento | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-05-documentacion` | Derechos documentados; contenido aprobado; sin datos privados; accesible |
+| 6. Visita 360° | **Infraestructura implementada:** modelo, derechos, visor, hotspots, fallback, accesibilidad y aislamiento. Falta contenido real con derechos y evidencia de rendimiento/accesibilidad manual. | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-05-documentacion` | Derechos documentados; contenido aprobado; sin datos privados; accesible |
 | 7. Identidad visual y SPA | Tokens, fuentes, componentes, vistas pública e interna, accesibilidad | `unidad-03-desarrollo`, `unidad-04-pruebas` | WCAG 2.2 AA; contraste, teclado y responsive verificados |
 | 8. Pruebas integrales y piloto | Pirámide, API/E2E, carga, seguridad, usabilidad, accesibilidad y campo | `unidad-04-pruebas`, `unidad-07-soporte-seguridad` | Métricas con muestra, entorno y método; sin defectos críticos/altos; acta |
 | 9. Despliegue y operación | Docker, staging/producción, TLS, secretos, CI/CD, observabilidad, backups, rollback, runbook | `unidad-06-despliegue`, `unidad-07-soporte-seguridad` | Restauración probada; rollback probado; smoke tests; SLO monitoreado |
@@ -627,8 +650,8 @@ modelo, hardware, red, top-k y caché concretos; no se promete antes.
 Dependencias:
 
 - La fase 5 puede empezar en paralelo con la 3 si el equipo de contenidos trabaja el corpus.
-- La fase 6 puede preparar derechos y captura desde la fase 0, pero su publicación espera al
-  modelo de activos de la fase 1.
+- La fase 6 ya tiene la infraestructura implementada; la publicación sigue esperando
+  panorámicas reales con derechos verificados y la revisión de accesibilidad/rendimiento.
 - Las pruebas y la preparación de despliegue son puertas continuas, no fases finales.
 
 ## 16. Impacto por archivo
@@ -740,7 +763,7 @@ en el árbol local; el estado confirmado y los faltantes están en las secciones
 | `README.md`, `docs/INSTALACION.md`, `.env.example` | Variables, arranque y operación. |
 | `.github/workflows/ci.yml` | Replica set, suites nuevas, artefactos y jobs. |
 | `docs/REQUISITOS.md`, `docs/RBAC.md`, `docs/FUENTES-RAG.md`, `docs/SEGURIDAD.md`, `docs/OPERACION.md`, `docs/ADR/` | Entregables de Fase 0 creados. |
-| `docs/MODELO-DATOS.md`, `docs/CASOS-USO.md`, `docs/EVENTOS-TIEMPO-REAL.md`, `docs/openapi.yaml`, `docs/WIREFRAMES.md`, `docs/360.md` | Entregables de Fase 1 creados; pendientes de revisión y aprobación. |
+| `docs/MODELO-DATOS.md`, `docs/CASOS-USO.md`, `docs/EVENTOS-TIEMPO-REAL.md`, `docs/openapi.yaml`, `docs/WIREFRAMES.md`, `docs/360.md` | Entregables de Fase 1 creados y actualizados; el contrato 360 está implementado y las rutas restantes se marcan como planificadas. |
 | `docs/PILOTO.md` | Entregable de Fase 8; pendiente. |
 | `docs/ADR/ADR-*.md` | Decisiones D-01 a D-08; D-09 a D-23 se registran en el plan y los documentos de Fase 1. |
 
@@ -854,8 +877,9 @@ No se declara terminado por número de pantallas, sino cuando:
 - La evidencia es privada, con hash, metadatos, acceso auditado y retención; no se expone por
   `/api/uploads`.
 - El asistente cita fuentes autorizadas, se abstiene sin evidencia y no ejecuta acciones.
-- La visita 360° tiene derechos, contenido, hotspots, fallback y accesibilidad; audio e
-  idiomas solo si se confirmaron.
+- La infraestructura de la visita 360° tiene derechos, hotspots, fallback, visor y
+  accesibilidad; la publicación queda bloqueada hasta disponer de contenido real con derechos
+  verificados. Audio e idiomas solo si se confirmaron.
 - Las métricas de campo y RAG se reportan con muestra, entorno, método y resultado.
 - Staging y producción tienen backups, restauración probada, monitoreo, rollback y
   documentación coincidente.
@@ -877,17 +901,18 @@ sigue fuera del alcance.
 | 3 | Habilitar evidencia privada | Implementar carga, validación de tipo/contenido/tamaño, almacenamiento no público, hash, metadatos/EXIF, escaneo o cuarentena, autorización por recurso, registro de accesos y retención. Vincular evidencias a reportes, hallazgos e intervenciones; definir comportamiento seguro si el escaneo no está disponible. | Evidencia no accesible por URL pública; acceso no autorizado denegado y auditado; intervención puede completarse/verificarse con evidencia y no puede cerrarse sin los requisitos del dominio. |
 | 4 | Entregar UI de conservación | Construir primero `/reportes` (crear y consultar propios) y `/inspecciones` (bandeja asignada, ejecutar, hallazgos, revisar, intervención, evidencia y cierre). Aplicar guards por capacidad como UX, manteniendo autorización en backend. Incluir estados vacíos, errores, carga y accesibilidad básica. | E2E desde reporte hasta cierre verificado, además de denegaciones para usuario ajeno, inspector no asignado y rol incorrecto. |
 | 5 | Integrar flujo y consolidar calidad | Probar el recorrido completo en un replica set desde frontend hasta MongoDB; agregar pruebas de API/E2E, regresión, autorización, carga de evidencia y recuperación. Validar que el estado público procede solo de inspección revisada/cerrada. | E2E reproducible; historial consistente; sin hallazgos críticos/altos abiertos; baseline local repetible y CI remoto documentado. |
-| 6 | Construir capacidades complementarias | **Socket.IO:** después de persistir notificaciones, implementar ticket de un solo uso, salas autorizadas, cursores y reconexión. **RAG:** puede avanzar en paralelo al backend tras aprobar corpus, derechos y evaluación, sin proveedor externo; implementar citas y abstención antes de abrir acceso. **360°:** iniciar derechos/adquisición en paralelo; publicar solo tras validar activo, derechos, fallback y accesibilidad. | Cada capacidad tiene sus pruebas de autorización, calidad y operación; RAG cita fuentes verificables; 360° publica contenido con derechos registrados; realtime recupera eventos tras reconexión. |
+| 6 | Construir capacidades complementarias | **Socket.IO:** después de persistir notificaciones, implementar ticket de un solo uso, salas autorizadas, cursores y reconexión. **RAG:** puede avanzar en paralelo al backend tras aprobar corpus, derechos y evaluación, sin proveedor externo; implementar citas y abstención antes de abrir acceso. **360°:** la infraestructura ya está implementada; quedan derechos/adquisición de contenido real y las verificaciones de accesibilidad, móvil y rendimiento antes de publicar. | Cada capacidad tiene sus pruebas de autorización, calidad y operación; RAG cita fuentes verificables; 360° publica contenido con derechos registrados; realtime recupera eventos tras reconexión. |
 | 7 | Preparar piloto y operación | Aplicar identidad visual progresivamente; revisar WCAG 2.2 AA y responsive; provisionar staging/producción, secretos, TLS, observabilidad, backups y runbooks. Ejecutar restauración y rollback; hacer piloto autorizado con protocolo de GPS, tiempos, accesibilidad y flujos reales. | SLO medidos; backup/restauración y rollback demostrados; piloto con muestra y resultados documentados; aceptación y transferencia operativa. |
 
 ### Próximo incremento recomendado
 
-La autorización por capacidades, el backend de conservación, la evidencia privada y la UI de
-conservación (`/reportes`, `/inspecciones`) ya están implementados y cubiertos por las suites
-de backend, frontend y E2E. El siguiente incremento es cerrar las decisiones D-18 a D-23, el
-dry-run/backup de roles, el antimalware y la migración del CI a replica set; no ejecutar la
-migración ni habilitar cargas en producción sin autorización. Después, Socket.IO, RAG y 360°
-pueden avanzar en carriles separados cuando sus dependencias estén resueltas.
+La autorización por capacidades, el backend de conservación, la evidencia privada, la UI de
+conservación (`/reportes`, `/inspecciones`) y la infraestructura de la visita 360° ya están
+implementados y cubiertos por las suites de backend, frontend y E2E. El siguiente incremento
+es cerrar las decisiones D-18 a D-23, el dry-run/backup de roles, el antimalware y la
+migración del CI a replica set; no ejecutar la migración ni habilitar cargas en producción sin
+autorización. Después, Socket.IO y RAG pueden avanzar en carriles separados; la visita 360°
+solo necesita contenido real con derechos y las verificaciones pendientes.
 
 Las pruebas, revisión de seguridad, accesibilidad y documentación son puertas continuas de
 cada paquete, no una fase final. La identidad visual puede avanzar incrementalmente, pero no

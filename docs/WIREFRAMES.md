@@ -37,9 +37,9 @@
 |---|---|---|---|
 | `/` | Mapa y buscador de POI | Público | Existente |
 | `/lugares` | Catálogo | Público | Existente |
-| `/lugares/:slug` | Ficha del POI, conservación y 360 | Público | Existente; se amplía |
-| `/panoramas` | Galería de visitas 360 publicadas | Público | Propuesta |
-| `/panoramas/:id` | Visor 360 con hotspots y fallback | Público | Propuesta |
+| `/lugares/:slug` | Ficha del POI, conservación y 360 | Público | Existente; incluye panoramas publicados |
+| `/panoramas` | Galería de visitas 360 publicadas | Público | Implementada |
+| `/panoramas/:id` | Visor 360 con hotspots y fallback | Público | Implementada |
 | `/asistente` | Guía turística con citas | Público con rate limit | Propuesta |
 | `/login`, `/registro` | Autenticación | Visitante | Existente |
 | `/perfil` | Perfil y check-ins | `user` autenticado | Existente |
@@ -61,7 +61,9 @@
 | `/admin/poi` | POI | `admin` | Existente |
 | `/admin/auditoria` | Auditoría | `admin` | Existente |
 | `/admin/fuentes` | Registro de fuentes RAG | `source.manage` | Propuesta |
-| `/admin/panoramas` | Inventario y publicación 360 | `panorama.manage` | Propuesta |
+| `/admin/panoramas` | Inventario, alta y configuración 360 | `panorama.manage` | Implementada |
+| `/curaduria/panoramas` | Bandeja editorial de panoramas públicos | `panorama.publish` / `panorama.manage` | Implementada |
+| `/curaduria/panoramas/:id` | Revisión, aprobación, publicación y archivo | `panorama.publish` / `panorama.manage` | Implementada |
 | `/admin/activos` | Activos patrimoniales | `asset.manage` (propuesto) | Propuesta |
 | `/contenido` | Mesa editorial del historiador | `content.edit` / `content.review` | Pendiente de alcance |
 
@@ -93,6 +95,7 @@ Inspector
   └── Notificaciones
 
 Historiador
+  ├── Curaduría de panoramas 360 (aprobar, publicar, archivar)
   ├── Mesa editorial (pendiente de alcance)
   ├── Consulta del asistente técnico
   └── Fuentes en solo lectura
@@ -103,7 +106,7 @@ Administrador
   ├── Cuentas y sesiones
   ├── Auditoría
   ├── Fuentes RAG
-  ├── Panoramas
+  ├── Panoramas 360 (configuración técnica e inspección)
   └── Activos patrimoniales
 ```
 
@@ -451,15 +454,18 @@ Reglas:
 │ ← Ficha del lugar        Catedral de Coro — Fachada          │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│          [ Escena equirectangular 360° ]                     │
+│   [ Imagen fija 2:1 con texto alternativo y descripción ]    │
 │                                                              │
-│     (hotspot)──► Plaza Bolívar                               │
-│     (hotspot)──► Interior                                    │
-│     (hotspot)──► Información                                 │
+│   [ Activar vista 360° ]                                     │
+│                                                              │
+│   Puntos interactivos                                        │
+│   • Plaza Bolívar, escena                                    │
+│   • Interior, escena                                         │
+│   • Información del lugar                                    │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
-│ Autoría · Licencia · Fecha · [Ver texto alternativo]         │
-│ [Activar movimiento] [Pantalla completa]                     │
+│ Autoría · Licencia · Fecha                                   │
+│ [Centrar] [Ver imagen fija]                                  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -467,11 +473,14 @@ Estados:
 
 | Estado | Comportamiento |
 |---|---|
-| Cargando | Esqueleto con texto “Cargando visita 360°…”; no bloquea el resto de la ficha. |
-| Error de imagen | Fallback estático, descripción y enlace a la ficha. |
-| Movimiento reducido | Sin animación automática; el usuario controla la vista. |
-| Teclado | Flechas para mover, Tab entre hotspots, Enter para activar. |
-| Sin WebGL | Fallback estático; se informa sin lenguaje técnico. |
+| Inicial | Se muestra el fallback estático con alt, descripción y créditos; WebGL no se inicializa. |
+| Activación | La persona pulsa «Activar vista 360°»; se descarga el derivado y se crea el renderer. |
+| Cargando | Texto de carga discreto; la ficha y el fallback siguen disponibles. |
+| Error de imagen | Se conserva el fallback y se explica el fallo sin lenguaje técnico. |
+| Sin WebGL | Se informa que el navegador no admite la vista interactiva; el fallback permanece. |
+| Teclado | Flechas para girar, `+`/`-` para zoom, controles con Tab y Enter. |
+| Hotspots | El lienzo los dibuja como ayuda visual; la navegación accesible es una lista de enlaces reales. |
+| Movimiento | Sin autogiro, autoplay, pantalla completa ni botón de movimiento. |
 | Panorama de inspección | No se sirve por la API turística; 404. |
 
 El detalle técnico está en [`360.md`](./360.md).

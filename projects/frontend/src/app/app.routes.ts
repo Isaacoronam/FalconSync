@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import {
   adminGuard,
   authGuard,
+  curatorGuard,
   guestGuard,
   inspectorGuard,
 } from './services/guards/auth.guard';
@@ -28,6 +29,22 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/lugares/lugar-detail/lugar-detail.component').then(
         (module) => module.LugarDetailComponent,
+      ),
+  },
+  {
+    path: 'panoramas',
+    title: 'Visitas 360° | FALCONSYNC',
+    loadComponent: () =>
+      import('./pages/panoramas/panorama-list/panorama-list.component').then(
+        (module) => module.PanoramaListComponent,
+      ),
+  },
+  {
+    path: 'panoramas/:id',
+    title: 'Visita 360° | FALCONSYNC',
+    loadComponent: () =>
+      import('./pages/panoramas/panorama-detail/panorama-detail.component').then(
+        (module) => module.PanoramaDetailComponent,
       ),
   },
   {
@@ -137,6 +154,39 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'panoramas',
+        pathMatch: 'full',
+        title: 'Panoramas 360° | FALCONSYNC',
+        loadComponent: () =>
+          import('./pages/admin/panoramas/admin-panorama-list.component').then(
+            (module) => module.AdminPanoramaListComponent,
+          ),
+      },
+      {
+        path: 'panoramas/nuevo',
+        title: 'Nuevo panorama | FALCONSYNC',
+        loadComponent: () =>
+          import('./pages/admin/panoramas/admin-panorama-form.component').then(
+            (module) => module.AdminPanoramaFormComponent,
+          ),
+      },
+      {
+        path: 'panoramas/:id/editar',
+        title: 'Editar panorama | FALCONSYNC',
+        loadComponent: () =>
+          import('./pages/admin/panoramas/admin-panorama-form.component').then(
+            (module) => module.AdminPanoramaFormComponent,
+          ),
+      },
+      {
+        path: 'panoramas/:id',
+        title: 'Detalle del panorama | FALCONSYNC',
+        loadComponent: () =>
+          import('./pages/admin/panoramas/admin-panorama-detail.component').then(
+            (module) => module.AdminPanoramaDetailComponent,
+          ),
+      },
+      {
         path: 'usuarios',
         title: 'Usuarios | FALCONSYNC',
         loadComponent: () =>
@@ -229,6 +279,27 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/conservation/inspection-detail/inspection-detail.component').then(
         (module) => module.InspectionDetailComponent,
+      ),
+  },
+  {
+    path: 'curaduria/panoramas',
+    pathMatch: 'full',
+    title: 'Curaduría de panoramas | FALCONSYNC',
+    canActivate: [authGuard, curatorGuard],
+    data: { mode: 'curate' },
+    loadComponent: () =>
+      import('./pages/admin/panoramas/admin-panorama-list.component').then(
+        (module) => module.AdminPanoramaListComponent,
+      ),
+  },
+  {
+    path: 'curaduria/panoramas/:id',
+    title: 'Revisión del panorama | FALCONSYNC',
+    canActivate: [authGuard, curatorGuard],
+    data: { mode: 'curate' },
+    loadComponent: () =>
+      import('./pages/admin/panoramas/admin-panorama-detail.component').then(
+        (module) => module.AdminPanoramaDetailComponent,
       ),
   },
   {

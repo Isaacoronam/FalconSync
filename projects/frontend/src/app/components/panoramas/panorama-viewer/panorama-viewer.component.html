@@ -1,0 +1,154 @@
+<figure class="panorama-viewer" aria-label="Visor de la visita 360°">
+  <div #stage class="panorama-viewer__stage">
+    @if (fallbackSrc()) {
+      <img
+        class="panorama-viewer__fallback"
+        [src]="fallbackSrc()"
+        [alt]="fallbackAlt()"
+        (error)="onFallbackError()"
+      />
+    } @else if (fallbackFailed()) {
+      <p class="panorama-viewer__placeholder" role="status">
+        La vista previa no está disponible. Conserva la descripción textual de esta escena.
+      </p>
+    } @else {
+      <p class="panorama-viewer__placeholder" role="status">Cargando la vista previa…</p>
+    }
+
+    <canvas
+      #canvas
+      class="panorama-viewer__canvas"
+      [class.panorama-viewer__canvas--active]="viewerState() === 'active'"
+      [attr.tabindex]="viewerState() === 'active' ? 0 : -1"
+      [attr.aria-hidden]="viewerState() === 'active' ? null : 'true'"
+      [attr.aria-describedby]="instructionsId"
+      (keydown)="onKeydown($event)"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)"
+      (pointercancel)="onPointerUp($event)"
+    >
+      Tu navegador no admite el lienzo interactivo. Puedes usar el texto alternativo y la lista de
+      puntos interactivos.
+    </canvas>
+
+    @if (viewerState() === 'active') {
+      <div class="panorama-viewer__hotspots" aria-hidden="true">
+        @for (position of hotspotPositions(); track position.hotspot.hotspotId) {
+          <button
+            type="button"
+            tabindex="-1"
+            class="panorama-viewer__hotspot"
+            [style.left.px]="position.x"
+            [style.top.px]="position.y"
+            [style.transform]="'translate(-50%, -50%) scale(' + position.scale + ')'"
+            (click)="openHotspot(position.hotspot)"
+          >
+            <span class="panorama-viewer__hotspot-dot"></span>
+            <span class="panorama-viewer__hotspot-label">{{ position.hotspot.label }}</span>
+          </button>
+        }
+      </div>
+    }
+
+    @if (viewerState() !== 'active') {
+      <div class="panorama-viewer__overlay">
+        @if (webglSupported()) {
+          <button
+            type="button"
+            class="button button--primary"
+            [disabled]="viewerState() === 'loading'"
+            (click)="activate()"
+          >
+            @if (viewerState() === 'loading') {
+              Cargando…
+            } @else if (viewerState() === 'error') {
+              Reintentar vista 360°
+            } @else {
+              Activar vista 360°
+            }
+          </button>
+          <p>
+            Se muestra una imagen fija. La vista interactiva se activa solo cuando la solicitas y no
+            se mueve sola.
+          </p>
+        } @else {
+          <p role="status">
+            Este navegador no admite WebGL, por lo que se mantiene la imagen fija. La descripción y
+            los enlaces de la escena siguen disponibles.
+          </p>
+        }
+      </div>
+    }
+
+    @if (viewerState() === 'active') {
+      <div class="panorama-viewer__toolbar" role="group" aria-label="Controles de la vista 360°">
+        <button
+          type="button"
+          class="panorama-viewer__control"
+          aria-label="Acercar la vista"
+          (click)="zoom(-5)"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          class="panorama-viewer__control"
+          aria-label="Alejar la vista"
+          (click)="zoom(5)"
+        >
+          −
+        </button>
+        <button type="button" class="panorama-viewer__control" (click)="resetView()">
+          Centrar
+        </button>
+        <button type="button" class="panorama-viewer__control" (click)="deactivate()">
+          Ver imagen fija
+        </button>
+      </div>
+    }
+  </div>
+
+  <figcaption class="panorama-viewer__caption">
+    @if (fallbackDescription()) {
+      <p class="panorama-viewer__description">{{ fallbackDescription() }}</p>
+    }
+    @if (credits()) {
+      <p class="panorama-viewer__credits"><strong>Crédito:</strong> {{ credits() }}</p>
+    }
+  </figcaption>
+
+  <p class="panorama-viewer__instructions" [id]="instructionsId">
+    Con la vista activa, arrastra con el puntero o usa las flechas del teclado para mirar alrededor.
+    Las teclas + y − acercan y alejan; Inicio o 0 centran la vista. Desactívala cuando prefieras la
+    imagen fija.
+  </p>
+
+  <p class="panorama-viewer__live" role="status">{{ statusMessage() }}</p>
+
+  @if (errorMessage()) {
+    <p class="form-error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (hotspots().length) {
+    <nav class="panorama-viewer__hotspot-list" aria-label="Puntos interactivos de la escena">
+      <h3>Puntos interactivos</h3>
+      <ul>
+        @for (hotspot of hotspots(); track hotspot.hotspotId) {
+          <li>
+            @if (hotspot.type === 'scene' && hotspot.targetPanoramaId) {
+              <a [routerLink]="['/panoramas', hotspot.targetPanoramaId]">{{ hotspot.label }}</a>
+            } @else if (hotspot.type === 'location' && hotspot.targetLocationSlug) {
+              <a [routerLink]="['/lugares', hotspot.targetLocationSlug]">{{ hotspot.label }}</a>
+            } @else if (hotspot.type === 'info' && hotspot.targetUrl) {
+              <a [routerLink]="hotspot.targetUrl">{{ hotspot.label }}</a>
+            } @else {
+              <span>{{ hotspot.label }}</span>
+            }
+            <small>{{ hotspotTypeLabels[hotspot.type] }} · {{ hotspot.ariaLabel }}</small>
+          </li>
+        }
+      </ul>
+    </nav>
+  }
+</figure>

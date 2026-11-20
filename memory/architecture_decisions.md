@@ -7,7 +7,7 @@ Decisión del 18 de noviembre de 2026. Se adopta la estructura obligatoria defin
 Estructura resultante:
 
 - Raíz: `AGENTS.md`, `context/` (`system_context.md`, `business_rules.md`, `api_contracts.md`), `skills/`, `memory/` (`architecture_decisions.md`, `error_solutions.md`) y `projects/`.
-- Backend: `api/` (`auth`, `users`, `uploads`, `adventures`, `check-ins`, `locations`, `conservation`, `evidence`, `admin`), `assets/`, `bin/server.js`, `databases/`, `helpers/`, `logs/`, `microservices/`, `middlewares/`, `public/`, `scripts/`, `seeders/`, `uploads/` (`images/`, `documents/`, `apks/`), `.env.example`, `ecosystem.config.cjs`, `index.js` y `package.json`.
+- Backend: `api/` (`auth`, `users`, `uploads`, `adventures`, `check-ins`, `locations`, `conservation`, `evidence`, `panoramas`, `admin`), `assets/`, `bin/server.js`, `databases/`, `helpers/`, `logs/`, `microservices/`, `middlewares/`, `public/`, `scripts/`, `seeders/`, `uploads/` (`images/`, `documents/`, `apks/`), `.env.example`, `ecosystem.config.cjs`, `index.js` y `package.json`.
 - Frontend: `src/app/{components,pages,services,models}` y `src/assets/`.
 - Mobile: `src/{screens,components,services,models}` y `package.json`.
 

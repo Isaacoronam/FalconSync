@@ -3,6 +3,7 @@ import { connectDB, disconnectDB } from '../databases/db.js';
 import { config } from '../helpers/env.js';
 import AuditLog from '../databases/models/AuditLog.js';
 import Location from '../databases/models/Location.js';
+import Panorama from '../databases/models/Panorama.js';
 import RefreshSession from '../databases/models/RefreshSession.js';
 import User from '../databases/models/User.js';
 import { ensureAdmin } from '../microservices/adminBootstrap.js';
@@ -15,6 +16,8 @@ const ADMIN_PASSWORD = 'AdminE2E12345';
 const PENDING_ADMIN_EMAIL = 'pending-admin@e2e.local';
 const PENDING_ADMIN_PASSWORD = 'PendingE2E12345';
 const INSPECTOR_PASSWORD = 'InspectorE2E123';
+const HISTORIAN_EMAIL = 'historian@e2e.local';
+const HISTORIAN_PASSWORD = 'HistorianE2E123';
 
 async function ensureInspector({ email, name }) {
   const passwordHash = await hashPassword(INSPECTOR_PASSWORD);
@@ -24,6 +27,18 @@ async function ensureInspector({ email, name }) {
     username: await generateUniqueUsername({ name, email }),
     passwordHash,
     role: 'inspector',
+    mustChangePassword: false,
+  });
+}
+
+async function ensureHistorian({ email, name }) {
+  const passwordHash = await hashPassword(HISTORIAN_PASSWORD);
+  return User.create({
+    name,
+    email,
+    username: await generateUniqueUsername({ name, email }),
+    passwordHash,
+    role: 'historian',
     mustChangePassword: false,
   });
 }
@@ -42,6 +57,7 @@ async function prepareDatabase() {
     RefreshSession.init(),
     Location.init(),
     AuditLog.init(),
+    Panorama.init(),
   ]);
   await seedLocations();
 
@@ -71,8 +87,13 @@ async function prepareDatabase() {
     name: 'Inspector Dos E2E',
   });
 
+  await ensureHistorian({
+    email: HISTORIAN_EMAIL,
+    name: 'Historiador E2E',
+  });
+
   console.log(
-    '[e2e] Base de datos reiniciada con 23 POI publicados, un admin operativo, un admin pendiente de cambio de contraseña y dos inspectores.',
+    '[e2e] Base de datos reiniciada con 23 POI publicados, un admin operativo, un admin pendiente de cambio de contraseña, dos inspectores y un historiador.',
   );
 }
 

@@ -80,7 +80,7 @@ Principios:
 | `SourceChunk` | `sourcechunks` | Nueva | Fragmento trazable de una fuente. |
 | `Conversation` | `conversations` | Nueva | Conversación con un asistente. |
 | `Message` | `messages` | Nueva | Mensaje y citas de una conversación. |
-| `Panorama` | `panoramas` | Nueva | Escena 360° pública o de inspección. |
+| `Panorama` | `panoramas` | Implementada | Escena 360° pública o de inspección. |
 | `AudioGuide` | `audioguides` | Condicional | Audio, transcripción e idioma. |
 | `IdempotencyRecord` | `idempotencyrecords` | Auxiliar | Respuesta almacenada para reintentos seguros. |
 | `AuditLog` | `auditlogs` | Existente | Auditoría administrativa no crítica. |
@@ -503,28 +503,48 @@ se abstiene.
 
 | Campo | Tipo | Obligatorio | Regla / índice |
 |---|---|---:|---|
-| `assetId` | ObjectId `HeritageAsset` \| null | Condicional | Al menos un destino. |
-| `locationId` | ObjectId `Location` \| null | Condicional | Al menos un destino. |
+| `assetId` | ObjectId `HeritageAsset` \| null | Condicional | Al menos un destino publicado/activo. |
+| `locationId` | ObjectId `Location` \| null | Condicional | Al menos un destino publicado/activo. |
 | `title` | String(160) | Sí | Título visible. |
-| `imageKey` | String | Sí | Almacenamiento controlado; no público directo. |
+| `description` | String(2000) | No | Descripción editorial. |
+| `imageKey` | String | Sí | Original privado; nunca se sirve. |
+| `derivativeKey` | String \| null | No | Derivado generado; `null` si no existe. |
+| `thumbnailKey` | String \| null | No | Miniatura generada; `null` si no existe. |
 | `projection` | Enum `equirectangular` | Sí | Proyección. |
-| `width` / `height` | Number | Sí | Dimensiones; relación 2:1 para equirectangular. |
-| `checksum` | String(64) | Sí | SHA-256. |
+| `width` / `height` | Number | Sí | Dimensiones del derivado; relación 2:1. |
+| `checksum` | String(64) | Sí | SHA-256 del original. |
+| `derivativeChecksum` | String(64) \| null | No | SHA-256 del derivado; se verifica al servir. |
+| `thumbnailChecksum` | String(64) \| null | No | SHA-256 de la miniatura. |
+| `bytes` | Number | Sí | Tamaño del original normalizado. |
+| `derivativeBytes` / `thumbnailBytes` | Number \| null | No | Tamaños de los derivados. |
 | `license` | String(200) | Sí | Licencia. |
-| `licenseUrl` | String(500) | No | Enlace a la licencia. |
+| `licenseUrl` | String(500) | No | Enlace http(s) a la licencia. |
 | `author` | String(160) | Sí | Autoría. |
 | `credit` | String(300) | Sí | Crédito visible. |
 | `capturedAt` | Date \| null | No | Fecha de captura. |
 | `status` | Enum `PANORAMA_STATUSES` | Sí | Por defecto `draft`; índice. |
 | `visibility` | Enum `PANORAMA_VISIBILITY` | Sí | Por defecto `public`; índice. |
-| `hotspots` | Array<Hotspot> | No | Navegación. |
-| `fallback` | Object | Sí | Imagen estática, alt, descripción y transcripción opcional. |
-| `consent` | Object | No | Consentimiento y difuminado de personas. |
+| `hotspots` | Array<Hotspot> | No | Navegación; identificadores únicos. |
+| `fallback` | Object | Sí | `{ alt, description, transcript? }`; sin URL persistida. |
+| `rightsDocumented` | Boolean | Sí | Derechos verificados. |
+| `permitDocumented` | Boolean | Sí | Permiso de captura o publicación. |
+| `rightsNotes` | String(500) | No | Referencia documental. |
+| `consent` | Object | No | `{ peopleBlurred, consentDocumented, notes? }`. |
+| `approvedAt` / `approvedBy` | Date / ObjectId `User` | No | Aprobación editorial. |
+| `publishedAt` / `publishedBy` | Date / ObjectId `User` | No | Publicación. |
+| `archivedAt` | Date \| null | No | Archivo lógico. |
 | `createdBy` / `updatedBy` | ObjectId `User` | Sí / No | Trazabilidad. |
+| `version` | Number | Sí | Control optimista; `ETag`/`If-Match`. |
 | `createdAt` / `updatedAt` | Date | Sí | Timestamps. |
 
 `Hotspot`: `{ hotspotId, label, type, yaw, pitch, targetPanoramaId, targetLocationId,
-targetUrl, ariaLabel }`. `yaw` y `pitch` en grados; se validan rangos.
+targetUrl, ariaLabel }`. `hotspotId` es UUID y se genera si no llega. `yaw` ∈ [−180, 180];
+el servicio limita `pitch` a [−85, 85]; `scene` exige `targetPanoramaId` publicado, `location`
+exige `targetLocationId` publicado e `info` exige una URL interna permitida. Al serializar, el
+API añade `targetPanoramaTitle` y `targetLocationSlug` para la UI; no se persisten.
+
+Las claves de almacenamiento nunca salen en las respuestas. `imageUrl` y `thumbnailUrl` se
+derivan al serializar (`/api/panoramas/{id}/...` o `/api/admin/panoramas/{id}/...`).
 
 `AudioGuide` (condicional a D-18):
 
@@ -629,9 +649,9 @@ una sola vez. No se persiste en MongoDB. El detalle está en
 | `conversations` | `{ userId: 1, startedAt: -1 }` | Historial. |
 | `conversations` | `{ retentionUntil: 1 }` TTL | Retención. |
 | `messages` | `{ conversationId: 1, createdAt: 1 }` | Orden. |
-| `panoramas` | `{ assetId: 1, status: 1 }` | Panoramas por activo. |
-| `panoramas` | `{ locationId: 1, status: 1 }` | Panoramas por POI. |
-| `panoramas` | `{ status: 1, visibility: 1 }` | Catálogo público. |
+| `panoramas` | `{ assetId: 1, status: 1, visibility: 1 }` | Panoramas por activo. |
+| `panoramas` | `{ locationId: 1, status: 1, visibility: 1 }` | Panoramas por POI. |
+| `panoramas` | `{ status: 1, visibility: 1, createdAt: -1 }` | Catálogo público y bandeja administrativa. |
 | `audioguides` | `{ assetId: 1, language: 1 }` único | Un audio por idioma. |
 | `idempotencyrecords` | `{ actorId: 1, key: 1 }` único | Reintentos seguros. |
 | `idempotencyrecords` | `{ expiresAt: 1 }` TTL | Limpieza. |
@@ -776,18 +796,24 @@ stateDiagram-v2
     draft --> approved: approve
     approved --> published: publish
     approved --> archived: archive
+    draft --> archived: archive
     published --> archived: archive
     archived --> [*]
 ```
 
 | Desde | Hasta | Actor / capacidad | Precondiciones | Efectos | Error |
 |---|---|---|---|---|---|
-| `draft` | `approved` | Historiador `panorama.publish` | Derechos, autoría, licencia, checksum y fallback | Evento; queda listo para publicar. | `RIGHTS_REQUIRED` |
-| `approved` | `published` | Historiador `panorama.publish` | `visibility=public` o `inspection` | Visible según audiencia. | `INVALID_TRANSITION` |
-| `approved` | `archived` | Historiador/admin | — | Archivo lógico. | — |
-| `published` | `archived` | Historiador/admin | — | Deja de servirse. | — |
+| `draft` | `approved` | Historiador `panorama.publish` si `public`; administración `panorama.manage` si `inspection` | Derechos, autoría, licencia, crédito y referencia documental | `approvedAt/By`; auditoría. | `RIGHTS_INCOMPLETE` |
+| `approved` | `published` | Historiador `panorama.publish` si `public`; administración `panorama.manage` si `inspection` | Fallback completo y destino publicado/activo | `publishedAt/By`; aparece en la API que corresponda. | `PANORAMA_NOT_READY` |
+| `draft` / `approved` / `published` | `archived` | Misma capacidad que la transición anterior según visibilidad | — | `archivedAt`; deja de servirse. | `INVALID_STATUS_TRANSITION` si ya está archivado |
+| `archived` | — | — | No se edita | — | `PANORAMA_ARCHIVED` |
 
-Un panorama `visibility=inspection` nunca se sirve por `/api/panoramas`.
+Toda transición exige `If-Match` con la versión actual. Una versión distinta responde
+`409 VERSION_CONFLICT`; la falta de la cabecera, `428 VERSION_REQUIRED`.
+
+Un panorama `visibility=inspection` nunca se sirve por `/api/panoramas` y el historiador no lo
+ve en la API administrativa: la administración lo gestiona por completo. A la inversa, la
+administración no puede aprobar, publicar ni archivar panoramas turísticos (`403 FORBIDDEN`).
 
 ### 8.7 `SourceDocument`
 

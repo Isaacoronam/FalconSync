@@ -1179,9 +1179,12 @@ paths:
     get:
       tags: [Panoramas]
       summary: Listar panoramas públicos
-      description: Solo `published` y `visibility=public`; los de inspección no se exponen.
+      description: |
+        Solo devuelve panoramas `published` con `visibility=public` y un POI destino
+        publicado. Los panoramas de inspección responden como inexistentes. El listado se
+        ordena por fecha de publicación descendente.
       operationId: listPanoramas
-      x-falconsync-status: planned
+      x-falconsync-status: implemented
       security: []
       parameters:
         - name: locationId
@@ -1194,27 +1197,36 @@ paths:
           required: false
           schema:
             type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
       responses:
         '200':
-          description: Panoramas publicados.
+          description: Panoramas publicados, paginados.
           content:
             application/json:
               schema:
                 type: object
-                required: [data]
+                required: [data, meta]
                 properties:
                   data:
                     type: array
                     items:
                       $ref: '#/components/schemas/PanoramaSummary'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
         '400':
+          $ref: '#/components/responses/ValidationError'
+        '422':
           $ref: '#/components/responses/ValidationError'
   /panoramas/{id}:
     get:
       tags: [Panoramas]
       summary: Consultar una escena 360°
+      description: |
+        Devuelve metadatos, hotspots y fallback de una visita `published` y `public`. Cualquier
+        otro estado o visibilidad responde `404`.
       operationId: getPanorama
-      x-falconsync-status: planned
+      x-falconsync-status: implemented
       security: []
       parameters:
         - $ref: '#/components/parameters/PanoramaId'
@@ -1231,6 +1243,393 @@ paths:
                     $ref: '#/components/schemas/Panorama'
         '404':
           $ref: '#/components/responses/NotFound'
+  /panoramas/{id}/image:
+    get:
+      tags: [Panoramas]
+      summary: Descargar el derivado público de la panorámica
+      description: |
+        Transmite el derivado equirectangular `image/webp` verificado por checksum. Solo
+        existe para panoramas `published` y `public`; el original nunca se sirve. Responde
+        `503 PANORAMA_INTEGRITY_ERROR` si el archivo no coincide con su checksum.
+      operationId: getPanoramaImage
+      x-falconsync-status: implemented
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Derivado equirectangular.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /panoramas/{id}/thumbnail:
+    get:
+      tags: [Panoramas]
+      summary: Descargar la miniatura pública
+      description: Miniatura `image/webp` de 640×320 con la misma verificación de integridad.
+      operationId: getPanoramaThumbnail
+      x-falconsync-status: implemented
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Miniatura de la visita.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/panoramas:
+    get:
+      tags: [Admin]
+      summary: Listar panoramas para gestión o curaduría
+      description: |
+        Requiere `panorama.manage` o `panorama.publish`. Administración ve todos los
+        panoramas; el historiador solo ve `visibility=public`. Los filtros se combinan.
+      operationId: listAdminPanoramas
+      x-falconsync-status: implemented
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: Búsqueda literal por título, sin distinguir mayúsculas.
+          schema:
+            type: string
+            maxLength: 120
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [draft, approved, published, archived]
+        - name: visibility
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [public, inspection]
+        - name: locationId
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Panoramas visibles para el actor, paginados.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminPanoramaSummary'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    post:
+      tags: [Admin]
+      summary: Crear un panorama
+      description: |
+        Carga multipart con `panorama.manage`. Valida la firma, el tamaño y la relación 2:1,
+        elimina EXIF, calcula checksums y genera derivado y miniatura con `sharp`. El panorama
+        nace en `draft`; la respuesta incluye `ETag` con la versión. Los campos booleanos se
+        envían como `true`/`false` y `hotspots` como JSON serializado.
+      operationId: createPanorama
+      x-falconsync-status: implemented
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PanoramaCreate'
+      responses:
+        '201':
+          description: Panorama creado en borrador.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /admin/panoramas/{id}:
+    get:
+      tags: [Admin]
+      summary: Consultar un panorama para gestión o curaduría
+      description: |
+        Requiere `panorama.manage` o `panorama.publish`. El historiador solo puede consultar
+        panoramas públicos; un panorama de inspección responde `404`. Devuelve `ETag` con la
+        versión actual.
+      operationId: getAdminPanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Detalle completo del panorama.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Admin]
+      summary: Editar la configuración técnica o editorial
+      description: |
+        Requiere `panorama.manage` y `If-Match`. No reemplaza la imagen original ni los
+        derivados; para cambiar la imagen se crea otro panorama. Un panorama archivado no se
+        edita. Incrementa la versión y devuelve el nuevo `ETag`.
+      operationId: updatePanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanoramaUpdate'
+      responses:
+        '200':
+          description: Panorama actualizado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /admin/panoramas/{id}/image:
+    get:
+      tags: [Admin]
+      summary: Descargar el derivado privado de gestión
+      description: |
+        Requiere `panorama.manage` o `panorama.publish` y responde `private, no-store`.
+        El historiador solo accede a panoramas públicos. El binario se entrega autenticado;
+        la SPA lo convierte en `blob:` para mostrarlo.
+      operationId: getAdminPanoramaImage
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Derivado equirectangular autenticado.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/panoramas/{id}/thumbnail:
+    get:
+      tags: [Admin]
+      summary: Descargar la miniatura privada de gestión
+      operationId: getAdminPanoramaThumbnail
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Miniatura autenticada.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/panoramas/{id}/approve:
+    post:
+      tags: [Admin]
+      summary: Aprobar un panorama en borrador
+      description: |
+        Requiere `If-Match`. En un panorama público exige `panorama.publish`; en uno de
+        inspección, `panorama.manage`. Solo se aprueba desde `draft` y con derechos
+        documentados; en caso contrario responde `409 RIGHTS_INCOMPLETE`.
+      operationId: approvePanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Panorama aprobado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /admin/panoramas/{id}/publish:
+    post:
+      tags: [Admin]
+      summary: Publicar un panorama aprobado
+      description: |
+        Requiere `If-Match`. En un panorama público exige `panorama.publish`; en uno de
+        inspección, `panorama.manage`. Solo se publica desde `approved`, con derechos,
+        fallback completo y destino publicado; si falta algo responde
+        `409 PANORAMA_NOT_READY`.
+      operationId: publishPanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Panorama publicado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /admin/panoramas/{id}/archive:
+    post:
+      tags: [Admin]
+      summary: Archivar un panorama
+      description: |
+        Requiere `If-Match`. En un panorama público exige `panorama.publish`; en uno de
+        inspección, `panorama.manage`. Un panorama archivado deja de servirse y no se edita.
+      operationId: archivePanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Panorama archivado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
   /admin/sources:
     get:
       tags: [Admin]
@@ -2832,7 +3231,7 @@ components:
           nullable: true
     PanoramaSummary:
       type: object
-      required: [id, title, projection, credits]
+      required: [id, title, projection, credits, width, height]
       properties:
         id:
           type: string
@@ -2856,18 +3255,57 @@ components:
           nullable: true
         credits:
           type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        location:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaLocationRef'
+          nullable: true
+        asset:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaAssetRef'
+          nullable: true
+    PanoramaLocationRef:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        slug:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+    PanoramaAssetRef:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
     Panorama:
       allOf:
         - $ref: '#/components/schemas/PanoramaSummary'
         - type: object
-          required: [imageUrl, width, height, hotspots, fallback, license, author]
+          required: [description, imageUrl, hotspots, fallback, license, author]
           properties:
+            description:
+              type: string
             imageUrl:
               type: string
-            width:
-              type: integer
-            height:
-              type: integer
             hotspots:
               type: array
               items:
@@ -2893,6 +3331,7 @@ components:
       properties:
         hotspotId:
           type: string
+          format: uuid
         label:
           type: string
         type:
@@ -2905,7 +3344,13 @@ components:
         targetPanoramaId:
           type: string
           nullable: true
+        targetPanoramaTitle:
+          type: string
+          nullable: true
         targetLocationId:
+          type: string
+          nullable: true
+        targetLocationSlug:
           type: string
           nullable: true
         targetUrl:
@@ -2926,6 +3371,338 @@ components:
         transcript:
           type: string
           nullable: true
+    AdminPanoramaSummary:
+      type: object
+      required:
+        - id
+        - title
+        - projection
+        - credits
+        - width
+        - height
+        - status
+        - visibility
+        - version
+        - hasDerivative
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        locationId:
+          type: string
+          nullable: true
+        assetId:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        projection:
+          type: string
+          enum: [equirectangular]
+        capturedAt:
+          type: string
+          format: date-time
+          nullable: true
+        credits:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        status:
+          type: string
+          enum: [draft, approved, published, archived]
+        visibility:
+          type: string
+          enum: [public, inspection]
+        version:
+          type: integer
+        hasDerivative:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        location:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaLocationRef'
+          nullable: true
+        asset:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaAssetRef'
+          nullable: true
+    AdminPanorama:
+      allOf:
+        - $ref: '#/components/schemas/AdminPanoramaSummary'
+        - type: object
+          required:
+            - description
+            - imageUrl
+            - hotspots
+            - license
+            - author
+            - credit
+            - rightsDocumented
+            - permitDocumented
+            - peopleBlurred
+            - consentDocumented
+            - checksum
+            - bytes
+            - createdBy
+            - updatedBy
+          properties:
+            description:
+              type: string
+            imageUrl:
+              type: string
+              nullable: true
+            hotspots:
+              type: array
+              items:
+                $ref: '#/components/schemas/Hotspot'
+            fallbackAlt:
+              type: string
+            fallbackDescription:
+              type: string
+            transcript:
+              type: string
+              nullable: true
+            license:
+              type: string
+            licenseUrl:
+              type: string
+              nullable: true
+            author:
+              type: string
+            credit:
+              type: string
+            rightsDocumented:
+              type: boolean
+            permitDocumented:
+              type: boolean
+            rightsNotes:
+              type: string
+              nullable: true
+            peopleBlurred:
+              type: boolean
+            consentDocumented:
+              type: boolean
+            consentNotes:
+              type: string
+              nullable: true
+            checksum:
+              type: string
+            derivativeChecksum:
+              type: string
+              nullable: true
+            thumbnailChecksum:
+              type: string
+              nullable: true
+            bytes:
+              type: integer
+            derivativeBytes:
+              type: integer
+              nullable: true
+            approvedAt:
+              type: string
+              format: date-time
+              nullable: true
+            publishedAt:
+              type: string
+              format: date-time
+              nullable: true
+            archivedAt:
+              type: string
+              format: date-time
+              nullable: true
+            createdBy:
+              type: string
+              nullable: true
+            updatedBy:
+              type: string
+              nullable: true
+    PanoramaCreate:
+      type: object
+      required: [title, author, license, credit, image]
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        locationId:
+          type: string
+          description: POI publicado; obligatorio si no se envía `assetId`.
+        assetId:
+          type: string
+          description: Activo activo; obligatorio si no se envía `locationId`.
+        visibility:
+          type: string
+          enum: [public, inspection]
+          default: public
+        capturedAt:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: string
+          maxLength: 160
+        license:
+          type: string
+          maxLength: 200
+        licenseUrl:
+          type: string
+          format: uri
+          nullable: true
+        credit:
+          type: string
+          maxLength: 300
+        rightsDocumented:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        permitDocumented:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        rightsNotes:
+          type: string
+          maxLength: 500
+        peopleBlurred:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        consentDocumented:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        consentNotes:
+          type: string
+          maxLength: 500
+        fallbackAlt:
+          type: string
+          maxLength: 200
+        fallbackDescription:
+          type: string
+          maxLength: 2000
+        transcript:
+          type: string
+          maxLength: 10000
+        hotspots:
+          type: string
+          description: Array JSON serializado de `PanoramaHotspotInput`.
+        image:
+          type: string
+          format: binary
+          description: JPEG, PNG o WebP equirectangular 2:1 de hasta 40 MB.
+    PanoramaUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        locationId:
+          type: string
+          nullable: true
+        assetId:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [public, inspection]
+        capturedAt:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: string
+          maxLength: 160
+        license:
+          type: string
+          maxLength: 200
+        licenseUrl:
+          type: string
+          format: uri
+          nullable: true
+        credit:
+          type: string
+          maxLength: 300
+        rightsDocumented:
+          type: boolean
+        permitDocumented:
+          type: boolean
+        rightsNotes:
+          type: string
+          maxLength: 500
+          nullable: true
+        peopleBlurred:
+          type: boolean
+        consentDocumented:
+          type: boolean
+        consentNotes:
+          type: string
+          maxLength: 500
+          nullable: true
+        fallbackAlt:
+          type: string
+          maxLength: 200
+        fallbackDescription:
+          type: string
+          maxLength: 2000
+        transcript:
+          type: string
+          maxLength: 10000
+          nullable: true
+        hotspots:
+          type: array
+          items:
+            $ref: '#/components/schemas/PanoramaHotspotInput'
+    PanoramaHotspotInput:
+      type: object
+      required: [label, type, yaw, pitch, ariaLabel]
+      properties:
+        hotspotId:
+          type: string
+          format: uuid
+          description: Si se omite, el servidor genera un UUID.
+        label:
+          type: string
+          maxLength: 80
+        type:
+          type: string
+          enum: [scene, location, info]
+        yaw:
+          type: number
+          minimum: -180
+          maximum: 180
+        pitch:
+          type: number
+          minimum: -85
+          maximum: 85
+        targetPanoramaId:
+          type: string
+          nullable: true
+        targetLocationId:
+          type: string
+          nullable: true
+        targetUrl:
+          type: string
+          maxLength: 500
+          nullable: true
+        ariaLabel:
+          type: string
+          maxLength: 120
     AdminSource:
       type: object
       required: [id, title, institution, version, license, rights, accessLevel, checksum, status]

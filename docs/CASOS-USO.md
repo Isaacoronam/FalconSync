@@ -465,24 +465,28 @@ Alternativas:
 |---|---|
 | Actor | Visitante |
 | Capacidad | Lectura pública |
-| Precondiciones | Panorama `published`, `visibility=public`, derechos documentados. |
-| Resultado | Escena 360° con hotspots, créditos y fallback accesible. |
+| Precondiciones | Panorama `published`, `visibility=public`, derechos documentados y destino publicado. |
+| Resultado | Fallback accesible primero; escena 360° bajo activación explícita, con hotspots y créditos. |
 
 Flujo principal:
 
 1. `GET /api/panoramas` o `GET /api/panoramas/:id`.
 2. El servidor filtra `published` y `visibility=public`.
 3. Devuelve escena, hotspots, créditos, licencia y fallback.
-4. El visor carga la imagen; si falla, muestra la imagen estática y el texto.
-5. La navegación por teclado mueve el foco entre hotspots; cada hotspot tiene etiqueta.
-6. El usuario puede abrir el fallback o la transcripción si existe.
+4. La SPA muestra el fallback con alt, descripción y créditos; no inicializa WebGL.
+5. La persona pulsa «Activar vista 360°»; se descarga el derivado verificado y se crea el
+   renderer WebGL propio.
+6. Flechas, `+`/`-`, «Centrar» y «Ver imagen fija» controlan la vista. Los hotspots del lienzo
+   son ayudas visuales; la navegación accesible usa una lista de enlaces reales.
+7. El usuario puede volver al fallback o abrir la transcripción si existe.
 
 Alternativas:
 
-- Panorama `inspection`: `404 NOT_FOUND` en la API pública.
-- Derechos incompletos: no se publica.
-- Imagen no disponible: fallback obligatorio.
-- Movimiento reducido: se desactiva la animación.
+- Panorama `inspection`: `404 NOT_FOUND` en la API pública y en la curaduría.
+- Derechos incompletos: no se publica (`409 RIGHTS_INCOMPLETE`).
+- Imagen no disponible o checksum alterado: `503 PANORAMA_INTEGRITY_ERROR`; se conserva el fallback.
+- Sin WebGL o fallo del renderer: se informa y se mantiene el fallback.
+- No hay autogiro, autoplay, pantalla completa ni botón de movimiento.
 
 ### UC-17 — Registrar y versionar fuentes RAG
 
@@ -794,21 +798,25 @@ sequenceDiagram
     actor U as Visitante
     participant SPA as Angular SPA
     participant API as API Express
-    participant CDN as Almacenamiento de panorama
+    participant FS as Derivado privado
     participant FB as Fallback estático
 
     U->>SPA: Abre /panoramas/:id
     SPA->>API: GET /api/panoramas/:id
     API->>API: require published + visibility=public
-    API-->>SPA: scene + hotspots + credits + fallback
-    SPA->>CDN: load equirectangular image
-    alt imagen disponible
-        SPA->>SPA: render 360 + hotspots
-    else error o movimiento reducido
-        SPA->>FB: show static image + description
+    API-->>SPA: escena + hotspots + créditos + fallback
+    SPA->>FB: muestra imagen fija, alt y descripción
+    U->>SPA: pulsa «Activar vista 360°»
+    SPA->>API: GET /api/panoramas/:id/image
+    API->>FS: lee derivado y verifica checksum
+    alt derivado e integridad correctos
+        API-->>SPA: imagen WebP equirectangular
+        SPA->>SPA: crea renderer WebGL y pinta hotspots
+    else sin WebGL, error de red o checksum alterado
+        SPA->>FB: conserva el fallback e informa
     end
-    U->>SPA: keyboard navigation / hotspot
-    SPA->>SPA: move focus + announce label
+    U->>SPA: flechas / zoom / enlaces de hotspots
+    SPA->>SPA: mueve cámara o navega a la escena
 ```
 
 ### S-10 — Alta de activo patrimonial

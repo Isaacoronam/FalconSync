@@ -32,6 +32,14 @@
       >
         Explorar lugares
       </a>
+      <a
+        class="site-nav__link"
+        routerLink="/panoramas"
+        routerLinkActive="site-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Visitas 360°
+      </a>
 
       @if (auth.isAuthenticated()) {
         @if (auth.canCreateReport()) {
@@ -42,6 +50,16 @@
             ariaCurrentWhenActive="page"
           >
             Reportes
+          </a>
+        }
+        @if (auth.canPublishPanoramas()) {
+          <a
+            class="site-nav__link"
+            routerLink="/curaduria/panoramas"
+            routerLinkActive="site-nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            Curaduría 360°
           </a>
         }
         @if (auth.isInspector()) {

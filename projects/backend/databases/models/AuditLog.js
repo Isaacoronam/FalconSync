@@ -20,6 +20,11 @@ export const AUDIT_ACTIONS = [
   'user.role.updated',
   'user.status.updated',
   'user.sessions.revoked',
+  'panorama.created',
+  'panorama.updated',
+  'panorama.approved',
+  'panorama.published',
+  'panorama.archived',
 ];
 
 const auditLogSchema = new mongoose.Schema(
@@ -49,7 +54,7 @@ const auditLogSchema = new mongoose.Schema(
       type: String,
       required: true,
       default: 'Location',
-      enum: ['Location', 'Adventure', 'AdventureStop', 'User'],
+      enum: ['Location', 'Adventure', 'AdventureStop', 'User', 'Panorama'],
       index: true,
     },
     entityId: {

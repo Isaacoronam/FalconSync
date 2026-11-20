@@ -104,8 +104,8 @@ Notas:
   severidad ni cierra inspecciones.
 - `asset.manage` para admin es una propuesta de Fase 0: administra inventario, no realiza
   inspecciones. Si se rechaza, la capacidad queda solo para inspector.
-- `panorama.publish` para historiador es una propuesta: el contenido 360° es editorial. La
-  configuración técnica queda en admin.
+- `panorama.publish` para historiador está implementada: el contenido 360° es editorial. La
+  configuración técnica y los panoramas de inspección quedan en admin (`panorama.manage`).
 
 ## 4. Reglas de autorización por recurso
 
@@ -118,7 +118,8 @@ Notas:
 | Evidencia | Se autoriza por `ownerType` + `ownerId`; nunca por URL pública. |
 | Notificación | Solo el `userId` destinatario. |
 | Conversación | Solo el `userId` dueño; admin solo metadatos de auditoría. |
-| Panorama de inspección | Nunca se expone por la API turística. |
+| Panorama público | Solo `published` + `visibility=public`; se sirve por `/api/panoramas` y por la ficha del POI publicado. |
+| Panorama de inspección | Nunca se expone por la API turística ni a la curaduría; solo lo gestiona `panorama.manage`. |
 | Activo patrimonial | Lectura pública solo de campos publicados; datos técnicos solo internos. |
 
 Reglas adicionales:
@@ -133,6 +134,9 @@ Reglas adicionales:
 - Un admin no puede usar su rol para inspeccionar, confirmar severidad ni cerrar una
   inspección. Si necesita una excepción, usa `break-glass`.
 - El historiador no puede aprobar diagnósticos técnicos ni modificar severidades.
+- La administración no puede aprobar, publicar ni archivar panoramas turísticos; esa
+  decisión es editorial y requiere `panorama.publish`.
+- El historiador no puede crear, editar ni gestionar panoramas de inspección.
 - El turista no accede a recursos internos ni a evidencia de terceros.
 
 ## 5. Mapa de endpoints y capacidades
@@ -146,14 +150,12 @@ Reglas adicionales:
 | `GET /api/locations`, `/near`, `/:slug` | Público | Catálogo publicado. |
 | `POST /api/check-ins` | `user` autenticado | Check-in turístico, separado de conservación. |
 | `GET/PATCH /api/profile/me`, `/avatar`, `/check-ins` | Dueño | Recurso privado. |
+| `GET /api/panoramas`, `/:id`, `/:id/image`, `/:id/thumbnail` | Público | Solo `published` + `visibility=public`; el resto responde `404`. |
+| `/api/admin/panoramas*` | `panorama.manage` o `panorama.publish` | Admin gestiona todo; historiador solo públicos. Las transiciones de inspección exigen `panorama.manage`; las turísticas, `panorama.publish`. |
 | `/api/admin/*` | `admin` | Se amplía con roles, estado y fuentes. |
 | `/api/adventures/*` | Público/autenticado | Compatibilidad heredada. |
 
-### 5.2 Endpoints planificados
-
-Los endpoints actuales del flujo de conservación usan las capacidades descritas aquí. La
-API de evidencia, notificaciones, tiempo real, RAG y panoramas sigue planificada; asignarles
-capacidades en la matriz no significa que esos endpoints ya existan.
+### 5.2 Endpoints implementados del dominio
 
 | Método y ruta | Capacidad | Regla de recurso |
 |---|---|---|
@@ -171,19 +173,24 @@ capacidades en la matriz no significa que esos endpoints ya existan.
 | `POST /api/inspections/:id/close` | `inspection.close` | Intervención verificada o justificación. |
 | `POST /api/inspections/:id/findings` | `finding.propose` | Asignado. |
 | `PATCH /api/inspections/:id/findings/:findingId` | `finding.confirm` | Revisor. |
-| `POST /api/interventions` | `intervention.propose` | Inspector. |
-| `POST /api/interventions/:id/verify` | `intervention.verify` | Distinto del ejecutor. |
+| `POST /api/inspections/:id/interventions` | `intervention.propose` | Inspector. |
+| `PATCH /api/interventions/:id` | `intervention.verify` | Distinto del ejecutor. |
 | `POST /api/evidence` | `evidence.upload` | Alcance del recurso. |
+| `GET /api/evidence` | `evidence.read.assigned` o `evidence.read.audit` | Alcance por propietario. |
 | `GET /api/evidence/:id` | `evidence.read.assigned` o `evidence.read.audit` | Registro de acceso. |
+| `PATCH /api/admin/users/:id/role` | `account.manage` | Reautenticación; protecciones. |
+| `PATCH /api/admin/users/:id/status` | `account.manage` | Reautenticación; protecciones. |
+| `POST /api/admin/users/:id/revoke-sessions` | `account.manage` | Revoca sesiones. |
+
+### 5.3 Endpoints planificados
+
+| Método y ruta | Capacidad | Regla de recurso |
+|---|---|---|
 | `GET /api/notifications` | `notification.read.own` | Solo propias. |
 | `POST /api/notifications/:id/read` | `notification.read.own` | Solo propias. |
 | `POST /api/realtime/ticket` | `realtime.connect` | Ticket de 60 s, un solo uso. |
 | `POST /api/assistant/tourist/query` | `assistant.tourist` | Público con rate limit. |
 | `POST /api/assistant/inspection/query` | `assistant.inspection` | Inspector o historiador en consulta. |
-| `GET /api/panoramas`, `/:id` | Público | Solo publicados. |
-| `PATCH /api/admin/users/:id/role` | `account.manage` | Reautenticación; protecciones. |
-| `PATCH /api/admin/users/:id/status` | `account.manage` | Reautenticación; protecciones. |
-| `POST /api/admin/users/:id/revoke-sessions` | `account.manage` | Revoca sesiones. |
 | `GET /api/admin/sources` | `source.read` / `source.manage` | Registro de fuentes. |
 
 ## 6. Migración expand-contract
@@ -227,7 +234,9 @@ Precondiciones:
 | Lectura de reportes e inspecciones para auditoría | Implementado con proyección reducida | `getReport`, `listInspections`, `getInspection`; sin contenido sensible |
 | Revisor asignado distinto del inspector | Implementado | Validación en creación/conversión y revisión/cierre |
 | Aislamiento de inspección e intervención | Implementado | ID del inspector/revisor/executor verificado en servicios |
-| Capacidades para módulos futuros | Política declarada; endpoints pendientes | No existe todavía evidencia, notificaciones, realtime, RAG ni panoramas |
+| `panorama.publish` / `panorama.manage` | Implementado | `adminPanoramaRoutes.js`, `panoramaService.js`; separación editorial verificada en `test/panorama.test.js` |
+| API pública 360 y curaduría | Implementado | `/api/panoramas`, `/api/admin/panoramas`, galería, visor y `/curaduria/panoramas`; E2E `panoramas.spec.ts` |
+| Capacidades para módulos futuros | Política declarada; endpoints pendientes | No existe todavía notificaciones, realtime, RAG ni fuentes |
 | `break_glass.inspection` | No concedida | Denegada hasta implementar motivo, aprobador, vigencia y auditoría |
 | Contract de `moderator` | Pendiente | Liberación posterior |
 
@@ -271,6 +280,14 @@ Precondiciones:
 | Reutilizar ticket realtime | Cualquiera | 401 |
 | Consultar asistente técnico | `user` | 403 |
 | Consultar asistente turístico | Visitante | 200 con rate limit |
+| Crear panorama | `admin` | 201 con `panorama.manage` |
+| Crear panorama | `historian` | 403 |
+| Aprobar panorama turístico | `admin` | 403 |
+| Aprobar panorama turístico | `historian` | 200 |
+| Aprobar sin derechos completos | `historian` | 409 `RIGHTS_INCOMPLETE` |
+| Ver panorama de inspección en curaduría | `historian` | 404 |
+| Gestionar panorama de inspección | `admin` | 200 |
+| Editar panorama | `historian` | 403 |
 
 ### 8.2 IDOR y aislamiento
 
@@ -282,6 +299,10 @@ Precondiciones:
   `inspection:<id>` sin asignación.
 - Un ticket de realtime expira, se consume una vez y no se acepta en query string.
 - Un panorama de inspección no aparece en `/api/panoramas`.
+- El historiador recibe `404` al consultar un panorama de inspección por la API
+  administrativa o al intentar una transición sobre él.
+- La administración recibe `403` al intentar aprobar, publicar o archivar un panorama
+  turístico; no puede saltarse la curaduría.
 
 ### 8.3 Migración
 
@@ -293,10 +314,13 @@ Precondiciones:
 
 ## 9. Frontend
 
-- `auth.service.ts` expone `isHistorian`, `isInspector`, `can(capability)`.
-- `capability.guard.ts` protege rutas; no sustituye al servidor.
+- `auth.service.ts` expone `isHistorian`, `isInspector`, `can(capability)`, `canPublishPanoramas()`
+  y las comprobaciones de administración.
+- `capability.guard.ts` y `auth.guard.ts` protegen rutas; no sustituyen al servidor.
+  `curatorGuard` (`canCuratePanoramas()`) habilita `/curaduria/panoramas` para historiador y
+  admin; la API sigue decidiendo qué transiciones permite a cada uno.
 - `/admin` queda para admin; `/inspecciones` para inspector/revisor; `/reportes` para
-  autenticados.
+  autenticados; `/curaduria/panoramas` para el historiador.
 - El menú y los botones se ocultan por capacidad, pero la API vuelve a verificar.
 - Los mensajes de denegación no revelan la existencia de recursos ajenos.
 

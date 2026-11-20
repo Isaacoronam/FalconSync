@@ -50,6 +50,61 @@
       </figure>
     }
 
+    <section class="lugar-article__panoramas" aria-labelledby="lugar-panoramas">
+      <div class="lugar-article__panoramas-header">
+        <div>
+          <p class="lugar-article__eyebrow">Visita inmersiva</p>
+          <h2 id="lugar-panoramas">Panoramas 360°</h2>
+        </div>
+        <a class="button button--ghost button--small" routerLink="/panoramas">
+          Ver todas las visitas
+        </a>
+      </div>
+
+      @if (panoramasLoading()) {
+        <p class="lugar-article__panoramas-state" role="status">
+          Buscando visitas 360° de este lugar…
+        </p>
+      } @else if (panoramasError()) {
+        <p class="lugar-article__panoramas-state" role="alert">{{ panoramasError() }}</p>
+      } @else if (panoramas().length === 0) {
+        <p class="lugar-article__panoramas-state">
+          Todavía no hay una visita 360° publicada para este lugar. Cuando exista una panorámica con
+          derechos verificados y aprobación editorial, aparecerá aquí.
+        </p>
+      } @else {
+        <ul class="lugar-article__panoramas-list">
+          @for (panorama of panoramas(); track panorama.id) {
+            <li>
+              <a class="lugar-panorama-card" [routerLink]="['/panoramas', panorama.id]">
+                @if (panorama.thumbnailUrl) {
+                  <img
+                    [src]="panorama.thumbnailUrl"
+                    [alt]="'Miniatura de ' + panorama.title"
+                    loading="lazy"
+                    (error)="onImageError($event)"
+                  />
+                } @else {
+                  <span class="lugar-panorama-card__placeholder" aria-hidden="true">360°</span>
+                }
+                <span class="lugar-panorama-card__body">
+                  <span class="lugar-panorama-card__title">{{ panorama.title }}</span>
+                  <span class="lugar-panorama-card__meta">
+                    @if (panorama.capturedAt) {
+                      Capturada el {{ formatPanoramaDate(panorama.capturedAt) }}
+                    } @else {
+                      Fecha de captura no declarada
+                    }
+                  </span>
+                  <span class="lugar-panorama-card__credits">{{ panorama.credits }}</span>
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
     <div class="lugar-article__layout">
       <div class="lugar-article__story">
         @if (place.historicalStory) {

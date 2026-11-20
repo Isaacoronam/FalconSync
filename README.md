@@ -28,8 +28,11 @@ flowchart LR
 - Catálogo público de lugares y puntos de interés (POI)
 - Mapa interactivo con geolocalización y filtro regional
 - Autenticación con JWT y cookies de refresco
-- Roles de usuario, moderador y administrador
+- Roles de usuario, historiador, inspector y administrador (`moderator` legacy en migración)
 - Gestión administrativa de POI, estados y validaciones
+- Flujo de conservación: reportes, inspecciones, hallazgos, intervenciones y cierre
+- Evidencia privada con hash, autorización por recurso y acceso auditado
+- Visitas 360° con visor WebGL propio, hotspots, fallback y curaduría editorial
 - Check-in por lugar con QR y geocerca
 - Perfil privado con avatar y galería de fotos
 - Insignias por visita y métricas de actividad

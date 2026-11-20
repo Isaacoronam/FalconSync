@@ -94,6 +94,24 @@ export const config = {
     scanRequired: nodeEnv === 'production',
     allowUnscanned: nodeEnv !== 'production',
   },
+  panoramas: {
+    // El original nunca se sirve: se guarda bajo UPLOAD_PRIVATE_DIR. El límite
+    // protege la memoria del proceso antes de decodificar la imagen maestra.
+    maxBytes: toPositiveInteger(
+      process.env.PANORAMA_MAX_BYTES,
+      40 * 1024 * 1024,
+    ),
+    maxPixels: toPositiveInteger(
+      process.env.PANORAMA_MAX_PIXELS,
+      120_000_000,
+    ),
+    derivativeWidth: toPositiveInteger(
+      process.env.PANORAMA_DERIVATIVE_WIDTH,
+      4096,
+    ),
+    thumbnailWidth: 640,
+    minWidth: 1024,
+  },
 };
 
 function isInsideDirectory(parent, child) {

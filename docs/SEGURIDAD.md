@@ -159,7 +159,7 @@ operativa, la purga por retención y el flujo de bloqueo legal.
 | Sin dominio de evidencia | Resuelto parcialmente: backend privado y auditado con 2/2 pruebas | Falta antimalware, cuarentena operativa, purga por retención y bloqueo legal; producción bloquea cargas. |
 | Sin Socket.IO | Confirmada | Implementar ticket y salas server-side. |
 | Sin RAG | Confirmada | Implementar corpus, citas y abstención. |
-| Sin visor 360 | Confirmada | Implementar con derechos y fallback. |
+| Visor 360 y contenido | Resuelto el visor: renderer propio, fallback, API pública/admin y aislamiento de inspección | Falta contenido real con derechos, revisión manual de accesibilidad y medición de rendimiento. |
 | Rol `moderator` legacy sin rutas | Confirmada | Migrar a `historian`; `inspector` ya es asignable. |
 | Gestión de cuentas desde la UI | Resuelto: rol, estado y revocación con reautenticación | Ejecutar la migración de `moderator` y revisar la exportación de datos. |
 | CI remoto no verificado | Confirmada | Primera ejecución autorizada en Fase 0. |
