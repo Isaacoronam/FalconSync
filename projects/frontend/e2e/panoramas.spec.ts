@@ -32,12 +32,21 @@ async function buildEquirectangularImage(): Promise<Buffer> {
     .toBuffer();
 }
 
-test.describe('visita 360°', () => {
+test.describe('visita 360° integrada en CoroMap', () => {
   test.setTimeout(180_000);
 
-  test('crea, aprueba, publica y muestra el panorama en galería y ficha del POI', async ({
+  test('crea, aprueba, publica y muestra la escena desde el mapa y la ficha del POI', async ({
     page,
   }) => {
+    const pageErrors: string[] = [];
+    const leafletPopupErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    page.on('console', (message) => {
+      if (message.type() === 'error' && message.text().includes('layerPointToContainerPoint')) {
+        leafletPopupErrors.push(message.text());
+      }
+    });
+
     const stamp = Date.now();
     const title = `Plaza 360 E2E ${stamp}`;
     const description = `Vista equirectangular de prueba generada para E2E ${stamp}.`;
@@ -73,6 +82,7 @@ test.describe('visita 360°', () => {
 
     await page.getByRole('button', { name: 'Crear panorama' }).click();
     await expect(page).toHaveURL(/\/admin\/panoramas\/[a-f0-9]{24}/);
+    const panoramaId = new URL(page.url()).pathname.split('/').pop()!;
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
     await expect(page.locator('.admin-badge', { hasText: 'Borrador' })).toBeVisible();
 
@@ -94,13 +104,16 @@ test.describe('visita 360°', () => {
     await expect(page.getByText('Panorama publicado.')).toBeVisible();
     await expect(page.locator('.admin-badge', { hasText: 'Publicado' })).toBeVisible();
 
-    // La galería pública y el detalle ofrecen la visita con alternativa fija.
+    // Los enlaces públicos heredados abren la visita dentro del mapa.
     await logout(page);
     await page.goto('/panoramas');
-    await expect(page.getByRole('heading', { name: 'Panoramas del patrimonio' })).toBeVisible();
-    await expect(page.getByText('1 visita publicada')).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator('#coro-map')).toBeVisible();
 
-    await page.getByRole('link', { name: new RegExp(title) }).click();
+    await page.goto(`/panoramas/${panoramaId}`);
+    await expect(page).toHaveURL(new RegExp(`\\?panorama=${panoramaId}$`));
+    await expect(page.locator('.map-stage--tour')).toBeVisible();
+    await expect(page.locator('#coro-map')).toBeVisible();
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
     await expect(page.locator('.panorama-viewer__fallback')).toBeVisible();
 
@@ -111,9 +124,7 @@ test.describe('visita 360°', () => {
 
     if (webglSupported) {
       await page.getByRole('button', { name: 'Activar vista 360°' }).click();
-      await expect(
-        page.getByRole('group', { name: 'Controles de la vista 360°' }),
-      ).toBeVisible();
+      await expect(page.getByRole('group', { name: 'Controles de la vista 360°' })).toBeVisible();
       await page.keyboard.press('ArrowRight');
       await page.getByRole('button', { name: 'Ver imagen fija' }).click();
       await expect(page.getByRole('button', { name: 'Activar vista 360°' })).toBeVisible();
@@ -121,9 +132,44 @@ test.describe('visita 360°', () => {
       await expect(page.getByText('Este navegador no admite WebGL')).toBeVisible();
     }
 
+    const showOnlyMapButton = page.getByRole('button', {
+      name: 'Cerrar visor 360° y mostrar solo el mapa',
+    });
+    await expect(showOnlyMapButton).toHaveText('Ver solo el mapa');
+    await showOnlyMapButton.click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator('.map-stage--tour')).toHaveCount(0);
+
+    await page.locator('.location-card').filter({ hasText: 'Arco de la Federación' }).click();
+    await page.getByRole('button', { name: 'Explorar en 360° junto al mapa' }).click();
+    await expect(
+      page.getByRole('heading', {
+        name: 'Este lugar aún no tiene una escena 360° publicada',
+      }),
+    ).toBeVisible();
+    await expect(page.locator('#coro-map')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Ver ilustración 360° conceptual' })).toHaveCount(
+      0,
+    );
+    await page.getByRole('button', { name: 'Cerrar visor 360° y mostrar solo el mapa' }).click();
+    await expect(page.locator('.map-stage--tour')).toHaveCount(0);
+
+    await page.locator('.location-card').filter({ hasText: 'Catedral de Coro' }).click();
+    await page.getByRole('button', { name: 'Explorar en 360° junto al mapa' }).click();
+    await expect(page).toHaveURL(new RegExp(`\\?panorama=${panoramaId}$`));
+    await expect(page.locator('.map-stage--tour')).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('#coro-map')).toBeVisible();
+    const horizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
     // La ficha del POI descubre la visita publicada.
     await page.goto('/lugares/catedral-de-coro');
     await expect(page.getByRole('heading', { name: 'Panoramas 360°' })).toBeVisible();
     await expect(page.getByRole('link', { name: new RegExp(title) })).toBeVisible();
+    expect(pageErrors).toEqual([]);
+    expect(leafletPopupErrors).toEqual([]);
   });
 });

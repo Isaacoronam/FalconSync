@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-002",
+    "title": "Coro y su puerto, Lista del Patrimonio Mundial n.º 658",
+    "institution": "Centro del Patrimonio Mundial de la UNESCO",
+    "version": "Ficha consultada el 2026-11-21",
+    "retrievedAt": "2026-11-21T00:00:00.000Z",
+    "url": "https://whc.unesco.org/es/list/658/",
+    "level": "A",
+    "sourceLabel": "Oficial UNESCO",
+    "usagePolicy": "final",
+    "indexingPolicy": "short_quotes_only",
+    "verifiedAt": "2026-11-22T00:00:00.000Z",
+    "credibilityNotes": "Ficha oficial. La descripción breve indica CC BY-SA IGO 3.0. La fecha de fundación de la versión española difiere de la inglesa; no se incluyó ese dato. Revisada por el responsable humano del proyecto.",
+    "license": "CC BY-SA IGO 3.0 para la descripción breve.",
+    "rights": "Uso aprobado con atribución visible al sitio oficial de UNESCO. La respuesta debe citar el título y el enlace, sin presentar el asistente como producto de UNESCO.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-22T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "patrimonio mundial",
+      "arquitectura de tierra",
+      "criterios de inscripción"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-002#ficha.inscripcion.01",
+      "ordinal": 0,
+      "section": "Ficha oficial, datos de inscripción",
+      "text": "Coro y su Puerto fueron inscritos en el año 1993. Criterios: (iv)(v). Zona central: 18.4000 Ha. Zona de amortiguación: 186.3000 Ha.",
+      "claimType": "normative",
+      "factKey": "unesco.inscription.year",
+      "factValue": "1993",
+      "assistantScopes": [
+        "tourist",
+        "technical"
+      ],
+      "topics": [
+        "inscripción",
+        "criterios",
+        "delimitación"
+      ],
+      "questions": [
+        "¿En qué año se inscribió Coro en la UNESCO?",
+        "¿Qué criterios cumple Coro y su Puerto?",
+        "¿Está Coro inscrito en la UNESCO?",
+        "¿Cuál es la zona central y la zona de amortiguación de Coro?"
+      ]
+    },
+    {
+      "chunkKey": "S-002#ficha.descripcion.01",
+      "ordinal": 1,
+      "section": "Descripción breve en español",
+      "text": "la ciudad de Coro es el único ejemplo subsistente de una fusión lograda de las técnicas y estilos arquitectónicos autóctonos, mudéjares españoles y holandeses.",
+      "assistantScopes": [
+        "tourist",
+        "technical"
+      ],
+      "topics": [
+        "arquitectura colonial",
+        "arquitectura de tierra",
+        "influencias arquitectónicas"
+      ],
+      "questions": [
+        "¿Qué es Coro?",
+        "¿Qué dice la UNESCO sobre la arquitectura de Coro?",
+        "¿Qué estilos arquitectónicos se mezclan en la ciudad de Coro?"
+      ]
+    }
+  ]
+}

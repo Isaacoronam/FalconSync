@@ -24,6 +24,14 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'guia',
+    title: 'Guía patrimonial | FALCONSYNC',
+    loadComponent: () =>
+      import('./pages/assistant/assistant-chat.component').then(
+        (module) => module.AssistantChatComponent,
+      ),
+  },
+  {
     path: 'lugares/:slug',
     title: 'Historia del lugar | FALCONSYNC',
     loadComponent: () =>
@@ -33,18 +41,15 @@ export const routes: Routes = [
   },
   {
     path: 'panoramas',
-    title: 'Visitas 360° | FALCONSYNC',
-    loadComponent: () =>
-      import('./pages/panoramas/panorama-list/panorama-list.component').then(
-        (module) => module.PanoramaListComponent,
-      ),
+    redirectTo: '',
+    pathMatch: 'full',
   },
   {
     path: 'panoramas/:id',
     title: 'Visita 360° | FALCONSYNC',
     loadComponent: () =>
-      import('./pages/panoramas/panorama-detail/panorama-detail.component').then(
-        (module) => module.PanoramaDetailComponent,
+      import('./pages/panoramas/panorama-map-redirect.component').then(
+        (module) => module.PanoramaMapRedirectComponent,
       ),
   },
   {

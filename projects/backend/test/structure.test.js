@@ -30,12 +30,14 @@ const BACKEND_DIRECTORIES = [
 const API_MODULES = [
   'admin',
   'adventures',
+  'assistant',
   'auth',
   'check-ins',
   'conservation',
   'evidence',
   'locations',
   'panoramas',
+  'sources',
   'uploads',
   'users',
 ];

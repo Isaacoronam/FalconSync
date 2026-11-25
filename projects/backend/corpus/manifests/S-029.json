@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-029",
+    "title": "Museo Diocesano de Coro Lucas Guillermo Castillo — artículo enciclopédico",
+    "institution": "Wikipedia en español",
+    "version": "Artículo consultado el 2026-11-23",
+    "retrievedAt": "2026-11-23T00:00:00.000Z",
+    "verifiedAt": "2026-11-23T00:00:00.000Z",
+    "url": "https://es.wikipedia.org/wiki/Museo_Diocesano_de_Coro_Lucas_Guillermo_Castillo",
+    "level": "D",
+    "sourceLabel": "Externo",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Enciclopedia colaborativa con licencia CC BY-SA 4.0 verificable. Se usan resúmenes propios de hasta 25 palabras con enlace al artículo original; nivel D: el dato debe atribuirse y señalarse como no verificado de forma independiente. Incorporación instruida por el responsable del proyecto el 2026-11-23.",
+    "license": "CC BY-SA 4.0 (texto de Wikipedia en español).",
+    "rights": "Resumen propio con atribución a Wikipedia en español y enlace al artículo. No presentar como fuente oficial ni como verificación independiente.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-23T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "Museo Diocesano",
+      "colecciones",
+      "Coro"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-029#fundacion",
+      "ordinal": 0,
+      "section": "Historia",
+      "claimType": "historical",
+      "text": "El Museo Diocesano de Coro Lucas Guillermo Castillo fue fundado por el monseñor Francisco José Iturriza Guillén en 1946.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Museo Diocesano",
+        "fundación"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Quién fundó el Museo Diocesano de Coro?",
+        "¿Cuándo se fundó el Museo Diocesano?",
+        "¿Quién es Lucas Guillermo Castillo?"
+      ],
+      "checksum": "C801F7E72F99CA84FEF60FC41431F95D00850103D455163E69B6EA72C7EA97DA"
+    },
+    {
+      "chunkKey": "S-029#sede-convento",
+      "ordinal": 1,
+      "section": "Ubicación",
+      "claimType": "context",
+      "text": "Está ubicado en el antiguo convento franciscano de Nuestra Señora de la Salceda, junto a la Iglesia de San Francisco.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Museo Diocesano",
+        "ubicación"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Dónde está el Museo Diocesano de Coro?",
+        "¿En qué convento está el Museo Diocesano?",
+        "¿Dónde queda el Museo Diocesano respecto a San Francisco?"
+      ],
+      "checksum": "785CC82493D2631F3FE134CF0BA145DB64D4796AF3F2357129B244E34CC1E2A8"
+    },
+    {
+      "chunkKey": "S-029#historia-sedes",
+      "ordinal": 2,
+      "section": "Historia",
+      "claimType": "historical",
+      "text": "El museo se mudó a la casa donada por Ana Arcaya de Faría y en 1982 recibió el convento de la Salceda en comodato.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Museo Diocesano",
+        "sedes"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Dónde estuvo el Museo Diocesano antes?",
+        "¿Cuál es la historia del Museo Diocesano?",
+        "¿Qué fue el convento de la Salceda?"
+      ],
+      "checksum": "6C4426170647799AEC998A3F76CFB284169A405B7974ED410638A799C11514C9"
+    },
+    {
+      "chunkKey": "S-029#salas-orfejeria",
+      "ordinal": 3,
+      "section": "Distribución",
+      "claimType": "historical",
+      "text": "Las salas 1 y 2 exhiben orfebrería de los siglos XVII al XIX.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "colecciones",
+        "orfebrería"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué tiene el Museo Diocesano en la sala 1?",
+        "¿Qué piezas de orfebrería se exhiben?",
+        "¿Qué se ve en el Museo Diocesano?"
+      ],
+      "checksum": "A9C09EADEB63178822BC4DF2889FDE4BFB83289F1E5E0F4C02491E8C99979FE3"
+    },
+    {
+      "chunkKey": "S-029#salas-tallas",
+      "ordinal": 4,
+      "section": "Distribución",
+      "claimType": "historical",
+      "text": "Las salas 4 y 5 presentan tallas europeas, y las 10 y 11 tallas y tablas populares.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "colecciones",
+        "tallas"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué tallas tiene el Museo Diocesano?",
+        "¿Qué se exhibe en las salas 4 y 5 del Museo Diocesano?",
+        "¿Qué son las tablas populares del museo?"
+      ],
+      "checksum": "8D2893F41C1F77FAAD3744EE5BD47A467E7392B3CD3899D588ABFAD86DA93CC3"
+    },
+    {
+      "chunkKey": "S-029#salas-cristaleria",
+      "ordinal": 5,
+      "section": "Distribución",
+      "claimType": "historical",
+      "text": "Las salas 7 a 9 muestran cristalería de vidrio y loza, junto a piezas líticas prehispánicas.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "colecciones",
+        "cristalería"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué cristalería tiene el Museo Diocesano?",
+        "¿Qué piezas prehispánicas hay en el museo?",
+        "¿Qué se ve en las salas 7 a 9?"
+      ],
+      "checksum": "C6D0B83DD1AA456CAC9745C8BACEB86F5258BEE3302F767C24D6B0CF2BDE0EB1"
+    },
+    {
+      "chunkKey": "S-029#salas-mobiliario",
+      "ordinal": 6,
+      "section": "Distribución",
+      "claimType": "historical",
+      "text": "Las salas 12 y 13 recrean aposentos con muebles, pinturas y lámparas de la época colonial; la sala 15 exhibe mobiliario eclesiástico.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "colecciones",
+        "mobiliario"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué hay en las salas 12 y 13 del Museo Diocesano?",
+        "¿Qué muebles coloniales se exhiben?",
+        "¿Qué es el mobiliario eclesiástico del museo?"
+      ],
+      "checksum": "3AE56B10C6A57083973A68D52DC714DD69D0525A8AC56296DB74C558041B276E"
+    },
+    {
+      "chunkKey": "S-029#sede-1992",
+      "ordinal": 7,
+      "section": "Historia",
+      "claimType": "historical",
+      "text": "El Banco de Venezuela donó una caja fuerte para las joyas; en 1992 se inauguró la sede actual con salas de la colección Alberto Henríquez.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Museo Diocesano",
+        "colecciones"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuándo se inauguró la sede actual del Museo Diocesano?",
+        "¿Qué colección tiene el museo?",
+        "¿Qué donó el Banco de Venezuela al museo?"
+      ],
+      "checksum": "E53A35E90BA85864D31F656BCC5AB92DB465F58687E7A0B64F879FF3A810C263"
+    }
+  ]
+}

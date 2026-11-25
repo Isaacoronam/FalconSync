@@ -1,0 +1,394 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-026",
+    "title": "Coro (Venezuela) — artículo enciclopédico",
+    "institution": "Wikipedia en español",
+    "version": "Artículo consultado el 2026-11-23",
+    "retrievedAt": "2026-11-23T00:00:00.000Z",
+    "verifiedAt": "2026-11-23T00:00:00.000Z",
+    "url": "https://es.wikipedia.org/wiki/Coro_(Venezuela)",
+    "level": "D",
+    "sourceLabel": "Externo",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Enciclopedia colaborativa con licencia CC BY-SA 4.0 verificable. Se usan resúmenes propios de hasta 25 palabras con enlace al artículo original; nivel D: el dato debe atribuirse y señalarse como no verificado de forma independiente. Incorporación instruida por el responsable del proyecto el 2026-11-23.",
+    "license": "CC BY-SA 4.0 (texto de Wikipedia en español).",
+    "rights": "Resumen propio con atribución a Wikipedia en español y enlace al artículo. No presentar como fuente oficial ni como verificación independiente.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-23T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "Coro",
+      "transporte",
+      "arquitectura",
+      "fiestas",
+      "gastronomía"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-026#transporte-troncales",
+      "ordinal": 0,
+      "section": "Transporte",
+      "claimType": "tourism",
+      "text": "Coro se comunica por la Troncal 3, que cruza el estado Falcón, y la Troncal 4, que enlaza Punto Fijo con Barquisimeto y Acarigua.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "transporte",
+        "carreteras"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo llego en carro a Coro?",
+        "¿Qué carreteras llegan a Coro?",
+        "¿Por dónde se entra a Coro?"
+      ],
+      "checksum": "08F8E53D6273C17A869ED93DD24C61ECFD4A25C9260F1AB9EF138ED22A888044"
+    },
+    {
+      "chunkKey": "S-026#transporte-aeropuerto-puerto",
+      "ordinal": 1,
+      "section": "Transporte",
+      "claimType": "tourism",
+      "text": "Coro tiene el Aeropuerto José Leonardo Chirino, con vuelos a Caracas, y el Puerto de Muaco, a unos 17 kilómetros de La Vela.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "transporte",
+        "aeropuerto",
+        "puerto"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Hay aeropuerto en Coro?",
+        "¿Desde dónde vuelan a Coro?",
+        "¿Dónde queda el puerto de Muaco?"
+      ],
+      "checksum": "5DEE3E2C56054DA5FD813D89BDFD7C6BE85E62D51BDD1A03E39858E8C6C0694C"
+    },
+    {
+      "chunkKey": "S-026#transporte-intercomunal",
+      "ordinal": 2,
+      "section": "Transporte",
+      "claimType": "tourism",
+      "text": "La avenida Intercomunal Coro–La Vela enlaza ambas ciudades; el transporte urbano usa autobuses, busetas y carros por puestos.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "transporte",
+        "La Vela"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo llego de Coro a La Vela?",
+        "¿Hay transporte entre Coro y La Vela?",
+        "¿Hay autobús de Coro a La Vela?"
+      ],
+      "checksum": "149E6797A701775AC83D91462B8665E65DB47DA2F0B7C7A5A9778380153F8DE4"
+    },
+    {
+      "chunkKey": "S-026#casco-colonial",
+      "ordinal": 3,
+      "section": "Monumentos y sitios de interés turístico",
+      "claimType": "tourism",
+      "text": "El casco colonial de Coro conserva un paisaje urbano de los siglos XVIII y XIX, con calles empedradas y edificios históricos.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "casco histórico",
+        "arquitectura"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es el casco histórico de Coro?",
+        "¿Cómo es el casco colonial de Coro?",
+        "¿Qué calles tiene el centro de Coro?"
+      ],
+      "checksum": "D7FF5D477E28D55B04DC559DCBD1D9A9D0D8E688E864439307FD3EAF4D828AF3"
+    },
+    {
+      "chunkKey": "S-026#estilos-arquitectonicos",
+      "ordinal": 4,
+      "section": "Monumentos y sitios de interés turístico",
+      "claimType": "historical",
+      "text": "La arquitectura coriana combina el estilo español mudéjar con la influencia holandesa, traída desde la colonia de Curazao.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "arquitectura",
+        "estilos"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué estilos arquitectónicos tiene Coro?",
+        "¿Por qué hay casas con influencia holandesa en Coro?",
+        "¿Qué es la arquitectura mudéjar?"
+      ],
+      "checksum": "8BCAE0EF6C9B618069CA72C2C82AAE18D209E6E207C874150975FADF66E38651"
+    },
+    {
+      "chunkKey": "S-026#tecnicas-tierra",
+      "ordinal": 5,
+      "section": "Monumentos y sitios de interés turístico",
+      "claimType": "historical",
+      "text": "Las edificaciones tradicionales corianas se construyeron con técnicas de tierra: adobe y bahareque, tierra reforzada con estructura vegetal.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "adobe",
+        "bahareque",
+        "técnicas de tierra"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿De qué están hechas las casas de Coro?",
+        "¿Qué es el bahareque?",
+        "¿Por qué las casas de Coro son de barro?"
+      ],
+      "checksum": "CDA3FC321B874DF4349A3159B81D2D093B76E28AFCB8F61F9E526B0451C5EDC4"
+    },
+    {
+      "chunkKey": "S-026#medanos",
+      "ordinal": 6,
+      "section": "Monumentos y sitios de interés turístico",
+      "claimType": "tourism",
+      "text": "Al extremo norte de Coro se encuentran los Médanos, el conjunto de dunas más extenso y visitado de Venezuela.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Médanos",
+        "atractivo natural"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué son los Médanos de Coro?",
+        "¿Dónde están los Médanos?",
+        "¿Qué atractivos naturales tiene Coro?"
+      ],
+      "checksum": "45F39D7537D69C1993C1BB608E35C920B3712FE65A06EF03EC2D7734CFA9E56D"
+    },
+    {
+      "chunkKey": "S-026#ventanas-de-hierro",
+      "ordinal": 7,
+      "section": "Casas Coloniales",
+      "claimType": "historical",
+      "text": "La Casa de las Ventanas de Hierro se erigió en el siglo XVII por José Francisco Garcés de la Colina, con hierro forjado de Sevilla.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Casa de las Ventanas de Hierro",
+        "arquitectura"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Quién construyó la Casa de las Ventanas de Hierro?",
+        "¿Por qué se llama Ventanas de Hierro?",
+        "¿Qué antigüedad tiene la Casa de las Ventanas de Hierro?"
+      ],
+      "checksum": "05246B2DEAD2E13D6A7C343F25A2E9C3F859D7A303F4E0FE4E8FF97AD240EBA3"
+    },
+    {
+      "chunkKey": "S-026#balcon-arcaya",
+      "ordinal": 8,
+      "section": "Casas Coloniales",
+      "claimType": "historical",
+      "text": "El Balcón de los Arcaya se estima construido en 1725; la familia Arcaya lo posee desde mediados del siglo XIX.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Balcón de los Arcaya",
+        "arquitectura"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuándo se construyó el Balcón de los Arcaya?",
+        "¿Quién fue la familia Arcaya?",
+        "¿Qué es el Balcón de los Arcaya?"
+      ],
+      "checksum": "A2428858F837BF387A060639EC58E9686B92FAA6F73648D1A93227B06E7063AF"
+    },
+    {
+      "chunkKey": "S-026#museo-cruxent",
+      "ordinal": 9,
+      "section": "Casas Coloniales",
+      "claimType": "historical",
+      "text": "El Balcón de los Arcaya es sede del Museo José María Cruxent, con colecciones arqueológicas, antropológicas y paleontológicas.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Museo José María Cruxent",
+        "colecciones"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué museo hay en el Balcón de los Arcaya?",
+        "¿Qué se exhibe en el Balcón de los Arcaya?",
+        "¿Quién fue José María Cruxent?"
+      ],
+      "checksum": "4341F7E4E60F2FBA325093A40927BE497A9D9FA738B338E864DB932A9D5945B2"
+    },
+    {
+      "chunkKey": "S-026#fiestas-civicas",
+      "ordinal": 10,
+      "section": "Fiestas locales",
+      "claimType": "tradition",
+      "text": "Las fiestas de Coro incluyen el día del comerciante (2 de enero), la Federación (20 de febrero) y Santa Ana (26 de julio).",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "fiestas",
+        "tradición"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué fiestas celebra Coro?",
+        "¿Cuándo es la fiesta de Santa Ana de Coro?",
+        "¿Qué ferias hay en Coro?"
+      ],
+      "checksum": "F132B692483BC667B892B89849CA90FFCC7FB4BC0EB1E8EF78FB25AFACF44192"
+    },
+    {
+      "chunkKey": "S-026#feria-medanos",
+      "ordinal": 11,
+      "section": "Fiestas locales",
+      "claimType": "tradition",
+      "text": "La feria de los Médanos y el repique del tambor coriano se celebran cada 30 de noviembre para dar la bienvenida a la navidad.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "fiestas",
+        "feria de los Médanos"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es la feria de los Médanos?",
+        "¿Qué celebra el repique del tambor coriano?",
+        "¿Qué se hace el 30 de noviembre en Coro?"
+      ],
+      "checksum": "D0BBF1F9424764C0B2687B0450B47C44D08D71A35A721670DA758FD88363865D"
+    },
+    {
+      "chunkKey": "S-026#teatro-armonia",
+      "ordinal": 12,
+      "section": "Teatro Armonía",
+      "claimType": "historical",
+      "text": "El Teatro Armonía se inauguró el 5 de diciembre de 1891 con estilo republicano; el incendio de 1945 lo destruyó y fue reconstruido.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Teatro Armonía",
+        "arquitectura"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuándo se construyó el Teatro Armonía?",
+        "¿Qué le pasó al Teatro Armonía?",
+        "¿Qué es el Teatro Armonía de Coro?"
+      ],
+      "checksum": "031E16EBCE7FC20919BB649DD38A809426BAFFFF044E37869848928263AAD323"
+    },
+    {
+      "chunkKey": "S-026#bandera-coriana",
+      "ordinal": 13,
+      "section": "Bandera",
+      "claimType": "historical",
+      "text": "La bandera de Coro tiene tres franjas: amarilla por los Médanos, azul por el golfete y verde por la Sierra de Coro.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "bandera de Coro",
+        "símbolos"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué significa la bandera de Coro?",
+        "¿Qué colores tiene la bandera de Coro?",
+        "¿Qué representan las franjas de la bandera de Coro?"
+      ],
+      "checksum": "A05B272DF74F176BB409A9CCBD62469A5DE5E36AB62040353FB37D483B9B3B9A"
+    },
+    {
+      "chunkKey": "S-026#gastronomia-platos",
+      "ordinal": 14,
+      "section": "Gastronomía",
+      "claimType": "tradition",
+      "text": "Los platos típicos de Coro incluyen el chivo en coco, el talkarí de chivo, el escabeche, el celse coriano y la arepa pelada.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "gastronomía",
+        "platos típicos"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué platos típicos tiene Coro?",
+        "¿Qué comida típica debo probar en Coro?",
+        "¿Qué es el chivo en coco?"
+      ],
+      "checksum": "084CAADF7B1B5E517B0BCD31631318DA2D96AB3ABB00E1C8FDE114E7661382E5"
+    },
+    {
+      "chunkKey": "S-026#gastronomia-dulces",
+      "ordinal": 15,
+      "section": "Gastronomía",
+      "claimType": "tradition",
+      "text": "Entre los dulces típicos de Coro están el queso de cabra, el suero, el debudeque, el mancarrón y el dulce de leche.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "gastronomía",
+        "dulces típicos"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué dulces típicos tiene Coro?",
+        "¿Qué dulce típico debo llevar de Coro?",
+        "¿Qué es el dulce de leche de Coro?"
+      ],
+      "checksum": "0F5A556F2615A00175E0F35482C857C05478D6155F1058365A0F3EE55DD8AB16"
+    },
+    {
+      "chunkKey": "S-026#gastronomia-bebidas",
+      "ordinal": 16,
+      "section": "Gastronomía",
+      "claimType": "tradition",
+      "text": "También son típicos la leche de burra, el papelón con limón, el cocuy blanco y la chicha.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "gastronomía",
+        "bebidas típicas"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué bebidas típicas tiene Coro?",
+        "¿Qué es el cocuy blanco?",
+        "¿Qué beben en Coro?"
+      ],
+      "checksum": "4CFB7727EE9221A924DF465FE0BD2A34F5DA61EE2E0659793751A8C4F389FE8D"
+    }
+  ]
+}

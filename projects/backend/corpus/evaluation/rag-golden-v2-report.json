@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 2,
+  "dataset": "corpus/evaluation/rag-golden-v2.json",
+  "datasetName": "Conjunto dorado RAG v2 (guía turística con búsqueda semántica)",
+  "executedAt": "2026-11-25T03:26:35.864Z",
+  "corpusVersion": "2026-11-22.1",
+  "embeddingModel": "Xenova/paraphrase-multilingual-MiniLM-L12-v2@q8",
+  "minSimilarity": 0.6,
+  "database": "falconsync_rag_eval",
+  "evaluationStatuses": [
+    "active",
+    "draft"
+  ],
+  "warmupMs": 123,
+  "sampleSize": 59,
+  "corpus": {
+    "ingested": [
+      {
+        "sourceId": "S-002",
+        "status": "active",
+        "usagePolicy": "final",
+        "level": "A",
+        "chunkCount": 2,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-003",
+        "status": "active",
+        "usagePolicy": "final",
+        "level": "A",
+        "chunkCount": 1,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-020",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 23,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-021",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 23,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-022",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 7,
+        "declaredAsDraft": false
+      }
+    ],
+    "excluded": [
+      {
+        "sourceId": "S-005",
+        "reason": "Borrador sin casos en el conjunto dorado v2; sigue sin aprobar."
+      },
+      {
+        "sourceId": "S-023",
+        "reason": "Su manifiesto exige que el POI cataratas-de-hueque esté publicado y el POI sigue en borrador."
+      }
+    ],
+    "declaredAsDraft": [],
+    "note": "S-021 y S-022 fueron aprobadas por el responsable del proyecto el 2026-11-23 y ya responden en producción; S-024 a S-029 son fuentes externas de niveles C y D incorporadas en la expansión del corpus (resúmenes propios con atribución y enlace); S-030 y S-031 aportan horarios publicados por el museo y la catedral, y el resto de lugares responde «Sin horarios confirmados»."
+  },
+  "corpusVerification": {
+    "ok": true,
+    "documentCount": 5,
+    "chunkCount": 56,
+    "problems": []
+  },
+  "targets": {
+    "poiAccuracy": 0.9,
+    "clarificationAccuracy": 0.5,
+    "abstentionAccuracy": 0.9,
+    "sourceHit": 0.9,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "latencyP95Ms": 1500
+  },
+  "metrics": {
+    "poiAccuracy": 1,
+    "clarificationAccuracy": 1,
+    "abstentionAccuracy": 1,
+    "sourceHit": 1,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "invalidCitations": 0,
+    "latencyP50Ms": 28,
+    "latencyP95Ms": 41
+  },
+  "unmetTargets": [],
+  "categoryBreakdown": {
+    "adversarial": {
+      "total": 3,
+      "passed": 3
+    },
+    "ambiguity": {
+      "total": 2,
+      "passed": 2
+    },
+    "follow_up": {
+      "total": 3,
+      "passed": 3
+    },
+    "heritage": {
+      "total": 6,
+      "passed": 6
+    },
+    "hueque_unpublished": {
+      "total": 1,
+      "passed": 1
+    },
+    "multi_source": {
+      "total": 1,
+      "passed": 1
+    },
+    "out_of_scope": {
+      "total": 9,
+      "passed": 9
+    },
+    "poi_detail": {
+      "total": 2,
+      "passed": 2
+    },
+    "poi_overview": {
+      "total": 23,
+      "passed": 23
+    },
+    "poi_paraphrase": {
+      "total": 2,
+      "passed": 2
+    },
+    "product": {
+      "total": 7,
+      "passed": 7
+    }
+  },
+  "failures": [],
+  "sourceMisses": []
+}

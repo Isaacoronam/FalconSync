@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-020",
+    "title": "POI publicados en FALCONSYNC (captura del seed)",
+    "institution": "Proyecto FALCONSYNC",
+    "version": "locations[] de feature/visita-360; captura 2026-11-21",
+    "retrievedAt": "2026-11-21T00:00:00.000Z",
+    "url": "https://github.com/Isaacoronam/FalconSync/blob/feature/visita-360/projects/backend/seeders/seedLocations.js",
+    "level": "C",
+    "sourceLabel": "No verificado",
+    "usagePolicy": "context",
+    "indexingPolicy": "full_text",
+    "credibilityNotes": "Instantánea de los datos publicados por el seed del proyecto; acredita lo que registra FALCONSYNC, no la realidad actual ni una fuente independiente. No prueba horarios, acceso, estado de conservación ni designación patrimonial.",
+    "verifiedAt": "2026-11-22T00:00:00.000Z",
+    "license": "Contenido interno de FALCONSYNC; atribución al propio sistema.",
+    "rights": "Uso aprobado como contexto interno del proyecto. Debe atribuirse a FALCONSYNC y nunca presentarse como fuente independiente UNESCO.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-22T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "POI publicados",
+      "orientación turística",
+      "datos del sistema"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-020#poi.catedral-de-coro",
+      "ordinal": 0,
+      "section": "Catedral de Coro",
+      "text": "FALCONSYNC registra Catedral de Coro como POI publicado. Su categoría registrada es religiosa y su circuito es Casco histórico. La dirección registrada para Catedral de Coro es frente a la Plaza Bolívar, casco histórico de Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["catedral-de-coro"]
+    },
+    {
+      "chunkKey": "S-020#poi.casa-de-las-ventanas-de-hierro",
+      "ordinal": 1,
+      "section": "Casa de las Ventanas de Hierro",
+      "text": "FALCONSYNC registra la Casa de las Ventanas de Hierro como POI publicado. Su categoría registrada es arquitectura y su circuito es Casco histórico. La dirección registrada para la Casa de las Ventanas de Hierro es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["casa-de-las-ventanas-de-hierro"]
+    },
+    {
+      "chunkKey": "S-020#poi.casa-del-sol",
+      "ordinal": 2,
+      "section": "Casa del Sol",
+      "text": "FALCONSYNC registra la Casa del Sol como POI publicado. Su categoría registrada es arquitectura y su circuito es Casco histórico. La dirección registrada para la Casa del Sol es esquina de Zamora y Federación, casco histórico de Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["casa-del-sol"]
+    },
+    {
+      "chunkKey": "S-020#poi.arco-de-la-federacion",
+      "ordinal": 3,
+      "section": "Arco de la Federación",
+      "text": "FALCONSYNC registra el Arco de la Federación como POI publicado. Su categoría es monumento y sus circuitos son Casco histórico y Espacios urbanos. La dirección registrada para el Arco de la Federación es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["arco-de-la-federacion"]
+    },
+    {
+      "chunkKey": "S-020#poi.medanos-de-coro",
+      "ordinal": 4,
+      "section": "Médanos de Coro",
+      "text": "FALCONSYNC registra Médanos de Coro como POI publicado. Su categoría registrada es naturaleza y su circuito es Naturaleza y miradores. La dirección registrada para Médanos de Coro es Parque Nacional Médanos de Coro, al norte de la ciudad.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["medanos-de-coro"]
+    },
+    {
+      "chunkKey": "S-020#poi.parque-nacional-medanos-de-coro",
+      "ordinal": 5,
+      "section": "Parque Nacional Médanos de Coro",
+      "text": "FALCONSYNC registra el Parque Nacional Médanos de Coro como POI publicado. Su categoría registrada es naturaleza y su circuito es Naturaleza y miradores. La dirección registrada para el parque es Antigua Carretera, junto al par vial Coro–Punto Fijo, estado Falcón.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["parque-nacional-medanos-de-coro"]
+    },
+    {
+      "chunkKey": "S-020#poi.plaza-bolivar-de-coro",
+      "ordinal": 6,
+      "section": "Plaza Bolívar de Coro",
+      "text": "FALCONSYNC registra la Plaza Bolívar de Coro como POI publicado. Su categoría es urbana y sus circuitos son Casco histórico y Espacios urbanos. La dirección registrada para la Plaza Bolívar de Coro es casco histórico de Coro, frente a la Catedral.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["plaza-bolivar-de-coro"]
+    },
+    {
+      "chunkKey": "S-020#poi.iglesia-de-san-francisco",
+      "ordinal": 7,
+      "section": "Iglesia de San Francisco",
+      "text": "FALCONSYNC registra la Iglesia de San Francisco como POI publicado. Su categoría registrada es religiosa y su circuito es Casco histórico. La dirección registrada para la Iglesia de San Francisco es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["iglesia-de-san-francisco"]
+    },
+    {
+      "chunkKey": "S-020#poi.iglesia-de-san-clemente",
+      "ordinal": 8,
+      "section": "Iglesia de San Clemente",
+      "text": "FALCONSYNC registra la Iglesia de San Clemente como POI publicado. Su categoría registrada es religiosa y su circuito es Casco histórico. La dirección registrada para la Iglesia de San Clemente es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["iglesia-de-san-clemente"]
+    },
+    {
+      "chunkKey": "S-020#poi.cruz-de-san-clemente",
+      "ordinal": 9,
+      "section": "Cruz de San Clemente",
+      "text": "FALCONSYNC registra la Cruz de San Clemente como POI publicado. Su categoría registrada es monumento y su circuito es Casco histórico. La dirección registrada para la Cruz de San Clemente es entorno de la Iglesia de San Clemente, casco histórico de Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["cruz-de-san-clemente"]
+    },
+    {
+      "chunkKey": "S-020#poi.casa-balcon-de-los-arcaya",
+      "ordinal": 10,
+      "section": "Casa Balcón de los Arcaya",
+      "text": "FALCONSYNC registra la Casa Balcón de los Arcaya como POI publicado. Su categoría registrada es arquitectura y su circuito es Casco histórico. La dirección registrada para la Casa Balcón de los Arcaya es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["casa-balcon-de-los-arcaya"]
+    },
+    {
+      "chunkKey": "S-020#poi.museo-de-arte-de-coro",
+      "ordinal": 11,
+      "section": "Museo de Arte de Coro",
+      "text": "FALCONSYNC registra el Museo de Arte de Coro como POI publicado. Su categoría es museo y sus circuitos son Casco histórico y Museos. La dirección registrada para el Museo de Arte de Coro es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["museo-de-arte-de-coro"]
+    },
+    {
+      "chunkKey": "S-020#poi.museo-alberto-henriquez",
+      "ordinal": 12,
+      "section": "Museo Alberto Henríquez",
+      "text": "FALCONSYNC registra el Museo Alberto Henríquez como POI publicado. Su categoría es museo y sus circuitos son Casco histórico y Museos. La dirección registrada para el Museo Alberto Henríquez es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["museo-alberto-henriquez"]
+    },
+    {
+      "chunkKey": "S-020#poi.museo-guadalupano",
+      "ordinal": 13,
+      "section": "Museo Guadalupano",
+      "text": "FALCONSYNC registra el Museo Guadalupano como POI publicado. Su categoría es museo y sus circuitos son Casco histórico y Museos. La dirección registrada para el Museo Guadalupano es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["museo-guadalupano"]
+    },
+    {
+      "chunkKey": "S-020#poi.museo-diocesano",
+      "ordinal": 14,
+      "section": "Museo Diocesano",
+      "text": "FALCONSYNC registra el Museo Diocesano como POI publicado. Su categoría es museo y sus circuitos son Casco histórico y Museos. La dirección registrada para el Museo Diocesano es casco histórico de Coro, municipio Miranda; el seed no confirma apertura.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística", "estado no confirmado"],
+      "poiSlugs": ["museo-diocesano"]
+    },
+    {
+      "chunkKey": "S-020#poi.monumento-de-las-madres",
+      "ordinal": 15,
+      "section": "Monumento de las Madres",
+      "text": "FALCONSYNC registra el Monumento de las Madres como POI publicado. Su categoría registrada es monumento y su circuito es Espacios urbanos. La dirección registrada para el Monumento de las Madres es Paseo Monseñor Iturriza, Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["monumento-de-las-madres"]
+    },
+    {
+      "chunkKey": "S-020#poi.teatro-armonia",
+      "ordinal": 16,
+      "section": "Teatro Armonía",
+      "text": "FALCONSYNC registra el Teatro Armonía como POI publicado. Su categoría es urbana y sus circuitos son Casco histórico y Espacios urbanos. La dirección registrada para el Teatro Armonía es casco histórico de Coro, municipio Miranda.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["teatro-armonia"]
+    },
+    {
+      "chunkKey": "S-020#poi.heladeria-el-sol",
+      "ordinal": 17,
+      "section": "Gelatería El Sol",
+      "text": "FALCONSYNC registra la Gelatería El Sol como POI publicado. Su categoría es comercio y sus circuitos son Casco histórico y Comercio y servicios. La dirección registrada para la Gelatería El Sol es calle El Sol, entre Comercio y Ampíes, Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["heladeria-el-sol"]
+    },
+    {
+      "chunkKey": "S-020#poi.paseo-independencia",
+      "ordinal": 18,
+      "section": "Paseo Independencia",
+      "text": "FALCONSYNC registra el Paseo Independencia como POI publicado. Su categoría registrada es urbana y su circuito es Espacios urbanos. La dirección registrada para el Paseo Independencia es Paseo Independencia, Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["paseo-independencia"]
+    },
+    {
+      "chunkKey": "S-020#poi.casa-museo-locos-de-la-vela",
+      "ordinal": 19,
+      "section": "Casa Museo Locos de la Vela",
+      "text": "FALCONSYNC registra la Casa Museo Locos de la Vela como POI publicado. Su categoría es museo y sus circuitos son La Vela y Museos. La dirección registrada para la Casa Museo Locos de la Vela es La Vela de Coro, municipio Colina.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["casa-museo-locos-de-la-vela"]
+    },
+    {
+      "chunkKey": "S-020#poi.mirador-ali-primera",
+      "ordinal": 20,
+      "section": "Mirador Alí Primera",
+      "text": "FALCONSYNC registra el Mirador Alí Primera como POI publicado. Su categoría registrada es mirador y su circuito es Naturaleza y miradores. La dirección registrada para el Mirador Alí Primera es Mirador Alí Primera, Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["mirador-ali-primera"]
+    },
+    {
+      "chunkKey": "S-020#poi.ciudad-deportiva",
+      "ordinal": 21,
+      "section": "Ciudad Deportiva",
+      "text": "FALCONSYNC registra Ciudad Deportiva como POI publicado. Su categoría es servicios y sus circuitos son Espacios urbanos y Comercio y servicios. La dirección registrada para Ciudad Deportiva es Ciudad Deportiva Universitaria, Coro.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["ciudad-deportiva"]
+    },
+    {
+      "chunkKey": "S-020#poi.plaza-antillana",
+      "ordinal": 22,
+      "section": "Plaza Antillana",
+      "text": "FALCONSYNC registra la Plaza Antillana como POI publicado. Su categoría es urbana y sus circuitos son La Vela y Espacios urbanos. La dirección registrada para la Plaza Antillana es La Vela de Coro, municipio Colina.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["plaza-antillana"]
+    }
+  ]
+}

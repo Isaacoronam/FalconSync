@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-024",
+    "title": "Arquitectura con barro — Arq. Gonzalo Vélez J. (Venezuela)",
+    "institution": "Apuntes, Revista Digital de Arquitectura",
+    "version": "Artículo del 18 de agosto de 2010; consultado el 2026-11-23",
+    "retrievedAt": "2026-11-23T00:00:00.000Z",
+    "verifiedAt": "2026-11-23T00:00:00.000Z",
+    "url": "https://apuntesdearquitecturadigital.blogspot.com/2010/08/arquitectura-con-barro-arq-gonzalo.html",
+    "level": "C",
+    "sourceLabel": "Referencia",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Portal especializado con autoría identificada (Arq. Gonzalo Vélez J., Venezuela) y bibliografía citada en el propio artículo. Sin licencia abierta declarada: uso limitado a citas breves (<=25 palabras) con atribución y enlace. Nivel C por autoría y fuentes citadas; nunca estado de conservación. Incorporación instruida por el responsable del proyecto el 2026-11-23; identidad, autor, URL y fecha de consulta verificados.",
+    "license": "Sin licencia abierta declarada; uso como referencia con cita breve, atribución al autor y enlace al original.",
+    "rights": "Incorporado por instrucción del responsable del proyecto (2026-11-23) para la guía turística. Citas breves (<=25 palabras) con atribución a Arq. Gonzalo Vélez J. y enlace. Uso educativo y no comercial; no se presenta como fuente oficial ni como norma de obra.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-23T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "adobe",
+      "tapia",
+      "bahareque",
+      "sistemas de tierra"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-024#definicion-adobe",
+      "ordinal": 0,
+      "section": "A- Técnicas de construcción en adobe",
+      "text": "El adobe es un ladrillo hecho con barro que tiene, tradicionalmente, unos 25 x 35 x 10 cms.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["adobe", "definición"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es el adobe?",
+        "¿Cómo se define un adobe?",
+        "¿Qué dimensiones tiene un adobe tradicional?",
+        "¿Qué es un ladrillo de barro?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#mezcla-adobe",
+      "ordinal": 1,
+      "section": "A- Técnicas de construcción en adobe",
+      "text": "La mezcla ideal contiene un 20% de arcilla y un 80% de arena.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["adobe", "mezcla"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué proporción tiene la mezcla de adobe?",
+        "¿Cuánta arena y arcilla lleva el adobe?",
+        "¿Cómo se prepara la mezcla del adobe?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#curado-adobe",
+      "ordinal": 2,
+      "section": "A- Técnicas de construcción en adobe",
+      "text": "La cura completa toma unos 30 días. Para ese momento el ladrillo es ya tan fuerte como el cemento.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["adobe", "secado"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuánto tarda en curar un adobe?",
+        "¿Cuánto tiempo se seca un adobe al sol?",
+        "¿Cuándo está listo un adobe para usar?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#produccion-adobe",
+      "ordinal": 3,
+      "section": "A- Técnicas de construcción en adobe",
+      "text": "Utilizando dos o tres operadores en el uso de esta tecnología puede alcanzarse una producción diaria de entre 300 y 500 ladrillos de adobe.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["adobe", "producción"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuántos adobes se hacen por día?",
+        "¿Qué rendimiento tiene la fabricación de adobes?",
+        "¿Cuántos ladrillos de barro produce un equipo al día?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#tapia-espana",
+      "ordinal": 4,
+      "section": "B- Tierra comprimida, apisonada o prensada. Tapia",
+      "text": "En España se conoce y utiliza desde hace siglos la tecnología de tierra apisonada bajo la denominación de tapia.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["tapia", "tierra apisonada"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es la tapia?",
+        "¿Qué es la tierra apisonada?",
+        "¿Cómo se llama la tierra apisonada en España?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#tipos-tapia",
+      "ordinal": 5,
+      "section": "B- Tierra comprimida, apisonada o prensada. Tapia",
+      "text": "La tapia real incorpora cal mezclada con barro y la tapia común se basa únicamente en barro.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["tapia", "tipos"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué tipos de tapia existen?",
+        "¿Qué diferencia hay entre tapia real y tapia común?",
+        "¿Qué lleva la tapia real?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#bahareque",
+      "ordinal": 6,
+      "section": "5- Características del barro como material de construcción",
+      "text": "El bahareque o bajareque es barro aplicado sobre una estructura de caña, usado en las áreas tropicales caribeñas.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["bahareque", "sistemas de tierra"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es el bahareque?",
+        "¿Cómo se construye un bahareque?",
+        "¿Qué es el bajareque?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#ventajas-barro",
+      "ordinal": 7,
+      "section": "5- Características del barro como material de construcción",
+      "text": "El barro es abundante, económico y reciclable, excelente para regular el control de las variaciones de la temperatura ambiental en una habitación.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["barro", "ventajas"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué ventajas tiene el barro como material?",
+        "¿Por qué conviene construir con barro?",
+        "¿Qué propiedades térmicas tiene el barro?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#aislamiento-barro",
+      "ordinal": 8,
+      "section": "5- Características del barro como material de construcción",
+      "text": "Mezclado con fibra provee aislamiento acústico y térmico, absorbe olores y no es atacado por el fuego.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["barro", "aislamiento"],
+      "poiSlugs": [],
+      "questions": [
+        "¿El barro es aislante?",
+        "¿Cómo es el aislamiento de las casas de barro?",
+        "¿El barro resiste al fuego?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#desventaja-adobe",
+      "ordinal": 9,
+      "section": "A- Técnicas de construcción en adobe",
+      "text": "Una desventaja del adobe no cocido es su falta de estabilidad como materia, dado que su endurecimiento no reviste carácter permanente",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["adobe", "durabilidad"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué desventajas tiene el adobe?",
+        "¿Por qué el adobe no es permanente?",
+        "¿Qué le pasa al adobe con el agua?"
+      ]
+    },
+    {
+      "chunkKey": "S-024#cinva-ram",
+      "ordinal": 10,
+      "section": "B- Tierra comprimida, apisonada o prensada. Tapia",
+      "text": "La máquina CINVA-RAM, originada en Chile y Colombia en la década de 1950, produce bloques de tierra comprimida sin energía eléctrica.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["CINVA-RAM", "bloques de tierra"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es la máquina CINVA-RAM?",
+        "¿Para qué sirve el CINVA-RAM?",
+        "¿Cómo se fabrican bloques de tierra?"
+      ]
+    }
+  ]
+}

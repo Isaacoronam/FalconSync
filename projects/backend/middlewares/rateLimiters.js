@@ -55,6 +55,12 @@ export const reportLimiter = createLimiter({
   message: 'Has enviado demasiados reportes. Intenta más tarde.',
 });
 
+export const assistantLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  message: 'Has realizado demasiadas consultas al asistente. Intenta más tarde.',
+});
+
 export const uploadLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
   limit: 30,

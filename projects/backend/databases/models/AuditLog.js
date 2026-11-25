@@ -25,6 +25,11 @@ export const AUDIT_ACTIONS = [
   'panorama.approved',
   'panorama.published',
   'panorama.archived',
+  'source.created',
+  'source.activated',
+  'source.superseded',
+  'source.index.rebuilt',
+  'source.embeddings.rebuilt',
 ];
 
 const auditLogSchema = new mongoose.Schema(
@@ -54,7 +59,14 @@ const auditLogSchema = new mongoose.Schema(
       type: String,
       required: true,
       default: 'Location',
-      enum: ['Location', 'Adventure', 'AdventureStop', 'User', 'Panorama'],
+      enum: [
+        'Location',
+        'Adventure',
+        'AdventureStop',
+        'User',
+        'Panorama',
+        'SourceDocument',
+      ],
       index: true,
     },
     entityId: {

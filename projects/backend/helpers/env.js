@@ -94,6 +94,20 @@ export const config = {
     scanRequired: nodeEnv === 'production',
     allowUnscanned: nodeEnv !== 'production',
   },
+  assistant: {
+    touristEnabled: toBoolean(process.env.RAG_TOURIST_ENABLED, false),
+    technicalEnabled: toBoolean(process.env.RAG_TECHNICAL_ENABLED, false),
+    corpusVersion: process.env.RAG_CORPUS_VERSION?.trim() || null,
+    embeddingModel:
+      process.env.RAG_EMBEDDING_MODEL?.trim() ||
+      'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
+    embeddingDtype: process.env.RAG_EMBEDDING_DTYPE?.trim() || 'q8',
+    embeddingCacheDir: path.resolve(
+      process.env.RAG_EMBEDDING_CACHE_DIR?.trim() || path.join(backendRoot, 'models'),
+    ),
+    embeddingAllowRemote: toBoolean(process.env.RAG_EMBEDDING_ALLOW_REMOTE, true),
+    minSimilarity: toNumber(process.env.RAG_MIN_SIMILARITY, 0.6),
+  },
   panoramas: {
     // El original nunca se sirve: se guarda bajo UPLOAD_PRIVATE_DIR. El límite
     // protege la memoria del proceso antes de decodificar la imagen maestra.

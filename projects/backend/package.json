@@ -21,6 +21,8 @@
     "seed:adventures:verify": "node seeders/seedAdventures.js --verify",
     "backfill:usernames": "node scripts/backfillUsernames.js",
     "backfill:achievements": "node scripts/backfillAchievements.js",
+    "rag:ingest": "node scripts/ingestRagCorpus.js",
+    "rag:evaluate": "node scripts/evaluateRagCorpus.js",
     "migrate:roles": "node scripts/migrateRoles.js",
     "verify:roles": "node scripts/verifyRoles.js",
     "create-admin": "node scripts/createAdmin.js",
@@ -28,6 +30,7 @@
     "test:watch": "node --test --watch --test-concurrency=1"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.3.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

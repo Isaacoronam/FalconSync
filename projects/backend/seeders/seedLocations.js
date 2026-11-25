@@ -28,10 +28,10 @@ export const locations = [
     slug: "catedral-de-coro",
     category: "religious",
     description:
-      "Basílica Catedral de Santa Ana, templo colonial frente a la Plaza Bolívar. Forma parte del conjunto histórico de Coro y su puerto, declarado Patrimonio Mundial por la UNESCO en 1993.",
+      "Basílica Catedral de Santa Ana, templo colonial frente a la Plaza Bolívar, en el casco histórico de Coro. La ficha oficial de UNESCO la sitúa fuera de los límites actuales del bien Coro y su puerto.",
     address: "Frente a la Plaza Bolívar, casco histórico de Coro",
     circuits: ["casco-historico"],
-    tags: ["colonial", "unesco"],
+    tags: ["colonial"],
     historicalPeriod: "Siglos XVI-XVIII",
     location: {
       type: "Point",
@@ -103,7 +103,7 @@ export const locations = [
       "Monumento conmemorativo de la Federación Venezolana y uno de los hitos del casco histórico de Coro. Su ubicación y relevancia lo convierten en referencia del paisaje urbano patrimonial.",
     address: "Casco histórico de Coro, municipio Miranda",
     circuits: ["casco-historico", "espacios-urbanos"],
-    tags: ["unesco", "photogenic", "free-entry"],
+    tags: ["photogenic", "free-entry"],
     historicalPeriod: "Siglo XIX",
     location: {
       type: "Point",
@@ -177,7 +177,7 @@ export const locations = [
       "Plaza central del casco histórico, frente a la Catedral de Coro. Funciona como espacio de encuentro y referencia urbana.",
     address: "Casco histórico de Coro, frente a la Catedral",
     circuits: ["casco-historico", "espacios-urbanos"],
-    tags: ["colonial", "unesco", "free-entry", "family", "photogenic"],
+    tags: ["colonial", "free-entry", "family", "photogenic"],
     historicalPeriod: "Época colonial",
     location: {
       type: "Point",
@@ -323,7 +323,7 @@ export const locations = [
       "Museo de arte fundado en 1988, con sede en una casona colonial del casco histórico de Coro. Su colección y su edificio forman parte de la oferta cultural del centro patrimonial.",
     address: "Casco histórico de Coro, municipio Miranda",
     circuits: ["casco-historico", "museos"],
-    tags: ["unesco", "guided-tour", "family"],
+    tags: ["guided-tour", "family"],
     historicalPeriod: "Siglo XX",
     location: {
       type: "Point",
@@ -354,7 +354,7 @@ export const locations = [
       "Museo de arte de carácter universitario en el casco histórico de Coro, orientado a la conservación y difusión del patrimonio artístico de la región. Su sede se encuentra en el área patrimonial de la ciudad.",
     address: "Casco histórico de Coro, municipio Miranda",
     circuits: ["casco-historico", "museos"],
-    tags: ["unesco", "guided-tour"],
+    tags: ["guided-tour"],
     location: {
       type: "Point",
       coordinates: [-69.6765199, 11.4082434],
@@ -377,7 +377,7 @@ export const locations = [
       "Espacio museístico de temática religiosa en el casco histórico de Coro, vinculado a la devoción guadalupana y a la memoria cultural de la ciudad.",
     address: "Casco histórico de Coro, municipio Miranda",
     circuits: ["casco-historico", "museos"],
-    tags: ["unesco", "guided-tour"],
+    tags: ["guided-tour"],
     location: {
       type: "Point",
       coordinates: [-69.6802642, 11.4088278],
@@ -400,7 +400,7 @@ export const locations = [
       "Museo fundado en 1946 por Monseñor Francisco José Iturriza Guillén, dedicado al patrimonio religioso de la diócesis de Coro. Reúne objetos litúrgicos, artísticos e históricos vinculados a la Iglesia local.",
     address: "Casco histórico de Coro, municipio Miranda",
     circuits: ["casco-historico", "museos"],
-    tags: ["unesco", "guided-tour", "family"],
+    tags: ["guided-tour", "family"],
     historicalPeriod: "Siglo XX",
     location: {
       type: "Point",
@@ -605,6 +605,32 @@ export const locations = [
     imageCredits: [],
     isProvisional: false,
     status: "published",
+  },
+  {
+    // Borrador: no se publica hasta tener revisión editorial, imagen con créditos y verificación de coordenadas.
+    title: "Cataratas de Hueque",
+    slug: "cataratas-de-hueque",
+    category: "nature",
+    description:
+      "Cataratas en el municipio Petit, estado Falcón, junto a la carretera Coro–Churuguara. Su pertenencia al Parque Nacional Juan Crisóstomo Falcón y su clasificación oficial están pendientes de verificación.",
+    address:
+      "Carretera Nacional Coro–Churuguara, El Calvario, parroquia Colina, municipio Petit, estado Falcón",
+    circuits: ["naturaleza-miradores"],
+    tags: [],
+    location: {
+      type: "Point",
+      coordinates: [-69.5621029, 11.1784359],
+    },
+    conservationStatus: "unknown",
+    sourceUrl: "https://www.openstreetmap.org/node/1617812154",
+    coordinateSource: "OpenStreetMap node 1617812154 (ODbL 1.0), consultado el 22/11/2026",
+    coordinateVerifiedAt: null,
+    verificationLevel: "unverified",
+    images: [],
+    imageCredits: [],
+    isProvisional: false,
+    isCatalogVisible: false,
+    status: "draft",
   },
 ];
 
@@ -888,6 +914,20 @@ const editorialContent = {
     visitorInfo:
       "Espacio público abierto; considera el sol y la brisa costera. Respeta las actividades comunitarias y verifica en el lugar si hay eventos o restricciones temporales.",
     contentSources: [unescoCoroSource],
+  },
+  "cataratas-de-hueque": {
+    historicalStory:
+      "Las Cataratas de Hueque son un atractivo natural de Falcón, situado en el municipio Petit, junto a la carretera que une Coro con Churuguara. La ficha del Parque Nacional Juan Crisóstomo Falcón en Wikipedia las menciona como un lugar al que acuden los visitantes. Este registro no incluye cronología ni datos de caudal o conservación, porque todavía no tienen una fuente verificada.",
+    interestingFacts: [
+      "Las coordenadas de este registro corresponden a un punto de OpenStreetMap junto a la carretera Coro–Churuguara.",
+      "La ficha del parque en Wikipedia indica que el Parque Nacional Juan Crisóstomo Falcón fue creado en 1987 y que lo administra INPARQUES.",
+    ],
+    visitorInfo:
+      "No hay horarios, accesos ni condiciones de visita verificados para este lugar. Confirma el acceso localmente antes de desplazarte.",
+    contentSources: [
+      "https://www.openstreetmap.org/node/1617812154",
+      "https://es.wikipedia.org/wiki/Parque_nacional_Juan_Cris%C3%B3stomo_Falc%C3%B3n",
+    ],
   },
 };
 
