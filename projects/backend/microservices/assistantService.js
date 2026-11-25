@@ -305,9 +305,11 @@ const MIN_COMPOUND_PART_TOKENS = 2;
 // bajar; una parte con evidencia cercana cuenta como cubierta, mientras que
 // la selección de candidatos sigue exigiendo el umbral completo.
 const COVERAGE_SIMILARITY_MARGIN = 0.1;
-// Conector interrogativo: "y qué", "y dónde", "e cómo"...
+// Conector interrogativo: "y qué", "y dónde", "e cómo", "y quién"... La forma
+// singular acentuada ("quién") tiene que entrar: sin ella la pregunta no se
+// parte y la consulta única puede responder con una cita ajena.
 const COMPOUND_CONNECTOR_PATTERN =
-  /\s+(?:y|e)\s+(?=(?:cu[aá]l|cu[aá]les|qu[eé]|d[oó]nde|c[oó]mo|cu[aá]ndo|cu[aá]nt[oa]s?|quien|qui[eé]nes|por qu[eé]|para qu[eé]))/iu;
+  /\s+(?:y|e)\s+(?=(?:cu[aá]l|cu[aá]les|qu[eé]|d[oó]nde|c[oó]mo|cu[aá]ndo|cu[aá]nt[oa]s?|qui[eé]n(?:es)?|por qu[eé]|para qu[eé]))/iu;
 
 /**
  * Divide una pregunta compuesta en sus sub-consultas para recuperar la
@@ -930,9 +932,25 @@ export async function answerAssistantQuestion({
   const selected = selectCandidates(scored, statusQuestion, coverageIds);
 
   if (statusQuestion) {
-    const statusEvidence = selected.filter(
-      ({ item }) => item.claimType === 'current_status',
-    );
+    // Un horario o estado publicado solo responde por el lugar preguntado:
+    // si la pregunta resuelve un POI, la evidencia debe pertenecerle (por la
+    // etiqueta del fragmento o por mencionar su título en el texto). El
+    // horario de otro sitio no responde «¿Cuál es el horario del Museo
+    // Diocesano?»: sin evidencia propia corresponde «Sin horarios confirmados…».
+    const askedPoi = resolution.poi;
+    const statusEvidence = selected.filter(({ item }) => {
+      if (item.claimType !== 'current_status') {
+        return false;
+      }
+      if (!askedPoi) {
+        return true;
+      }
+
+      return (
+        item.poiSlugs.includes(askedPoi.slug) ||
+        phraseOf(item.text).includes(phraseOf(askedPoi.title))
+      );
+    });
     const asksPrice = PRICE_ASPECT_PATTERN.test(question);
     // Un horario publicado no responde una pregunta de precio: si la pregunta
     // pide tarifas, la evidencia de estado debe contener datos de precio.

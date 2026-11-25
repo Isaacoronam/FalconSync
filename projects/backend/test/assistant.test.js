@@ -37,6 +37,7 @@ const {
   clearAssistantCaches,
   FALLBACK_MESSAGE,
   SCHEDULE_ABSTENTION_MESSAGE,
+  splitSubQueries,
 } = await import('../microservices/assistantService.js');
 const { modelIdentity, setEmbedderForTests } = await import(
   '../microservices/embeddingService.js'
@@ -964,6 +965,56 @@ describe('Asistentes RAG', () => {
       });
     assert.equal(season.status, 200, JSON.stringify(season.body));
     assert.notEqual(season.body.data.abstentionReason, 'NO_CURRENT_STATUS');
+  });
+
+  it('no responde con el horario de otro lugar cuando el lugar preguntado no tiene fuente', async () => {
+    await createPoi({ title: 'Museo Diocesano', slug: 'museo-diocesano' });
+    await createPoi({
+      title: 'Museo de Arte de Coro',
+      slug: 'museo-de-arte-de-coro',
+    });
+    const source = await createSource();
+    await createChunk(source, {
+      chunkKey: 'S-002#mucor.horario',
+      text: 'El Museo de Arte de Coro abre de martes a sábado de 9:00 a.m. a 4:00 p.m.',
+      claimType: 'current_status',
+      questions: [
+        '¿Cuál es el horario del Museo de Arte de Coro?',
+        '¿Cuál es el horario del museo?',
+      ],
+    });
+
+    // El horario publicado del MUCOR es evidencia de otro lugar: no responde
+    // por el Museo Diocesano, que queda en «Sin horarios confirmados…».
+    const otroLugar = await request(app)
+      .post('/api/assistant/tourist/query')
+      .send({ question: '¿Cuál es el horario del Museo Diocesano?' });
+    assert.equal(otroLugar.status, 200, JSON.stringify(otroLugar.body));
+    assert.equal(otroLugar.body.data.abstained, true);
+    assert.equal(otroLugar.body.data.abstentionReason, 'NO_CURRENT_STATUS');
+    assert.equal(otroLugar.body.data.answer, SCHEDULE_ABSTENTION_MESSAGE);
+
+    // El mismo fragmento sí responde por el lugar al que pertenece.
+    const propio = await request(app)
+      .post('/api/assistant/tourist/query')
+      .send({ question: '¿Cuál es el horario del Museo de Arte de Coro?' });
+    assert.equal(propio.status, 200, JSON.stringify(propio.body));
+    assert.equal(propio.body.data.abstained, false);
+    assert.ok(propio.body.data.citations.length >= 1);
+  });
+
+  it('parte las preguntas compuestas que usan el conector «y quién»', () => {
+    const parts = splitSubQueries(
+      '¿En qué año se inscribió Coro y quién pintó la Mona Lisa?',
+    );
+
+    assert.equal(parts.length, 2);
+    assert.match(parts[0], /año/i);
+    assert.match(parts[1], /Mona Lisa/);
+
+    // Una pregunta simple no se parte: el comportamiento de consulta única no
+    // cambia.
+    assert.deepEqual(splitSubQueries('¿Qué es Coro?'), []);
   });
 
   it('pide aclaración en una pregunta ¿dónde? sin lugar nombrado cuando la evidencia general no atribuye', async () => {

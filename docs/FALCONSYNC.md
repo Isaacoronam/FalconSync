@@ -522,8 +522,9 @@ habilitada con corpus declarado; sin esa petición no se ingiere nada y el estad
 `$env:RAG_TOURIST_ENABLED='true'; $env:RAG_CORPUS_VERSION='2026-11-22.1'; npm --prefix projects/frontend run e2e -- e2e/chatbot-guia.spec.ts`
 — la ingesta con embeddings tardó 18,3 s y el timeout de arranque del backend sube a 600 s
 solo en ese modo. En esa modalidad, los casos B7 (horario sin fuente del lugar preguntado)
-y C3b (mezcla «…y quién…») quedan en rojo: documentan defectos reales del asistente
-reportados para su corrección; el resto de la batería pasa.
+y C3b (mezcla «…y quién…») documentaban los defectos FG-01 y FG-02; ambos quedaron en
+verde tras la corrección de `assistantService.js` (evidencia de estado acotada al lugar
+preguntado y conector «y quién» reconocido), verificada con la batería completa.
 
 ## Seguridad y dependencias
 
