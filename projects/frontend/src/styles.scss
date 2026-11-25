@@ -250,6 +250,26 @@ a {
   margin-bottom: 0.7rem;
 }
 
+.heritage-popup__panorama {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--terracotta);
+  border-radius: 999px;
+  color: var(--paper);
+  background: var(--terracotta);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.heritage-popup__panorama:hover {
+  border-color: var(--terracotta-dark);
+  background: var(--terracotta-dark);
+}
+
 .heritage-popup__tag {
   padding: 0.2rem 0.45rem;
   border-radius: 999px;

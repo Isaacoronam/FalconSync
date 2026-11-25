@@ -19,6 +19,12 @@
   touch-action: pan-y;
 }
 
+.panorama-viewer__stage--embedded {
+  min-height: 15rem;
+  max-height: 42vh;
+  aspect-ratio: auto;
+}
+
 .panorama-viewer__fallback {
   display: block;
   width: 100%;
@@ -216,9 +222,20 @@
   font-size: 0.85rem;
 }
 
-.panorama-viewer__hotspot-list a {
+.panorama-viewer__hotspot-list a,
+.panorama-viewer__hotspot-link {
   color: var(--terracotta-dark);
   font-weight: 700;
+}
+
+.panorama-viewer__hotspot-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .panorama-viewer__hotspot-list small {
@@ -229,6 +246,11 @@
 
 @media (max-width: 620px) {
   .panorama-viewer__stage {
+    aspect-ratio: 4 / 3;
+  }
+
+  .panorama-viewer__stage--embedded {
+    max-height: none;
     aspect-ratio: 4 / 3;
   }
 

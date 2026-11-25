@@ -98,13 +98,112 @@
     </div>
   </aside>
 
-  <div class="map-stage">
+  <div class="map-stage" [class.map-stage--tour]="tourState() !== 'closed'">
     <div
       id="coro-map"
       class="map-canvas"
       role="application"
       aria-label="Mapa interactivo del patrimonio de Coro"
     ></div>
+
+    @if (tourState() !== 'closed') {
+      <section class="map-tour" aria-label="Visita 360° integrada al mapa">
+        <header class="map-tour__header">
+          <div>
+            <p class="map-tour__eyebrow">CoroMap · vista inmersiva</p>
+            <h2>
+              {{ activePanorama()?.title ?? tourLocation()?.title ?? 'Visita 360°' }}
+            </h2>
+          </div>
+          <button
+            type="button"
+            class="map-tour__close"
+            aria-label="Cerrar visor 360° y mostrar solo el mapa"
+            title="Cerrar el visor 360° y mostrar solo el mapa"
+            (click)="closeTour()"
+          >
+            Ver solo el mapa
+          </button>
+        </header>
+
+        @switch (tourState()) {
+          @case ('loading') {
+            <p class="map-tour__state" role="status">Cargando escenas publicadas…</p>
+          }
+          @case ('empty') {
+            <div class="map-tour__state">
+              <h3>Este lugar aún no tiene una escena 360° publicada</h3>
+              <p>
+                El mapa sigue disponible. La escena aparecerá aquí cuando exista una panorámica real
+                con derechos verificados y aprobación editorial.
+              </p>
+            </div>
+          }
+          @case ('error') {
+            <div class="map-tour__state map-tour__state--error" role="alert">
+              <p>{{ tourError() }}</p>
+              @if (tourLocation(); as location) {
+                <button
+                  type="button"
+                  class="map-tour__retry"
+                  (click)="openLocationPanoramas(location)"
+                >
+                  Reintentar
+                </button>
+              }
+            </div>
+          }
+          @case ('choices') {
+            <div class="map-tour__choices">
+              <p>Elige una escena de este lugar:</p>
+              <ul>
+                @for (panorama of availablePanoramas(); track panorama.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="map-tour__choice"
+                      (click)="selectPanorama(panorama.id)"
+                    >
+                      <span>{{ panorama.title }}</span>
+                      <small>{{ panorama.credits }}</small>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+          @case ('active') {
+            @if (activePanorama(); as scene) {
+              @for (viewerScene of [scene]; track viewerScene.id) {
+                <app-panorama-viewer
+                  [imageUrl]="viewerScene.imageUrl"
+                  [fallbackUrl]="viewerScene.thumbnailUrl"
+                  [fallbackAlt]="viewerScene.fallback.alt"
+                  [fallbackDescription]="viewerScene.fallback.description"
+                  [hotspots]="viewerScene.hotspots"
+                  [credits]="viewerScene.credits"
+                  [embeddedNavigation]="true"
+                  (sceneRequested)="requestPanoramaScene($event)"
+                  (locationRequested)="requestPanoramaLocation($event)"
+                />
+                <p class="map-tour__rights">
+                  {{ viewerScene.credits }}
+                  @if (viewerScene.licenseUrl) {
+                    ·
+                    <a [href]="viewerScene.licenseUrl" target="_blank" rel="noopener noreferrer">
+                      {{ viewerScene.license }}
+                    </a>
+                  } @else {
+                    · {{ viewerScene.license }}
+                  }
+                </p>
+              }
+            }
+          }
+        }
+      </section>
+    }
+
     <div class="map-stage__actions">
       <button
         type="button"
@@ -115,8 +214,10 @@
         Ver todo Falcón
       </button>
     </div>
-    <div class="map-stage__overlay" aria-hidden="true">
-      <span class="map-stage__hint">Selecciona un punto para ver su ficha</span>
-    </div>
+    @if (tourState() === 'closed') {
+      <div class="map-stage__overlay" aria-hidden="true">
+        <span class="map-stage__hint">Selecciona un punto para ver su ficha</span>
+      </div>
+    }
   </div>
 </section>

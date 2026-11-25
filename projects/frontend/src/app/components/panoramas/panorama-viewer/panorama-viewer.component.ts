@@ -8,6 +8,7 @@ import {
   OnInit,
   inject,
   input,
+  output,
   signal,
   viewChild,
 } from '@angular/core';
@@ -58,6 +59,9 @@ export class PanoramaViewerComponent implements OnInit, AfterViewInit, OnDestroy
   readonly hotspots = input<readonly PanoramaHotspot[]>([]);
   readonly credits = input<string>('');
   readonly authenticated = input<boolean>(false);
+  readonly embeddedNavigation = input(false);
+  readonly sceneRequested = output<string>();
+  readonly locationRequested = output<string>();
 
   protected readonly instructionsId = `panorama-viewer-instructions-${nextViewerId++}`;
   protected readonly hotspotTypeLabels = HOTSPOT_TYPE_LABELS;
@@ -127,10 +131,7 @@ export class PanoramaViewerComponent implements OnInit, AfterViewInit, OnDestroy
       canvasElement.addEventListener('wheel', this.handleWheel, {
         passive: false,
       });
-      canvasElement.addEventListener(
-        'webglcontextlost',
-        this.handleContextLost as EventListener,
-      );
+      canvasElement.addEventListener('webglcontextlost', this.handleContextLost as EventListener);
     }
 
     this.updateViewport();
@@ -195,11 +196,7 @@ export class PanoramaViewerComponent implements OnInit, AfterViewInit, OnDestroy
       const image = await loadImage(source);
 
       this.renderer ??= new PanoramaRenderer(canvasElement);
-      this.renderer.resize(
-        this.viewportWidth,
-        this.viewportHeight,
-        renderPixelRatio(),
-      );
+      this.renderer.resize(this.viewportWidth, this.viewportHeight, renderPixelRatio());
       this.renderer.setImage(image);
       this.viewerState.set('active');
       this.statusMessage.set(
@@ -319,11 +316,21 @@ export class PanoramaViewerComponent implements OnInit, AfterViewInit, OnDestroy
 
   protected openHotspot(hotspot: PanoramaHotspot): void {
     if (hotspot.type === 'scene' && hotspot.targetPanoramaId) {
+      if (this.embeddedNavigation()) {
+        this.sceneRequested.emit(hotspot.targetPanoramaId);
+        return;
+      }
+
       void this.router.navigate(['/panoramas', hotspot.targetPanoramaId]);
       return;
     }
 
     if (hotspot.type === 'location' && hotspot.targetLocationSlug) {
+      if (this.embeddedNavigation()) {
+        this.locationRequested.emit(hotspot.targetLocationSlug);
+        return;
+      }
+
       void this.router.navigate(['/lugares', hotspot.targetLocationSlug]);
       return;
     }
@@ -351,11 +358,7 @@ export class PanoramaViewerComponent implements OnInit, AfterViewInit, OnDestroy
     this.viewportHeight = rect.height;
 
     if (this.renderer) {
-      this.renderer.resize(
-        this.viewportWidth,
-        this.viewportHeight,
-        renderPixelRatio(),
-      );
+      this.renderer.resize(this.viewportWidth, this.viewportHeight, renderPixelRatio());
       this.requestRender();
     }
   };

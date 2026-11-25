@@ -10,8 +10,9 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import * as L from 'leaflet';
+import { PanoramaDetail, PanoramaSummary } from '../../models/panorama.model';
 import {
   CORO_INITIAL_ZOOM,
   CORO_VIEW,
@@ -29,6 +30,8 @@ import {
   LocationVerificationLevel,
 } from '../../models/location.model';
 import { LocationApiService } from '../../services/location-api.service';
+import { PanoramaApiService } from '../../services/panorama-api.service';
+import { PanoramaViewerComponent } from '../../components/panoramas/panorama-viewer/panorama-viewer.component';
 import {
   CONSERVATION_LABELS,
   LOCATION_CATEGORY_FILTER_OPTIONS,
@@ -39,6 +42,7 @@ import {
 } from '../../services/utils/location-labels';
 
 type CategoryFilter = LocationCategory | 'all';
+type TourState = 'closed' | 'loading' | 'choices' | 'empty' | 'error' | 'active';
 
 interface LocationCluster {
   locations: FalconLocation[];
@@ -49,14 +53,16 @@ const CLUSTER_RADIUS_PX = 52;
 
 @Component({
   selector: 'app-coro-map',
-  imports: [RouterLink],
+  imports: [PanoramaViewerComponent, RouterLink],
   templateUrl: './coro-map.component.html',
   styleUrl: './coro-map.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CoroMapComponent implements AfterViewInit, OnDestroy {
   private readonly locationsApi = inject(LocationApiService);
+  private readonly panoramasApi = inject(PanoramaApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   private map?: L.Map;
@@ -66,6 +72,10 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
   private readonly hoverAwarePopups = new WeakSet<HTMLElement>();
   private popupOpen = false;
   private renderingMarkers = false;
+  private requestedPanoramaId: string | null = null;
+  private panoramaRequestToken = 0;
+  private centeredPanoramaId: string | null = null;
+  private layoutFrame: number | null = null;
 
   protected readonly categories = LOCATION_CATEGORY_FILTER_OPTIONS;
   protected readonly selectedCategory = signal<CategoryFilter>('all');
@@ -73,6 +83,11 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
   protected readonly locations = signal<FalconLocation[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly tourState = signal<TourState>('closed');
+  protected readonly tourLocation = signal<FalconLocation | null>(null);
+  protected readonly availablePanoramas = signal<PanoramaSummary[]>([]);
+  protected readonly activePanorama = signal<PanoramaDetail | null>(null);
+  protected readonly tourError = signal<string | null>(null);
   protected readonly total = computed(() => this.locations().length);
   protected readonly hasLocations = computed(() => this.locations().length > 0);
 
@@ -103,10 +118,26 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initializeMap();
     this.loadLocations();
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const panoramaId = params.get('panorama');
+
+      if (panoramaId === this.requestedPanoramaId) {
+        return;
+      }
+
+      this.requestedPanoramaId = panoramaId;
+
+      if (panoramaId) {
+        this.loadPanorama(panoramaId);
+      } else {
+        this.resetTour();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.clearPopupCloseTimeout();
+    this.cancelLayoutFrame();
 
     if (typeof window !== 'undefined') {
       delete (window as Window & { __falconsyncMap?: L.Map }).__falconsyncMap;
@@ -143,6 +174,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
           this.locations.set(response.data);
           this.renderMarkers(true);
           this.loading.set(false);
+          this.syncPanoramaLocation();
         },
         error: () => {
           this.locations.set([]);
@@ -168,6 +200,143 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       this.markers.get(location.slug)?.openPopup();
     });
     this.map.flyTo([latitude, longitude], LOCATION_DETAIL_ZOOM, { duration: 0.8 });
+  }
+
+  protected openLocationPanoramas(location: FalconLocation): void {
+    const requestToken = ++this.panoramaRequestToken;
+
+    this.requestedPanoramaId = null;
+    this.tourLocation.set(location);
+    this.availablePanoramas.set([]);
+    this.activePanorama.set(null);
+    this.tourError.set(null);
+    this.tourState.set('loading');
+    this.selectedSlug.set(location.slug);
+    this.map?.closePopup();
+    this.renderMarkers();
+    this.invalidateMapAfterLayout();
+
+    void this.router
+      .navigate([], {
+        relativeTo: this.route,
+        queryParams: { panorama: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      })
+      .catch(() => {
+        if (requestToken !== this.panoramaRequestToken) {
+          return;
+        }
+
+        this.tourError.set('No se pudo actualizar el enlace de la visita.');
+        this.tourState.set('error');
+      });
+
+    this.panoramasApi
+      .list({ locationId: location.id, limit: 50 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ data }) => {
+          if (requestToken !== this.panoramaRequestToken) {
+            return;
+          }
+
+          this.availablePanoramas.set(data);
+
+          if (data.length === 0) {
+            this.tourState.set('empty');
+            this.invalidateMapAfterLayout();
+            return;
+          }
+
+          if (data.length === 1) {
+            void this.selectPanorama(data[0].id);
+            return;
+          }
+
+          this.tourState.set('choices');
+          this.invalidateMapAfterLayout();
+        },
+        error: () => {
+          if (requestToken !== this.panoramaRequestToken) {
+            return;
+          }
+
+          this.tourError.set(
+            'No se pudieron consultar las escenas publicadas de este lugar. Inténtalo de nuevo.',
+          );
+          this.tourState.set('error');
+          this.invalidateMapAfterLayout();
+        },
+      });
+  }
+
+  protected async selectPanorama(id: string): Promise<void> {
+    try {
+      const navigated = await this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { panorama: id },
+        queryParamsHandling: 'merge',
+      });
+
+      if (!navigated && this.requestedPanoramaId !== id) {
+        this.tourError.set('No se pudo abrir esta escena 360°.');
+        this.tourState.set('error');
+      }
+    } catch {
+      this.tourError.set('No se pudo abrir esta escena 360°.');
+      this.tourState.set('error');
+    }
+  }
+
+  protected async closeTour(): Promise<void> {
+    if (!this.route.snapshot.queryParamMap.has('panorama')) {
+      this.resetTour();
+      return;
+    }
+
+    try {
+      const navigated = await this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { panorama: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+
+      if (navigated || !this.route.snapshot.queryParamMap.has('panorama')) {
+        this.requestedPanoramaId = null;
+        this.resetTour();
+        return;
+      }
+
+      this.tourError.set('No se pudo volver al mapa.');
+      this.tourState.set('error');
+    } catch {
+      if (!this.route.snapshot.queryParamMap.has('panorama')) {
+        this.requestedPanoramaId = null;
+        this.resetTour();
+        return;
+      }
+
+      this.tourError.set('No se pudo volver al mapa.');
+      this.tourState.set('error');
+    }
+  }
+
+  protected requestPanoramaScene(id: string): void {
+    void this.selectPanorama(id);
+  }
+
+  protected requestPanoramaLocation(slug: string): void {
+    const location = this.locations().find((item) => item.slug === slug);
+
+    if (!location) {
+      this.tourError.set('Este lugar no está disponible en los filtros actuales del mapa.');
+      this.tourState.set('error');
+      return;
+    }
+
+    this.openLocationPanoramas(location);
   }
 
   protected showFalconOverview(): void {
@@ -246,7 +415,13 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       this.markers.clear();
 
       const selected = this.selectedSlug();
-      const locations = this.locations();
+      const locations = [...this.locations()];
+      const tourLocation = this.tourLocation();
+
+      if (tourLocation && !locations.some((location) => location.id === tourLocation.id)) {
+        locations.push(tourLocation);
+      }
+
       const clusteredLocations = selected
         ? locations.filter((location) => location.slug !== selected)
         : locations;
@@ -261,9 +436,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       }
 
       if (selected) {
-        const selectedLocation = locations.find(
-          (location) => location.slug === selected,
-        );
+        const selectedLocation = locations.find((location) => location.slug === selected);
 
         if (selectedLocation) {
           this.addLocationMarker(selectedLocation, true);
@@ -298,9 +471,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       const [longitude, latitude] = location.location.coordinates;
       const point = this.map.project([latitude, longitude], zoom);
       const target = clusters.find(
-        (cluster) =>
-          Math.hypot(cluster.x - point.x, cluster.y - point.y) <=
-          CLUSTER_RADIUS_PX,
+        (cluster) => Math.hypot(cluster.x - point.x, cluster.y - point.y) <= CLUSTER_RADIUS_PX,
       );
 
       if (target) {
@@ -318,14 +489,10 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     return clusters.map((cluster) => ({
       locations: cluster.locations,
       center: L.latLng(
-        cluster.locations.reduce(
-          (sum, location) => sum + location.location.coordinates[1],
-          0,
-        ) / cluster.locations.length,
-        cluster.locations.reduce(
-          (sum, location) => sum + location.location.coordinates[0],
-          0,
-        ) / cluster.locations.length,
+        cluster.locations.reduce((sum, location) => sum + location.location.coordinates[1], 0) /
+          cluster.locations.length,
+        cluster.locations.reduce((sum, location) => sum + location.location.coordinates[0], 0) /
+          cluster.locations.length,
       ),
     }));
   }
@@ -345,7 +512,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     }).bindPopup(this.createPopup(location), {
       maxWidth: 340,
       minWidth: 260,
-      maxHeight: Math.max(160, ((this.map?.getSize().y ?? 0) * 0.6) - 40),
+      maxHeight: Math.max(160, (this.map?.getSize().y ?? 0) * 0.6 - 40),
       autoPanPadding: [20, 20],
     });
 
@@ -369,9 +536,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
 
     this.hoverAwarePopups.add(popupElement);
     popupElement.addEventListener('mouseenter', this.clearPopupCloseTimeout);
-    popupElement.addEventListener('mouseleave', () =>
-      this.schedulePopupClose(marker),
-    );
+    popupElement.addEventListener('mouseleave', () => this.schedulePopupClose(marker));
   }
 
   private schedulePopupClose(marker: L.Marker): void {
@@ -468,14 +633,9 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private createIcon(
-    category: LocationCategory,
-    isProvisional = false,
-  ): L.DivIcon {
+  private createIcon(category: LocationCategory, isProvisional = false): L.DivIcon {
     return L.divIcon({
-      className: `heritage-marker${
-        isProvisional ? ' heritage-marker--provisional' : ''
-      }`,
+      className: `heritage-marker${isProvisional ? ' heritage-marker--provisional' : ''}`,
       html: `<span class="heritage-marker__dot heritage-marker__dot--${category}"></span>`,
       iconSize: [28, 28],
       iconAnchor: [14, 28],
@@ -499,9 +659,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       image.addEventListener('error', () => image.remove(), { once: true });
       container.append(image);
 
-      const credit = location.imageCredits?.find(
-        (item) => item.url === imageUrl,
-      );
+      const credit = location.imageCredits?.find((item) => item.url === imageUrl);
 
       if (credit) {
         container.append(this.createImageCredit(credit));
@@ -533,9 +691,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     meta.className = 'heritage-popup__meta';
 
     for (const circuit of location.circuits ?? []) {
-      meta.append(
-        this.createChip(this.circuitLabel(circuit), 'heritage-popup__tag--circuit'),
-      );
+      meta.append(this.createChip(this.circuitLabel(circuit), 'heritage-popup__tag--circuit'));
     }
 
     for (const tag of location.tags ?? []) {
@@ -544,11 +700,8 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
 
     meta.append(
       this.createChip(
-        `Verificación: ${this.verificationLabel(
-          location.verificationLevel ?? 'unverified',
-        )}`,
-        location.verificationLevel === 'verified' ||
-          location.verificationLevel === 'single-source'
+        `Verificación: ${this.verificationLabel(location.verificationLevel ?? 'unverified')}`,
+        location.verificationLevel === 'verified' || location.verificationLevel === 'single-source'
           ? 'heritage-popup__tag--verified'
           : 'heritage-popup__tag--warning',
       ),
@@ -561,13 +714,18 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     meta.append(
       this.createChip(
         `Conservación: ${this.conservationLabel(location.conservationStatus)}`,
-        location.conservationStatus === 'unknown'
-          ? 'heritage-popup__tag--warning'
-          : '',
+        location.conservationStatus === 'unknown' ? 'heritage-popup__tag--warning' : '',
       ),
     );
 
     container.append(description, meta);
+
+    const panoramaAction = document.createElement('button');
+    panoramaAction.type = 'button';
+    panoramaAction.className = 'heritage-popup__panorama';
+    panoramaAction.textContent = 'Explorar en 360° junto al mapa';
+    panoramaAction.addEventListener('click', () => this.openLocationPanoramas(location));
+    container.append(panoramaAction);
 
     const detail = document.createElement('a');
     detail.className = 'heritage-popup__detail';
@@ -590,6 +748,101 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     }
 
     return container;
+  }
+
+  private loadPanorama(id: string): void {
+    const requestToken = ++this.panoramaRequestToken;
+
+    this.tourState.set('loading');
+    this.tourError.set(null);
+    this.tourLocation.set(null);
+    this.availablePanoramas.set([]);
+    this.activePanorama.set(null);
+    this.invalidateMapAfterLayout();
+
+    this.panoramasApi
+      .get(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ data }) => {
+          if (requestToken !== this.panoramaRequestToken) {
+            return;
+          }
+
+          this.activePanorama.set(data);
+          this.tourState.set('active');
+          this.syncPanoramaLocation();
+          this.invalidateMapAfterLayout();
+        },
+        error: () => {
+          if (requestToken !== this.panoramaRequestToken) {
+            return;
+          }
+
+          this.tourError.set(
+            'Esta escena no existe, ya no está publicada o no se puede consultar.',
+          );
+          this.tourState.set('error');
+          this.invalidateMapAfterLayout();
+        },
+      });
+  }
+
+  private syncPanoramaLocation(): void {
+    const panorama = this.activePanorama();
+
+    if (!panorama?.locationId || !this.map) {
+      return;
+    }
+
+    const location =
+      this.locations().find((item) => item.id === panorama.locationId) ??
+      (this.tourLocation()?.id === panorama.locationId ? this.tourLocation() : null);
+
+    if (!location) {
+      return;
+    }
+
+    this.tourLocation.set(location);
+    this.selectedSlug.set(location.slug);
+    this.renderMarkers();
+
+    if (this.centeredPanoramaId !== panorama.id) {
+      this.centeredPanoramaId = panorama.id;
+      const [longitude, latitude] = location.location.coordinates;
+      this.map.flyTo([latitude, longitude], LOCATION_DETAIL_ZOOM, {
+        duration: 0.8,
+      });
+    }
+  }
+
+  private resetTour(): void {
+    this.panoramaRequestToken += 1;
+    this.centeredPanoramaId = null;
+    this.tourState.set('closed');
+    this.tourLocation.set(null);
+    this.availablePanoramas.set([]);
+    this.activePanorama.set(null);
+    this.tourError.set(null);
+    this.renderMarkers();
+    this.invalidateMapAfterLayout();
+  }
+
+  private invalidateMapAfterLayout(): void {
+    this.cancelLayoutFrame();
+    this.layoutFrame = requestAnimationFrame(() => {
+      this.layoutFrame = null;
+      this.map?.invalidateSize({ pan: false });
+    });
+  }
+
+  private cancelLayoutFrame(): void {
+    if (this.layoutFrame === null) {
+      return;
+    }
+
+    cancelAnimationFrame(this.layoutFrame);
+    this.layoutFrame = null;
   }
 
   private createChip(text: string, modifier = ''): HTMLSpanElement {

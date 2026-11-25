@@ -1,5 +1,9 @@
 <figure class="panorama-viewer" aria-label="Visor de la visita 360°">
-  <div #stage class="panorama-viewer__stage">
+  <div
+    #stage
+    class="panorama-viewer__stage"
+    [class.panorama-viewer__stage--embedded]="embeddedNavigation()"
+  >
     @if (fallbackSrc()) {
       <img
         class="panorama-viewer__fallback"
@@ -136,7 +140,19 @@
       <ul>
         @for (hotspot of hotspots(); track hotspot.hotspotId) {
           <li>
-            @if (hotspot.type === 'scene' && hotspot.targetPanoramaId) {
+            @if (
+              embeddedNavigation() &&
+              ((hotspot.type === 'scene' && hotspot.targetPanoramaId) ||
+                (hotspot.type === 'location' && hotspot.targetLocationSlug))
+            ) {
+              <button
+                type="button"
+                class="panorama-viewer__hotspot-link"
+                (click)="openHotspot(hotspot)"
+              >
+                {{ hotspot.label }}
+              </button>
+            } @else if (hotspot.type === 'scene' && hotspot.targetPanoramaId) {
               <a [routerLink]="['/panoramas', hotspot.targetPanoramaId]">{{ hotspot.label }}</a>
             } @else if (hotspot.type === 'location' && hotspot.targetLocationSlug) {
               <a [routerLink]="['/lugares', hotspot.targetLocationSlug]">{{ hotspot.label }}</a>

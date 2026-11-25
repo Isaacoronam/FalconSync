@@ -26,6 +26,10 @@ reales con derechos verificados y no se publicará contenido sintético.
   (`panorama.manage`), sin acceso del historiador a estos últimos.
 - Visor WebGL 1 propio, sin dependencia externa, con activación explícita, hotspots, teclado
   y fallback estático obligatorio.
+- Integrar el visor turístico en CoroMap y mantener el mapa visible y sincronizado con el POI
+  de la escena. `/panoramas/:id` conserva compatibilidad y abre el modo integrado mediante
+  `/?panorama=:id`; `/panoramas` vuelve al mapa.
+- Resolver los hotspots a escenas o POI sin abandonar CoroMap en el modo integrado.
 - Separar panoramas públicos de panoramas de inspección en modelo, API, UI y almacenamiento.
 - Documentar consentimiento y difuminar personas cuando corresponda.
 - Añadir `AudioGuide` y multilingüe solo si se confirman; con transcripción, idioma, duración,
@@ -38,6 +42,9 @@ reales con derechos verificados y no se publicará contenido sintético.
   externa que actualizar, pero tampoco soporte de terceros.
 - Los panoramas de inspección nunca se exponen por la API turística ni a la curaduría.
 - El contenido 360° se enlaza a activos verificados, no a cualquier POI.
+- Asociar una escena a un POI no define un recorrido caminable. La ruta, el orden de paradas y
+  la cobertura continua requieren geometría y contenido verificados; no se deducen de la
+  proximidad entre coordenadas.
 - La galería pública permanece vacía mientras no exista contenido con derechos.
 
 ## Alternativas consideradas
