@@ -44,7 +44,6 @@ Fronteras:
 - navegador ↔ API;
 - API ↔ MongoDB;
 - API ↔ almacenamiento público y privado;
-- API ↔ proveedor externo;
 - API ↔ clientes Socket.IO;
 - consola administrativa ↔ API;
 - CI/CD ↔ entornos;
@@ -63,8 +62,8 @@ Fronteras:
 | S-07 | Fallo de auditoría silencioso | `recordAudit` best-effort | Sin trazabilidad | Evento obligatorio en transiciones críticas; fallar la operación | Pruebas de fallo de evento |
 | S-08 | Sala Socket.IO no autorizada | Cliente elige sala | Fuga en tiempo real | Ticket, salas server-side, pertenencia, single-use | `notifications.test.js` |
 | S-09 | Repetición o duplicado de eventos | Reenvío | Notificaciones falsas | `eventId` único, cursor, deduplicación, `ack` | Pruebas de reconexión |
-| S-10 | Inyección de prompt | Documento o consulta | Respuesta manipulada | Delimitación, instrucciones de sistema, allowlist, sin herramientas de escritura | Conjunto adversario |
-| S-11 | Fuga de datos al proveedor | Contexto RAG | Privacidad | Minimización, acceso por recurso, retención, contrato | Revisión de payloads |
+| S-10 | Instrucciones embebidas en documento o consulta | Documento o pregunta | Respuesta manipulada | Sin generación libre; documentos tratados como datos, allowlist y sin herramientas de escritura | Conjunto adversario |
+| S-11 | Fuga de datos a terceros | Contexto RAG | Privacidad | No hay proveedor RAG en v1; minimización, acceso por recurso y retención | Revisión de payloads |
 | S-12 | Cita inventada | Alucinación | Desinformación | Validación contra fragmentos, abstención | Evaluación dorada |
 | S-13 | Fuga de secretos | Logs, repo, errores | Compromiso total | Variables de entorno, redacción, `.gitignore`, rotación | Escaneo y revisión |
 | S-14 | Cadena de suministro | Dependencias | RCE, robo | Lockfiles, `npm audit`, revisión de cambios | CI y auditoría |
@@ -133,13 +132,15 @@ operativa, la purga por retención y el flujo de bloqueo legal.
 
 ### 4.6 RAG
 
-- El modelo no tiene herramientas de escritura, cierre, asignación ni publicación.
-- Citas validadas contra fragmentos recuperados; abstención si falla.
-- Documentos delimitados; instrucciones para ignorar órdenes embebidas.
-- Allowlist de fuentes y dominios de búsqueda.
-- Minimización de datos enviados al proveedor.
-- Cuota, caché, límite de tokens y registro de coste.
-- Retención de conversaciones y acceso por usuario.
+- El asistente no tiene herramientas de escritura, cierre, asignación ni publicación.
+- Sin generación libre: composición extractiva con citas literales de máximo 25 palabras o hechos estructurados verificados.
+- Citas validadas contra fragmentos recuperados; si falla una regla, abstención total.
+- Los documentos son datos: se ignoran las órdenes embebidas y se prueba con un documento sintético.
+- Allowlist de fuentes; sin búsqueda externa ni scraping en v1.
+- Sin envío de datos a terceros.
+- Cuota, caché, límite de latencia y registro de consultas; coste externo 0.
+- Retención: turismo anónimo sin persistencia; asistente técnico 90 días con TTL.
+- El registro de fuentes nunca expone `storageKey` ni texto completo de fuentes restringidas.
 
 ### 4.7 Infraestructura y operación
 

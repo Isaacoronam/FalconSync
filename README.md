@@ -37,6 +37,7 @@ flowchart LR
 - Perfil privado con avatar y galería de fotos
 - Insignias por visita y métricas de actividad
 - Auditoría de cambios y soporte para imágenes locales
+- Guía patrimonial con respuestas citadas (RAG semántico local), abstención honesta y sugerencias; apoyo técnico reservado y deshabilitado hasta aprobar su corpus
 - Suite E2E con Playwright para validación continua
 
 ## Stack tecnológico

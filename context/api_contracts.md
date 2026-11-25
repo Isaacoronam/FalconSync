@@ -17,6 +17,8 @@ controladores y validadores son la referencia para payloads, errores y permisos.
 | `/api/inspections` | Inspecciones de campo | `GET /`, `/inspectors`, `/:id`; `POST /`, `/:id/start`, `/resume`, `/findings`, `/submit`, `/review`, `/close`, `/:id/interventions` |
 | `/api/interventions` | Transiciones de intervenciones | `PATCH /:id` |
 | `/api/evidence` | Evidencia privada con autorización por recurso | `POST /`, `GET /`, `GET /:id` |
+| `/api/assistant` | Guía turística y apoyo técnico RAG | `GET /status`, `POST /tourist/query`, `POST /inspection/query` |
+| `/api/sources` | Metadatos de las fuentes del corpus | `GET /` |
 
 Las rutas de detalle son:
 
@@ -39,6 +41,12 @@ Las rutas de detalle son:
   `GET /evidence/:id`. La evidencia se guarda en `uploads/documents/` y no se sirve por
   `/api/uploads`.
 - Administración de evidencia: `GET /admin/evidence/:id/access-log`.
+- Asistente: `GET /assistant/status`; `POST /assistant/tourist/query` (público con rate
+  limit) y `POST /assistant/inspection/query` (con `assistant.inspection`). La consulta
+  acepta `contextLocationId` como pista de seguimiento que nunca filtra; la respuesta
+  incluye `suggestions`, `options` y `poi`. Ver [`docs/FUENTES-RAG.md`](../docs/FUENTES-RAG.md) §8.
+- Fuentes: `GET /sources` exige `source.read` y devuelve solo metadatos paginados, nunca
+  fragmentos ni `storageKey`.
 
 El check-in y la foto pueden guardarse en fases separadas. Los tokens de QR no deben
 guardarse ni registrarse en claro fuera del flujo de rotación.
@@ -49,9 +57,10 @@ conocidas con el código (por ejemplo, `/reports/queue`, `/inspectors` y
 se alinearán en la Fase 1. Hasta entonces, la fuente de verdad de las rutas es
 `projects/backend/api/`.
 
-Socket.IO, RAG y visita 360° no están implementados y sus contratos en
-[`docs/openapi.yaml`](../docs/openapi.yaml) llevan `x-falconsync-status: planned`. No deben
-tratarse como contratos vigentes.
+Notificaciones y tiempo real (Socket.IO) siguen planificados; sus contratos en
+[`docs/openapi.yaml`](../docs/openapi.yaml) llevan `x-falconsync-status: planned` y no deben
+tratarse como contratos vigentes. El asistente RAG y la visita 360° sí están implementados
+y sus rutas llevan `x-falconsync-status: implemented`.
 
 ## Fuentes de verdad
 

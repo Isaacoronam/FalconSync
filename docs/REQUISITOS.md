@@ -105,8 +105,8 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | RN-19 | El documento UNESCO 100777 es un informe histórico de 2008; no acredita el estado actual. El estado actual sale de informes recientes y de las inspecciones propias. |
 | RN-20 | No todo POI del Casco Histórico es UNESCO. `unescoStatus` se registra explícitamente y no se etiqueta automáticamente. |
 | RN-21 | Un panorama 360° solo se publica con autoría, licencia, créditos, checksum y estado aprobado. Los panoramas de inspección no se exponen en la API turística. |
-| RN-22 | Un POI turístico no patrimonial se presenta como tal: no usa lenguaje de patrimonio ni de conservación, y su clasificación se registra por POI y por fuente. La etiqueta `unesco` no prueba pertenencia al bien (propuesta D-24). |
-| RN-22 | El check-in turístico y el reporte de conservación son flujos separados. |
+| RN-22 | Un POI turístico no patrimonial se presenta como tal: no usa lenguaje de patrimonio ni de conservación, y su clasificación se registra por POI y por fuente. La etiqueta `unesco` no prueba pertenencia al bien (D-24). |
+| RN-26 | El check-in turístico y el reporte de conservación son flujos separados. |
 | RN-23 | Las reglas de publicación de POI se mantienen: no se publica un POI provisional ni sin fecha de verificación de coordenadas. |
 | RN-24 | Los estados se comunican con texto, icono o patrón; nunca solo con color. |
 | RN-25 | La marca pública es FALCONSYNC. |
@@ -135,9 +135,9 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | HU-18 | `user` | recibir notificaciones de mis reportes | seguir el avance | Media | Solo recibo notificaciones de mis recursos; puedo marcarlas leídas. |
 | HU-19 | `admin` | gestionar cuentas, roles y estado | administrar el sistema | Alta | No puedo degradar al último admin ni autodegradarme; el cambio revoca sesiones y se audita. |
 | HU-20 | `admin` | consultar auditoría y registro de fuentes | gobernar el sistema | Media | La auditoría es de solo lectura; no inspecciono por defecto. |
-| HU-21 | `inspector` | preguntar al asistente técnico | consultar normativa y evidencia | Alta | La respuesta cita fragmentos recuperados o se abstiene; no ejecuta acciones. |
-| HU-22 | Visitante | preguntar a la guía turística | obtener contexto de un POI | Media | La respuesta distingue fuente oficial, externa y no verificada; para POI no UNESCO puede usar búsqueda externa. |
-| HU-23 | Historiador | registrar y versionar fuentes RAG | mantener el corpus trazable | Alta | Cada fragmento identifica documento, página y sección; una versión nueva no borra la anterior. |
+| HU-21 | `inspector` | consultar normativa, arquitectura colonial y técnicas de tapia/adobe | obtener orientación técnica preliminar y contextualizada | Alta | Distingue norma, evidencia e hipótesis; cita fuentes verificadas o se abstiene. No emite diagnóstico definitivo ni prescribe una intervención para un inmueble concreto. |
+| HU-22 | Visitante | consultar historia, POI y rutas turísticas sugeridas | planificar una visita informada | Media | Distingue fuente oficial, externa y no verificada; usa el corpus curado y se abstiene si no hay evidencia. Las rutas no garantizan acceso, horario, seguridad ni accesibilidad. La búsqueda externa en vivo queda diferida. |
+| HU-23 | Historiador | validar la identidad, el nivel, los derechos y la vigencia de las fuentes RAG, y proponer altas, versiones y retiros | mantener un corpus trazable y autorizado | Alta | Cada propuesta identifica documento, página, sección y checksum; la mutación la ejecuta administración con `source.manage`; una versión nueva no borra la anterior. |
 | HU-24 | Operador | desplegar, monitorear, respaldar y revertir | operar el servicio | Alta | Existe restauración probada, monitoreo, alertas y rollback documentado. |
 | HU-25 | Soporte | diagnosticar un incidente | reducir el tiempo de reparación | Media | Los logs tienen `correlationId` y no exponen secretos ni datos personales innecesarios. |
 
@@ -224,19 +224,19 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 
 | ID | Requisito | Prioridad | HU |
 |---|---|---|---|
-| RF-53 | Registrar cada fuente con título, institución, versión, fecha, páginas, licencia, derechos, checksum y estado. | Alta | HU-23 |
+| RF-53 | Registrar cada fuente con título, institución, versión, fecha, páginas, licencia, derechos, checksum, nivel, `usagePolicy`, `indexingPolicy` y estado. | Alta | HU-23 |
 | RF-54 | Ingerir documentos autorizados conservando página y sección. | Alta | HU-23 |
-| RF-55 | Fragmentar con tamaño y solape definidos, manteniendo trazabilidad al fragmento. | Alta | HU-23 |
+| RF-55 | Fragmentar en 3–6 frases con `chunkKey` legible, manteniendo trazabilidad al fragmento. | Alta | HU-23 |
 | RF-56 | Usar recuperación léxica con filtros de metadatos como línea base; vectores solo tras evaluación. | Alta | HU-21, HU-22 |
 | RF-57 | Responder con citas verificadas contra fragmentos recuperados. | Alta | HU-21, HU-22 |
-| RF-58 | Abstenerse cuando la recuperación sea débil o no cubra la pregunta. | Alta | HU-21, HU-22 |
+| RF-58 | Abstenerse cuando la recuperación sea débil o no cubra la pregunta, con un motivo explícito. | Alta | HU-21, HU-22 |
 | RF-59 | Separar asistente técnico (A/B/C técnico) de guía turística (A–E con etiqueta). | Alta | HU-21, HU-22 |
-| RF-60 | Permitir búsqueda externa para POI no UNESCO, con fuente, fecha y etiqueta de confianza. | Alta | HU-22 |
+| RF-60 | (Diferido a v1.1) Búsqueda externa para POI sin fuente curada. En v1 el asistente responde solo con el corpus registrado y se abstiene si no hay evidencia. | Baja | HU-22 |
 | RF-61 | Etiquetar UNESCO 100777 como histórico 2008 y no usarlo como estado actual. | Alta | HU-21, HU-22 |
-| RF-62 | Impedir que el modelo ejecute escrituras, cierres, asignaciones o publicaciones. | Alta | HU-21 |
-| RF-63 | Defenderse de inyección de prompt en documentos y consultas. | Alta | HU-21 |
-| RF-64 | Aplicar límite de tokens, cuota, caché y registro de coste. | Media | HU-24 |
-| RF-65 | Definir retención de conversaciones y control de acceso al historial. | Media | HU-20 |
+| RF-62 | Impedir que el asistente ejecute escrituras, cierres, asignaciones o publicaciones. | Alta | HU-21 |
+| RF-63 | Defenderse de instrucciones embebidas en documentos y consultas (inyección de prompt). | Alta | HU-21 |
+| RF-64 | Aplicar cuota por usuario o IP, caché, límite de latencia y registro de consultas. El coste externo por consulta es 0 en v1. | Media | HU-24 |
+| RF-65 | No persistir conversaciones turísticas anónimas; retener las técnicas 90 días con control de acceso al historial. | Media | HU-20 |
 | RF-66 | Evaluar recuperación y respuestas con un conjunto dorado de 60 preguntas. | Alta | HU-21, HU-22 |
 
 ### 6.7 Visita 360°, audio e idiomas
@@ -263,6 +263,8 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | RF-79 | Mostrar en el mapa solo conservación respaldada por inspección revisada. | Alta | HU-15 |
 | RF-80 | Incluir centro de notificaciones y reconexión visible. | Media | HU-17, HU-18 |
 | RF-81 | Mostrar citas, fuentes y abstención en el asistente. | Alta | HU-21, HU-22 |
+| RF-88 | Presentar orientación técnica sobre arquitectura colonial y tapia/adobe como preliminar, diferenciando normas, hechos e hipótesis; no prescribir intervenciones específicas ni sustituir una inspección profesional. | Alta | HU-21 |
+| RF-89 | Sugerir recorridos solo entre POI registrados y no afirmar condiciones actuales de acceso, horario, seguridad o accesibilidad sin una fuente vigente. | Media | HU-22 |
 
 ### 6.9 Operación y administración
 
@@ -319,7 +321,7 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | RN-17, RN-18, RN-19 | HU-21, HU-22, HU-23 | RF-53 a RF-66 |
 | RN-20 | HU-15, HU-22 | RF-13, RF-60 |
 | RN-21 | HU-02 | RF-67 a RF-70 |
-| RN-22 | HU-04 | RF-34 |
+| RN-26 | HU-04 | RF-34 |
 | RN-23 | HU-01 | RF-01, reglas de POI vigentes |
 | RN-24 | Todas | RF-76, RF-77 |
 | RN-25 | Todas | RNF-24 |

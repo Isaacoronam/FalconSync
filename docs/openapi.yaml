@@ -51,6 +51,8 @@ tags:
     description: Ticket de corta duración para Socket.IO.
   - name: Assistant
     description: Guía turística y asistente técnico con citas.
+  - name: Sources
+    description: Registro de fuentes RAG en solo lectura.
   - name: Panoramas
     description: Visita 360° pública.
   - name: Admin
@@ -1111,10 +1113,11 @@ paths:
       tags: [Assistant]
       summary: Consultar la guía turística
       description: |
-        Público con rate limit. Usa fuentes A–D y E etiquetada. Responde con citas validadas
-        o `abstained=true`. No ejecuta acciones.
+        Público con rate limit. Usa fuentes curadas A–D según su política; las fuentes E
+        no sustentan afirmaciones. Responde con citas validadas o `abstained=true`. No ejecuta
+        acciones ni persiste la consulta.
       operationId: queryTouristAssistant
-      x-falconsync-status: planned
+      x-falconsync-status: implemented
       security: []
       requestBody:
         required: true
@@ -1135,19 +1138,42 @@ paths:
                     $ref: '#/components/schemas/AssistantAnswer'
         '400':
           $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /assistant/status:
+    get:
+      tags: [Assistant]
+      summary: Consultar disponibilidad de los asistentes
+      description: Estado de habilitación y disponibilidad por ámbito, sin datos de fuentes.
+      operationId: getAssistantStatus
+      x-falconsync-status: implemented
+      security: []
+      responses:
+        '200':
+          description: Estado actual del servicio RAG.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AssistantStatus'
   /assistant/inspection/query:
     post:
       tags: [Assistant]
       summary: Consultar el asistente técnico
       description: |
-        Solo inspector o historiador en consulta. Usa fuentes A/B/C técnicas; no usa redes
-        sociales. Responde “no consta” si no hay evidencia.
+        Solo inspector o historiador con `assistant.inspection`. Usa fuentes técnicas A/B/C;
+        no consulta datos de activos o inspecciones ni usa redes sociales. Persiste la
+        conversación por 90 días. Permanece deshabilitado hasta que exista corpus y evaluación
+        técnica aprobados.
       operationId: queryInspectionAssistant
-      x-falconsync-status: planned
+      x-falconsync-status: implemented
       requestBody:
         required: true
         content:
@@ -1171,6 +1197,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '503':
@@ -1630,12 +1660,15 @@ paths:
           $ref: '#/components/responses/Conflict'
         '428':
           $ref: '#/components/responses/PreconditionRequired'
-  /admin/sources:
+  /sources:
     get:
-      tags: [Admin]
-      summary: Listar el registro de fuentes RAG
+      tags: [Sources]
+      summary: Consultar el registro de fuentes RAG
+      description: |
+        Solo lectura para `source.read` (historiador, inspector y admin). Devuelve metadatos;
+        nunca `storageKey` ni texto completo de fuentes restringidas.
       operationId: listSources
-      x-falconsync-status: planned
+      x-falconsync-status: implemented
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Limit'
@@ -1645,6 +1678,18 @@ paths:
           schema:
             type: string
             enum: [draft, active, superseded, retracted]
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [A, B, C, D, E]
+        - name: usagePolicy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [final, pointer, context]
         - name: accessLevel
           in: query
           required: false
@@ -1653,7 +1698,7 @@ paths:
             enum: [public, internal, restricted]
       responses:
         '200':
-          description: Fuentes registradas.
+          description: Fuentes registradas en solo lectura.
           content:
             application/json:
               schema:
@@ -1663,7 +1708,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/AdminSource'
+                      $ref: '#/components/schemas/SourceSummary'
                   meta:
                     $ref: '#/components/schemas/PageMeta'
         '401':
@@ -3147,25 +3192,91 @@ components:
           type: string
           minLength: 3
           maxLength: 2000
-        locationId:
+        contextLocationId:
           type: string
+          description: >
+            Lugar de la respuesta anterior. Es solo una pista de seguimiento: nunca filtra la
+            búsqueda. Solo se envía en el modo turista.
         assetId:
           type: string
+          deprecated: true
+          description: No admitido en v1; la consulta de datos de activos está desactivada.
         inspectionId:
           type: string
+          deprecated: true
+          description: No admitido en v1; el asistente no consulta datos de inspecciones.
         locale:
           type: string
-          example: es-VE
+          enum: [es]
+          example: es
+        conversationId:
+          type: string
+          nullable: true
+          description: Solo asistente técnico autenticado; el turismo anónimo no persiste.
     AssistantAnswer:
       type: object
-      required: [answer, abstained, citations, sources]
+      required:
+        - answerType
+        - answer
+        - abstained
+        - abstentionReason
+        - citations
+        - sources
+        - suggestions
+        - options
+        - poi
+        - corpusVersion
       properties:
+        answerType:
+          type: string
+          enum: [extractive, structured, contextual, mixed, clarification, abstention]
         answer:
           type: string
+          description: Respuesta extractiva de 3–5 frases, mensaje de aclaración o mensaje único de abstención.
         abstained:
           type: boolean
+        abstentionReason:
+          type: string
+          nullable: true
+          enum:
+            - NO_EVIDENCE
+            - RIGHTS_RESTRICTED
+            - OUT_OF_SCOPE
+            - NO_CURRENT_STATUS
+            - AMBIGUOUS_POI
+        suggestions:
+          type: array
+          description: Tres preguntas que el asistente sí puede responder; vacío cuando la respuesta no es una abstención.
+          maxItems: 3
+          items:
+            type: string
+        options:
+          type: array
+          description: Lugares posibles cuando la pregunta es ambigua (`answerType: clarification`).
+          items:
+            type: object
+            required: [id, title]
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+        poi:
+          type: object
+          nullable: true
+          description: Lugar al que se refiere la respuesta; `null` cuando no se resolvió ninguno.
+          required: [id, slug, title]
+          properties:
+            id:
+              type: string
+            slug:
+              type: string
+            title:
+              type: string
         citations:
           type: array
+          maxItems: 3
+          description: Una cita por parte respondida en preguntas compuestas; máximo 2 en consultas simples y 3 cuando la pregunta tiene varias partes.
           items:
             $ref: '#/components/schemas/Citation'
         sources:
@@ -3174,7 +3285,17 @@ components:
             $ref: '#/components/schemas/SourceRef'
         confidenceLabel:
           type: string
-          enum: [Oficial UNESCO, Oficial local, Referencia, Externo, No verificado]
+          nullable: true
+          enum:
+            - Oficial UNESCO
+            - Oficial estatal
+            - Oficial local
+            - Histórico 2008
+            - Académico
+            - Referencia
+            - Externo
+            - No verificado
+            - Tradición local
         conversationId:
           type: string
           nullable: true
@@ -3183,30 +3304,96 @@ components:
           nullable: true
         latencyMs:
           type: integer
+        corpusVersion:
+          type: string
+          example: '2026-11-20.1'
     Citation:
       type: object
-      required: [documentId, chunkId, quote, sourceLevel, sourceLabel]
+      required: [documentId, chunkId, sourceId, title, institution, kind, quote, sourceLevel, sourceLabel]
       properties:
         documentId:
           type: string
         chunkId:
           type: string
+          description: Identificador legible del fragmento recuperado, por ejemplo `S-002#p1.inscripcion.01`.
+        sourceId:
+          type: string
+          pattern: '^S-\d{3}$'
+        title:
+          type: string
+        institution:
+          type: string
+        kind:
+          type: string
+          enum: [quote, fact, context]
         page:
-          type: integer
+          type: string
           nullable: true
         section:
           type: string
           nullable: true
         quote:
           type: string
+          description: Cita literal de máximo 25 palabras o valor del hecho estructurado.
+          maxLength: 300
+        claimType:
+          type: string
+          nullable: true
+          enum: [historical, normative, current_status, technical_guidance, tourism, tradition, context]
+        factKey:
+          type: string
+          nullable: true
+        factValue:
+          type: string
+          nullable: true
+        contradictionGroup:
+          type: string
+          nullable: true
+        validAsOf:
+          type: string
+          format: date-time
+          nullable: true
         sourceLevel:
           type: string
           enum: [A, B, C, D, E]
         sourceLabel:
           type: string
+          enum:
+            - Oficial UNESCO
+            - Oficial estatal
+            - Oficial local
+            - Histórico 2008
+            - Académico
+            - Referencia
+            - Externo
+            - No verificado
+            - Tradición local
         url:
           type: string
           nullable: true
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+    AssistantStatus:
+      type: object
+      required: [corpusVersion, tourist, technical]
+      properties:
+        corpusVersion:
+          type: string
+          nullable: true
+        tourist:
+          $ref: '#/components/schemas/AssistantScopeStatus'
+        technical:
+          $ref: '#/components/schemas/AssistantScopeStatus'
+    AssistantScopeStatus:
+      type: object
+      required: [enabled, available]
+      properties:
+        enabled:
+          type: boolean
+        available:
+          type: boolean
     SourceRef:
       type: object
       required: [id, title, institution, level, label]
@@ -3703,12 +3890,16 @@ components:
         ariaLabel:
           type: string
           maxLength: 120
-    AdminSource:
+    SourceSummary:
       type: object
-      required: [id, title, institution, version, license, rights, accessLevel, checksum, status]
+      required: [id, sourceId, title, institution, version, level, sourceLabel, usagePolicy, indexingPolicy, license, rights, accessLevel, status]
       properties:
         id:
           type: string
+        sourceId:
+          type: string
+          pattern: '^S-\d{3}$'
+          example: S-002
         title:
           type: string
         institution:
@@ -3722,30 +3913,56 @@ components:
         retrievedAt:
           type: string
           format: date-time
-        pages:
-          type: integer
+        verifiedAt:
+          type: string
+          format: date-time
           nullable: true
+        url:
+          type: string
+          nullable: true
+        level:
+          type: string
+          enum: [A, B, C, D, E]
+        sourceLabel:
+          type: string
+          enum: [Oficial UNESCO, Oficial estatal, Oficial local, Histórico 2008, Académico, Referencia, Externo, No verificado, Tradición local]
+        usagePolicy:
+          type: string
+          enum: [final, pointer, context]
+        indexingPolicy:
+          type: string
+          enum: [full_text, short_quotes_only]
+        credibilityNotes:
+          type: string
         license:
           type: string
         rights:
           type: string
+        rightsVerified:
+          type: boolean
         accessLevel:
           type: string
           enum: [public, internal, restricted]
-        checksum:
+        language:
           type: string
+          example: es
+        topics:
+          type: array
+          items:
+            type: string
+        poiSlugs:
+          type: array
+          items:
+            type: string
         status:
           type: string
           enum: [draft, active, superseded, retracted]
+        statusReason:
+          type: string
+          nullable: true
         supersedes:
           type: string
           nullable: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
     UserRoleUpdateRequest:
       type: object
       required: [role, currentPassword]

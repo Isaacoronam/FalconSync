@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| Fecha | 2026-11-17 |
-| Estado | D-01 a D-17 aceptadas (D-09 a D-17 aprobadas el 2026-11-13); D-03 revisada el 2026-11-17; D-18 a D-20 y D-22 a D-23 pendientes; D-21 retirada; D-24 propuesta |
+| Fecha | 2026-11-20 |
+| Estado | D-01 a D-17 aceptadas (D-09 a D-17 aprobadas el 2026-11-13); D-03 revisada el 2026-11-17; D-18 a D-20 y D-22 pendientes; D-21 retirada; D-23 parcial; D-24 y D-25 a D-29 aceptadas el 2026-11-20 |
 | Documentos relacionados | [`../PLAN-IMPLEMENTACION.md`](../PLAN-IMPLEMENTACION.md), [`../REQUISITOS.md`](../REQUISITOS.md), [`../RBAC.md`](../RBAC.md) |
 
 ## Estados
@@ -21,7 +21,7 @@
 | [ADR-002](./ADR-002-roles-capacidades.md) | Roles por capacidades y migración expand-contract | Propuesta; backend y UI implementados; migración de datos pendiente |
 | [ADR-003](./ADR-003-evidencia-auditoria.md) | Evidencia privada y auditoría obligatoria | Propuesta; backend implementado; antimalware y retención pendientes |
 | [ADR-004](./ADR-004-tiempo-real.md) | Socket.IO, ticket y notificaciones persistidas | Aceptada; diseño propuesto |
-| [ADR-005](./ADR-005-rag-fuentes.md) | RAG con fuentes verificadas, citas y abstención | Aceptada (revisada 2026-11-17): RAG v1 sin proveedor externo y con respuesta extractiva |
+| [ADR-005](./ADR-005-rag-fuentes.md) | RAG con fuentes verificadas, citas y abstención | Aceptada (revisada 2026-11-17; addendum 2026-11-20): RAG v1 sin proveedor externo, respuesta extractiva e ingesta por CLI |
 | [ADR-006](./ADR-006-visita-360.md) | Visita 360° obligatoria con derechos y fallback | Aceptada e implementada; contenido real pendiente |
 | [ADR-007](./ADR-007-operacion-slo.md) | SLO, RPO/RTO, backups y rollback | Propuesta |
 
@@ -65,8 +65,13 @@ corresponde, indican qué partes ya están implementadas y cuáles siguen pendie
 | D-20 | Instancia única o clúster con Redis. | Pendiente | Define Socket.IO y escalado. |
 | D-21 | Proveedor RAG, presupuesto y tratamiento de datos. | Retirada (2026-11-17) | No aplica en v1: RAG sin proveedor externo. |
 | D-22 | Herramienta de monitoreo y alertas. | Pendiente | Bloquea observabilidad de Fase 9. |
-| D-23 | Retención de evidencia y conversaciones. | Pendiente | Afecta privacidad y almacenamiento. |
-| D-24 | Clasificación patrimonial explícita de POI (`patrimonialStatus`). | Propuesta | Evita tratar POI turísticos como patrimonio y reemplaza la etiqueta `unesco` sin verificación. |
+| D-23 | Retención de evidencia y conversaciones. | Parcial (2026-11-20): conversaciones técnicas 90 días; turísticas anónimas sin persistencia; evidencia pendiente | TTL en `Conversation` y `Message`; menor superficie de datos personales. |
+| D-24 | Clasificación patrimonial explícita de POI (`patrimonialStatus`). | Aceptada (2026-11-20) | Enum con `sin_clasificar` por defecto; evita tratar POI turísticos como patrimonio y reemplaza la etiqueta `unesco` sin verificación. |
+| D-25 | Ingesta RAG por CLI y manifiestos; sin subida de PDF en v1. | Aceptada (2026-11-20) | Sin parser ni superficie de archivos; corpus reproducible y auditado. |
+| D-26 | Conversaciones turísticas anónimas sin persistencia; técnicas 90 días. | Aceptada (2026-11-20) | Sin `Conversation` turística; TTL en ambas colecciones técnicas. |
+| D-27 | El historiador valida y propone fuentes; admin ejecuta `source.manage`. | Aceptada (2026-11-20) | RBAC sin cambios; la CLI exige actor autorizado y auditoría. |
+| D-28 | Búsqueda externa en vivo (RF-60) diferida a v1.1. | Aceptada (2026-11-20) | v1 responde solo con corpus curado y fechado. |
+| D-29 | Apertura del asistente solo con cobertura oficial verificada. | Aceptada (2026-11-20) | Sin cobertura suficiente: modo restringido o no se abre. |
 
 ## Regla de cambio
 

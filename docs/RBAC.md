@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.1 |
-| Fecha | 2026-11-13 |
-| Estado | Autorización por capacidades aplicada a los endpoints de conservación implementados; las capacidades de módulos aún no construidos son política objetivo. D-16 y D-18 a D-23 siguen pendientes de ratificación formal. |
+| Versión | 1.2 |
+| Fecha | 2026-11-20 |
+| Estado | Autorización por capacidades aplicada a los endpoints de conservación implementados; las capacidades de módulos aún no construidos son política objetivo. D-16 y D-18 a D-20, D-22 y la parte de evidencia de D-23 siguen pendientes; D-24 a D-29 aceptadas el 2026-11-20. |
 | Documentos relacionados | [`REQUISITOS.md`](./REQUISITOS.md), [`PLAN-IMPLEMENTACION.md`](./PLAN-IMPLEMENTACION.md), [`SEGURIDAD.md`](./SEGURIDAD.md) |
 
 > La autorización se aplica en el servidor. Un guard de Angular solo mejora la experiencia;
@@ -51,7 +51,7 @@ ese rol. No se crea un rol `tourist`: “Turista” es la etiqueta de `user`.
 | CAP-22 | `account.manage` | Gestionar cuentas, roles y estado. |
 | CAP-23 | `audit.read` | Consultar auditoría y eventos de dominio. |
 | CAP-24 | `source.read` | Consultar el registro de fuentes RAG. |
-| CAP-25 | `source.manage` | Registrar, versionar y retirar fuentes RAG. |
+| CAP-25 | `source.manage` | Registrar, versionar y retirar fuentes RAG, y ejecutar la ingesta CLI. |
 | CAP-26 | `panorama.publish` | Aprobar y publicar panoramas 360°. |
 | CAP-27 | `panorama.manage` | Gestionar la configuración técnica de panoramas. |
 | CAP-28 | `break_glass.inspection` | Excepción temporal y auditada para una acción de inspección. |
@@ -106,6 +106,11 @@ Notas:
   inspecciones. Si se rechaza, la capacidad queda solo para inspector.
 - `panorama.publish` para historiador está implementada: el contenido 360° es editorial. La
   configuración técnica y los panoramas de inspección quedan en admin (`panorama.manage`).
+- `source.manage` sigue siendo exclusivo de admin. El historiador valida y propone con
+  `source.read`; la ingesta CLI se ejecuta con un actor que tenga `source.manage` y queda
+  auditada (D-27).
+- `assistant.inspection` no usa datos de inspección, evidencia ni reportes en v1; solo fuentes
+  A/B/C técnicas.
 
 ## 4. Reglas de autorización por recurso
 
@@ -191,7 +196,8 @@ Reglas adicionales:
 | `POST /api/realtime/ticket` | `realtime.connect` | Ticket de 60 s, un solo uso. |
 | `POST /api/assistant/tourist/query` | `assistant.tourist` | Público con rate limit. |
 | `POST /api/assistant/inspection/query` | `assistant.inspection` | Inspector o historiador en consulta. |
-| `GET /api/admin/sources` | `source.read` / `source.manage` | Registro de fuentes. |
+| `GET /api/sources` | `source.read` | Registro en solo lectura para historiador, inspector y admin. |
+| `GET /api/admin/sources` | `source.manage` | Registro completo para administración. |
 
 ## 6. Migración expand-contract
 

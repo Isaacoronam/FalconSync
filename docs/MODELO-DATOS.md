@@ -11,8 +11,10 @@
 > Este documento describe el modelo **objetivo** del dominio de conservación. El árbol de
 > trabajo ya contiene modelos, servicios y rutas parciales para `HeritageAsset`, `Report`,
 > `Inspection`, `Intervention` y `DomainEvent`. Aún no están implementados `Evidence`,
-> `EvidenceAccessLog`, notificaciones, RAG ni visita 360°; tampoco está completa la UI o la
-> autorización por recurso. Los 23 POI siguen en `conservationStatus: unknown`.
+> `EvidenceAccessLog` ni notificaciones. El RAG tiene modelos iniciales, recuperación léxica y
+> endpoints; siguen pendientes la ingesta CLI, la curación del corpus, la evaluación y la UI.
+> Tampoco está completa la UI o la autorización por recurso. Los 23 POI siguen en
+> `conservationStatus: unknown`.
 
 ## 1. Alcance y principios
 
@@ -76,10 +78,10 @@ Principios:
 | `EvidenceAccessLog` | `evidenceaccesslogs` | Nueva | Acceso append-only a evidencia. |
 | `DomainEvent` | `domainevents` | Nueva | Hecho inmutable del dominio. |
 | `Notification` | `notifications` | Nueva | Aviso persistido por usuario. |
-| `SourceDocument` | `sourcedocuments` | Nueva | Fuente RAG registrada. |
-| `SourceChunk` | `sourcechunks` | Nueva | Fragmento trazable de una fuente. |
-| `Conversation` | `conversations` | Nueva | Conversación con un asistente. |
-| `Message` | `messages` | Nueva | Mensaje y citas de una conversación. |
+| `SourceDocument` | `sourcedocuments` | Inicial | Registro de fuente RAG; sin ingesta CLI todavía. |
+| `SourceChunk` | `sourcechunks` | Inicial | Fragmento trazable y recuperación léxica. |
+| `Conversation` | `conversations` | Inicial | Conversación técnica con TTL de 90 días. |
+| `Message` | `messages` | Inicial | Mensajes técnicos y citas con TTL de 90 días. |
 | `Panorama` | `panoramas` | Implementada | Escena 360° pública o de inspección. |
 | `AudioGuide` | `audioguides` | Condicional | Audio, transcripción e idioma. |
 | `IdempotencyRecord` | `idempotencyrecords` | Auxiliar | Respuesta almacenada para reintentos seguros. |
@@ -187,10 +189,13 @@ capacidades nuevas y no es asignable desde la administración.
 
 | Campo | Tipo | Obligatorio | Regla |
 |---|---|---:|---|
+| `patrimonialStatus` | Enum `PATRIMONIAL_STATUSES` | Sí | `unesco_fuera_verificado`, `unesco_entorno_pendiente`, `nacional_verificado`, `natural_protegido`, `turistico_no_patrimonial` o `sin_clasificar` (por defecto); índice. |
 | `conservationStatus` | Enum `good`, `fair`, `poor`, `unknown` | Sí | **Solo lectura** para la API de POI. Lo actualiza la proyección. Por defecto `unknown`. |
 | `conservationVerifiedAt` | Date \| null | No | `closedAt` de la inspección revisada que alimenta la proyección. |
 | `lastInspectionId` | ObjectId \| null | No | Inspección cerrada y revisada usada por la proyección. |
 | `heritageAssetId` | — | — | **No se añade**: el enlace vive en `HeritageAsset.locationId` para evitar dos fuentes de verdad. |
+
+`patrimonialStatus` implementa D-24. La etiqueta `tags: unesco` no se usa como fuente de verdad; el seed y la migración asignan el valor por POI. Un POI en `sin_clasificar` no se presenta como patrimonio ni como no patrimonio: el asistente se abstiene ante preguntas de pertenencia.
 
 Los campos editoriales, geográficos y de publicación existentes se conservan. El formulario
 administrativo de POI deja de aceptar `conservationStatus`; si lo recibe, responde
@@ -432,39 +437,75 @@ desempatar sin depender de `_id`. La API devuelve `nextCursor` y `hasMore`.
 
 | Campo | Tipo | Obligatorio | Regla / índice |
 |---|---|---:|---|
-| `title` | String(300) | Sí | Título completo. |
-| `institution` | String(200) | Sí | Autor o institución. |
-| `version` | String(80) | Sí | Edición, revisión o fecha. |
+| `sourceId` | String | Sí | Único; patrón `^S-\d{3}$`. |
+| `title` | String(240) | Sí | Título completo. |
+| `institution` | String(160) | Sí | Autor o institución. |
+| `version` | String(120) | Sí | Edición, revisión o fecha. |
 | `publicationDate` | Date \| null | No | Fecha de publicación. |
 | `retrievedAt` | Date | Sí | Fecha de obtención. |
-| `pages` | Number \| null | No | Número de páginas. |
-| `license` | String(200) | Sí | Licencia o condición. |
-| `rights` | String(500) | Sí | Derechos de uso. |
-| `accessLevel` | Enum `ACCESS_LEVELS` | Sí | Nivel de acceso. |
-| `checksum` | String(64) | Sí | SHA-256 único. |
-| `storageKey` | String | Sí | Ruta privada; no pública. |
+| `verifiedAt` | Date \| null | No | Obligatoria para `active`; nula mientras no se verifique. |
+| `url` | String(1000) \| null | No | Enlace oficial o de referencia. |
+| `level` | Enum `SOURCE_LEVELS` | Sí | A–E; índice. |
+| `sourceLabel` | Enum `SOURCE_LABELS` | Sí | Etiqueta de credibilidad visible. |
+| `usagePolicy` | Enum `SOURCE_USAGE_POLICIES` | Sí | `final`, `pointer` o `context`; índice. |
+| `indexingPolicy` | Enum `SOURCE_INDEXING_POLICIES` | Sí | `full_text` o `short_quotes_only`. |
+| `credibilityNotes` | String(2000) | Sí | Motivo del nivel y advertencias. |
+| `license` | String(300) | Sí | Licencia o condición. |
+| `rights` | String(1000) | Sí | Derechos de uso. |
+| `rightsVerified` | Boolean | Sí | Por defecto `false`; una fuente `active` exige `true`. |
+| `rightsVerifiedAt` | Date \| null | No | Fecha de verificación de derechos. |
+| `rightsVerifiedBy` | ObjectId `User` \| null | No | Actor que verificó. |
+| `accessLevel` | Enum `ACCESS_LEVELS` | Sí | `public`, `internal` o `restricted`. |
+| `checksum` | String(64) \| null | No | SHA-256; índice único parcial si está presente. |
+| `checksumScope` | Enum `original_file` \| `curated_text` \| null | No | Alcance del checksum; obligatorio si hay checksum. |
+| `storageKey` | String \| null | No | Ruta privada; excluida por defecto de las consultas. |
+| `language` | Enum `es` | Sí | El corpus v1 admite español. |
+| `topics` | Array<String(80)> | No | Etiquetas. |
+| `poiSlugs` | Array<String(120)> | No | Slugs normalizados a minúsculas. |
 | `status` | Enum `SOURCE_STATUSES` | Sí | Por defecto `draft`; índice. |
+| `statusReason` | String(1000) \| null | No | Obligatorio al retirar o sustituir. |
 | `supersedes` | ObjectId `SourceDocument` \| null | No | Versión anterior. |
-| `createdBy` / `updatedBy` | ObjectId `User` | Sí / No | Trazabilidad. |
 | `createdAt` / `updatedAt` | Date | Sí | Timestamps. |
+
+Índices: `status`; `{ sourceId: 1, status: 1 }`; `{ level: 1, usagePolicy: 1, status: 1 }`; y `{ checksum: 1 }` único parcial cuando el checksum es texto.
 
 ### 5.14 `SourceChunk`
 
 | Campo | Tipo | Obligatorio | Regla / índice |
 |---|---|---:|---|
-| `documentId` | ObjectId `SourceDocument` | Sí | Índice compuesto. |
+| `chunkKey` | String(180) | Sí | Único y legible: `S-002#p1.inscripcion.01`. |
+| `documentId` | ObjectId `SourceDocument` | Sí | Índice. |
 | `ordinal` | Number | Sí | Único con `documentId`. |
-| `page` | Number \| null | No | Página de origen. |
-| `section` | String(200) | No | Sección o encabezado. |
-| `text` | String | Sí | Texto del fragmento. |
-| `tokens` | Number | Sí | Conteo aproximado. |
+| `page` | String(40) \| null | No | Página, rango o localizador de origen; conserva valores como `12–13`. |
+| `section` | String(240) \| null | No | Sección o encabezado. |
+| `claimType` | Enum `CLAIM_TYPES` \| null | No | `historical`, `normative`, `current_status`, `technical_guidance`, `tourism`, `tradition` o `context`. |
+| `factKey` | String(120) \| null | No | Clave de hecho; debe acompañarse de `factValue`. |
+| `factValue` | String(300) \| null | No | Valor citado, máximo 25 palabras, incluido en `text`. |
+| `contradictionGroup` | String(80) \| null | No | Agrupa afirmaciones que requieren mostrar fuentes discrepantes. |
+| `validAsOf` | Date \| null | No | Fecha hasta la que el dato se considera vigente. |
+| `language` | Enum `es` | Sí | Campo de `language_override`. |
+| `text` | String(12000) | Sí | Texto curado; con `short_quotes_only` no supera 25 palabras. |
+| `indexingPolicy` | Enum `SOURCE_INDEXING_POLICIES` | Sí | Política copiada de la fuente para validar citas. |
+| `assistantScopes` | Array de `tourist` / `technical` | Sí | No puede estar vacío. |
+| `topics` | Array<String(80)> | No | Etiquetas. |
+| `poiSlugs` | Array<String(120)> | No | Slugs de POI asociados. |
 | `checksum` | String(64) | Sí | Integridad del fragmento. |
-| `embedding` | Array<Number> \| null | No | Solo si D-12 se aprueba y hay almacén. |
-| `metadata` | Object | No | Nivel de fuente, idioma, tema. |
-| `createdAt` | Date | Sí | Fecha. |
+| `createdAt` / `updatedAt` | Date | Sí | Timestamps. |
 
-Línea base D-12: índice léxico con filtros de metadatos. `embedding` queda `null` y no se
-consulta hasta que se elija almacén vectorial y se evalúe la recuperación.
+Índices:
+
+```js
+SourceChunkSchema.index(
+  { text: 'text' },
+  { default_language: 'spanish', language_override: 'language', name: 'source_chunk_text_es' },
+);
+SourceChunkSchema.index({ documentId: 1, ordinal: 1 }, { unique: true });
+SourceChunkSchema.index({ documentId: 1, page: 1 });
+SourceChunkSchema.index({ assistantScopes: 1 });
+SourceChunkSchema.index({ poiSlugs: 1 });
+```
+
+`chunkKey` tiene índice único declarado en el campo. La fuente y su `usagePolicy`, nivel y acceso se comprueban mediante `SourceDocument`; no se duplican en `SourceChunk`.
 
 ### 5.15 `Conversation` y `Message`
 
@@ -472,12 +513,13 @@ consulta hasta que se elija almacén vectorial y se evalúe la recuperación.
 
 | Campo | Tipo | Obligatorio | Regla / índice |
 |---|---|---:|---|
-| `userId` | ObjectId `User` \| null | No | `null` para visitante anónimo. |
-| `assistant` | Enum `ASSISTANTS` | Sí | `tourist` o `inspection`. |
+| `userId` | ObjectId `User` | Sí | En v1 solo el asistente técnico persiste; el turismo anónimo no crea conversación. |
+| `assistant` | Enum `ASSISTANTS` | Sí | `inspection` en v1. |
 | `startedAt` | Date | Sí | Inicio. |
 | `lastMessageAt` | Date | Sí | Último mensaje. |
-| `retentionUntil` | Date | Sí | TTL propuesto: 90 días (D-23). |
-| `clientKeyHash` | String(64) \| null | No | Hash para cuota anónima; no IP en claro. |
+| `retentionUntil` | Date | Sí | TTL: 90 días (D-26). |
+| `corpusVersion` | String(40) | Sí | Versión usada en la conversación. |
+| `clientKeyHash` | String(64) \| null | No | Reservado; no se escribe en v1. |
 
 `Message`:
 
@@ -486,16 +528,18 @@ consulta hasta que se elija almacén vectorial y se evalúe la recuperación.
 | `conversationId` | ObjectId `Conversation` | Sí | Índice con `createdAt`. |
 | `role` | Enum `MESSAGE_ROLES` | Sí | `user`, `assistant` o `system`. |
 | `content` | String | Sí | Texto mostrado. |
-| `citations` | Array<Citation> | No | Cada cita referencia un `chunkId` recuperado. |
-| `model` | String(80) | No | Modelo usado. |
+| `citations` | Array<Citation> | No | Cada cita referencia un `chunkId` recuperado y conserva sus metadatos de afirmación. |
+| `answerType` | Enum \| null | No | `extractive`, `structured`, `contextual`, `mixed` o `abstention`; nulo para mensajes de usuario. |
+| `abstained` | Boolean | Sí | Por defecto `false`. |
+| `abstentionReason` | Enum `ABSTENTION_REASONS` \| null | No | Obligatorio si `abstained=true`. |
 | `latencyMs` | Number | No | Latencia. |
-| `tokensIn` / `tokensOut` | Number | No | Consumo. |
-| `costUsd` | Number | No | Coste estimado. |
+| `retrieval` | Object | No | `chunkIds`, `scores`, `topK` y `corpusVersion`; nunca texto completo. |
+| `retentionUntil` | Date | Sí | TTL: 90 días. |
 | `createdAt` | Date | Sí | Fecha. |
 
-`Citation`: `{ documentId, chunkId, page, section, quote, sourceLevel, sourceLabel, url }`.
-La cita se valida contra el fragmento recuperado; si no coincide, se descarta la respuesta y
-se abstiene.
+`Citation`: `{ documentId, chunkId, sourceId, title, institution, kind, page, section, quote, claimType, factKey, factValue, contradictionGroup, validAsOf, sourceLevel, sourceLabel, url, verifiedAt }`. `page` es texto para preservar páginas y rangos. `kind` es `quote`, `fact` o `context`; el contexto se identifica como tal y nunca sustenta una afirmación factual. La respuesta y el mensaje persistido conservan los mismos metadatos de cita.
+
+TTL en `Conversation` y `Message` sobre `retentionUntil` (`expireAfterSeconds: 0`) para no dejar mensajes huérfanos. En v1 no se guardan `model`, `tokensIn`, `tokensOut` ni `costUsd`: no hay proveedor externo.
 
 ### 5.16 `Panorama` y `AudioGuide`
 
@@ -821,6 +865,7 @@ administración no puede aprobar, publicar ni archivar panoramas turísticos (`4
 stateDiagram-v2
     [*] --> draft
     draft --> active: activate
+    draft --> retracted: discard
     active --> superseded: supersede
     active --> retracted: retract
     superseded --> [*]
@@ -1043,6 +1088,7 @@ sin bloqueo legal.
 ### 14.1 `Location`
 
 - Añadir `conservationVerifiedAt` y `lastInspectionId` con `null`.
+- Añadir `patrimonialStatus` con `sin_clasificar` por defecto y migrar los 23 POI según `CORPUS-POI.md`; la etiqueta `unesco` de `tags` no se modifica en esta fase.
 - Mantener `conservationStatus=unknown` en los 23 POI.
 - Retirar `conservationStatus` del formulario y del DTO de escritura de POI.
 - Recalcular la proyección solo cuando exista una inspección cerrada y revisada.
@@ -1085,7 +1131,7 @@ migración, se restaura el backup y se documenta el incidente.
 | RN-15, RN-16, RF-44 a RF-52 | `Notification`, ticket, cursor, `EVENTOS-TIEMPO-REAL.md`. |
 | RN-17 a RN-20, RF-53 a RF-66 | `SourceDocument`, `SourceChunk`, `Conversation`, `Message`. |
 | RN-21, RF-67 a RF-70 | `Panorama`, `AudioGuide`, `360.md`. |
-| RN-22, RF-34 | Separación `CheckIn`/`Report`. |
+| RN-26, RF-34 | Separación `CheckIn`/`Report`. |
 | RN-23 | `Location` y reglas de publicación existentes. |
 | RN-24, RN-25 | Etiquetas y metadatos de UI; no cambian el modelo. |
 

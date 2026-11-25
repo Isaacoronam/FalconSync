@@ -5,9 +5,10 @@ API REST para los puntos de interés patrimonial de Coro, con autenticación y p
 ## Requisitos
 
 - Node.js 26.13.0
-- MongoDB 9.0.4 local. Conservación y evidencia requieren transacciones, así que usan un
-  replica set de un nodo en `127.0.0.1:27018` (`replicaSet=falconsyncTest`); el resto de
-  módulos puede usar el standalone en `127.0.0.1:27017`.
+- MongoDB 9.0.4 local. Conservación, evidencia y persistencia del asistente técnico requieren
+  transacciones, así que usan un replica set de un nodo en `127.0.0.1:27018`
+  (`replicaSet=falconsyncTest`); el resto de módulos puede usar el standalone en
+  `127.0.0.1:27017`.
 
 ## Estructura
 
@@ -18,6 +19,7 @@ projects/backend/
 ├── api/                      # Módulos HTTP: rutas y controladores por dominio
 │   ├── admin/                # Administración de POI, aventuras, cuentas y auditoría (/api/admin)
 │   ├── adventures/           # Aventuras publicadas y progreso (/api/adventures)
+│   ├── assistant/            # Consultas RAG turístico y técnico (/api/assistant)
 │   ├── auth/                 # Registro, sesión y contraseña (/api/auth)
 │   ├── check-ins/            # Check-in por QR y geocerca (/api/check-ins)
 │   ├── conservation/         # Activos, reportes, inspecciones e intervenciones (/api)
@@ -89,6 +91,7 @@ pm2 start ecosystem.config.cjs # producción con PM2 (opcional; requiere PM2 ins
 Lectura pública:
 
 - `GET /api/health`
+- `POST /api/assistant/tourist/query` (`{ question, locationId?, locale? }`; citas y abstención)
 - `GET /api/locations?page=1&limit=50&category=religious&circuit=casco-historico&tag=unesco`
 - `GET /api/locations?includeProvisional=true` (compatibilidad del mapa; ya no hay borradores)
 - `GET /api/locations/near?lat=11.4075&lng=-69.6778&radius=500`
@@ -118,6 +121,19 @@ Perfil privado (autenticado):
 - `POST /api/profile/avatar` (`multipart/form-data`, campo `image`)
 - `DELETE /api/profile/avatar`
 - `GET /api/profile/check-ins/:checkInId/photo`
+
+Asistente técnico (capacidad `assistant.inspection`):
+
+- `POST /api/assistant/inspection/query` (`{ question, conversationId?, locale? }`; fuentes A/B/C)
+
+El núcleo RAG inicial usa recuperación léxica y respuestas extractivas; no llama a un
+proveedor de IA. Incluye citas literales de hasta 25 palabras o abstención. Las consultas
+turísticas anónimas no se persisten; las conversaciones técnicas se conservan 90 días con TTL.
+Los endpoints responden `503 ASSISTANT_UNAVAILABLE` hasta que exista corpus activo,
+verificado y elegible. Ambos asistentes permanecen desactivados por defecto:
+`RAG_TOURIST_ENABLED` y `RAG_TECHNICAL_ENABLED` solo se habilitan tras evaluar el corpus
+dorado; `RAG_CORPUS_VERSION` identifica la versión publicada. El catálogo y la ingesta
+aprobada de fuentes siguen pendientes.
 
 Administración (rol `admin`):
 

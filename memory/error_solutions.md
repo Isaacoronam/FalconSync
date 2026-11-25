@@ -60,3 +60,48 @@
   sin depender del reparto de eventos de la rueda.
 - **Verificación:** `playwright test e2e/map.spec.ts --repeat-each=3` pasó 3/3 y
   `npm run verify` terminó con 19/19 E2E el 2026-11-18.
+
+## La regresión v2 falla al evaluarla contra el corpus expandido
+
+- **Síntoma:** `npm run rag:evaluate` con `rag-golden-v2.json` sobre el corpus completo (14
+  fuentes) reporta 1 fallo (`oos-07`: «¿Qué ruta debo seguir para recorrer el casco histórico?»
+  esperaba abstención y ahora responde) y `fallbackExact`/`suggestionsComplete` en 0.923.
+- **Causa confirmada:** no es una regresión de código. El conjunto v2 se congeló con el corpus
+  original de 5 fuentes; al expandirlo, S-028 aporta rutas y la pregunta pasa a tener evidencia
+  (comportamiento correcto). El caso quedó ajustado en `rag-golden-v3.json` y documentado en sus
+  notas.
+- **Solución aplicada (2026-11-24):** la regresión de código se ejecuta con el corpus original:
+  `node scripts/evaluateRagCorpus.js --dataset corpus/evaluation/rag-golden-v2.json --report
+  corpus/evaluation/rag-golden-v2-report.json --sources S-002,S-003,S-020,S-021,S-022`.
+  El comportamiento del corpus expandido se mide con `rag-golden-v3.json` (sin `--sources`).
+- **Verificación:** v2 con `--sources` → 59/59, `unmetTargets` vacío (p95 41 ms); v3 → 125/125,
+  `unmetTargets` vacío (p95 45 ms). Sin `--sources`, el fallo de `oos-07` es esperado y está
+  documentado.
+- **Nota:** `rag-golden-v2.json` no se modifica tras ejecutarlo; las expectativas nuevas viven
+  en v3.
+
+## El replica set de 27018 se pierde y la base de desarrollo queda vacía
+
+- **Síntoma:** tras un reinicio del entorno, `mongod` en `27018` no responde
+  (`ECONNREFUSED`) y, al recrearlo, la base `falconsync` queda sin usuarios, POI ni corpus:
+  el asistente en desarrollo devuelve `503 ASSISTANT_UNAVAILABLE` y las suites de
+  conservación, evidencia y E2E no conectan.
+- **Causa confirmada:** el directorio de datos del replica set vive en
+  `%LOCALAPPDATA%\Temp\opencode\mongo-rs-27018`; si desaparece, `mongod --replSet falconsyncTest`
+  arranca sin configuración ni datos previos y las pruebas recrean solo sus propias bases
+  `falconsync_*_test`.
+- **Solución aplicada (2026-11-23):**
+  1. Recrear el directorio e iniciar `mongod --port 27018 --bind_ip 127.0.0.1 --replSet falconsyncTest`;
+     ejecutar `rs.initiate()` si hace falta y verificar `db.hello().isWritablePrimary`.
+  2. Copiar los usuarios desde la base `falconsync` de `127.0.0.1:27017` (misma máquina; las
+     credenciales nunca se imprimen ni se copian fuera de MongoDB).
+  3. `npm --prefix projects/backend run seed` (24 POI: 23 publicados y Cataratas de Hueque
+     en borrador).
+  4. Ingerir S-002, S-003 y S-020 con `npm run rag:ingest -- --apply --manifest <archivo>
+     --actor-id <admin>` y cerrar con `--verify` (3 fuentes, 26 fragmentos, sin problemas).
+- **Verificación:** smoke del asistente en desarrollo: responde patrimonio con S-002/S-003,
+  se abstiene en lugar no publicado, texto libre, precio sin fuente y año sin evidencia, con
+  3 sugerencias; `npm run rag:evaluate` reporta `unmetTargets` vacío.
+- **Nota:** el historiador con `_id` fijo `6aee4b03d9a54453e896062c` (declarado en
+  `rightsVerifiedBy` de S-002, S-003 y S-020) debe existir en la base destino; el de 27017 ya
+  lo tiene y se copió con el resto de usuarios.

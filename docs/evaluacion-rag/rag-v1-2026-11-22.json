@@ -1,0 +1,31 @@
+{
+  "corpusVersion": "2026-11-22.1",
+  "date": "2026-11-22",
+  "environment": "MongoDB replica set local falconsyncTest en 127.0.0.1:27018",
+  "sampleSize": 60,
+  "topK": 5,
+  "metrics": {
+    "recallAt5": 1,
+    "citationPrecision": 1,
+    "correctAbstentionRate": 0.9642857142857143,
+    "invalidCitations": 0,
+    "latencyP50Ms": 14,
+    "latencyP95Ms": 30
+  },
+  "failures": [],
+  "scope": {
+    "tourist": "enabled",
+    "technical": "disabled"
+  },
+  "sources": [
+    "S-002",
+    "S-003",
+    "S-020"
+  ],
+  "sourceAttribution": "Las respuestas incluyen institución, título, etiqueta, enlace oficial o enlace interno y localizador cuando corresponde.",
+  "limitations": [
+    "El asistente técnico no está activado.",
+    "S-020 es contexto del sistema y no verifica hechos externos.",
+    "Los datos de horario, acceso, precio y estado práctico requieren fuentes vigentes adicionales."
+  ]
+}
