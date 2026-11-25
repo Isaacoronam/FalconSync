@@ -498,13 +498,32 @@ La suite E2E comprueba:
   check-in con foto, insignia, visor ampliado, reemplazo y eliminación de foto y filtros de
   galería;
 - gestión de cuentas: cambio de rol, desactivación, reactivación y revocación de sesiones
-  con reautenticación.
+  con reautenticación;
+- guía patrimonial `/guia`: creación de perfil por UI, estado de disponibilidad y bloqueo
+  de la consulta sin corpus (`e2e/guia.spec.ts`) y —con el corpus RAG habilitado— la batería
+  de preguntas del E2E de conversación (`e2e/chatbot-guia.spec.ts`): lugares publicados,
+  estado UNESCO, adobe y tapia por separado y compuestos, identidad de Coro y FALCONSYNC,
+  horario sin fuente publicada y preguntas compuestas de dos partes conocidas y de mezcla
+  conocida+desconocida.
 
 La E2E local usa Microsoft Edge mediante el canal de Playwright. La suite completa quedó en
 19/19 en Edge el 2026-11-18 y en 19/19 con `CI=1`/Chromium en una copia limpia el 2026-11-19.
 La ejecución remota del workflow sigue pendiente de autorización. Las imágenes de la E2E se
 guardan en `test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan
 las carpetas de desarrollo.
+
+Por defecto la suite E2E corre con la guía apagada: `playwright.config.ts` fija
+`RAG_TOURIST_ENABLED`, `RAG_CORPUS_VERSION` y `RAG_TECHNICAL_ENABLED` (los toma del entorno
+que lanza la suite y, si no están, los apaga), de modo que el `.env` de desarrollo no cambia
+el resultado de `npm run verify` ni de CI. `scripts/e2eServer.js` solo ingiere las 14
+fuentes de la evaluación dorada (S-005 y S-023 quedan fuera) cuando la guía turística viene
+habilitada con corpus declarado; sin esa petición no se ingiere nada y el estado sigue en
+«Guía en preparación». Para conversar con la guía en E2E:
+`$env:RAG_TOURIST_ENABLED='true'; $env:RAG_CORPUS_VERSION='2026-11-22.1'; npm --prefix projects/frontend run e2e -- e2e/chatbot-guia.spec.ts`
+— la ingesta con embeddings tardó 18,3 s y el timeout de arranque del backend sube a 600 s
+solo en ese modo. En esa modalidad, los casos B7 (horario sin fuente del lugar preguntado)
+y C3b (mezcla «…y quién…») quedan en rojo: documentan defectos reales del asistente
+reportados para su corrección; el resto de la batería pasa.
 
 ## Seguridad y dependencias
 
