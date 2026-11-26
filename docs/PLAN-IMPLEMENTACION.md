@@ -25,7 +25,7 @@
 | 2026-11-13 | Fase 1 documental creada | `docs/MODELO-DATOS.md`, `docs/CASOS-USO.md`, `docs/EVENTOS-TIEMPO-REAL.md`, `docs/openapi.yaml`, `docs/WIREFRAMES.md` y `docs/360.md`; YAML válido con `js-yaml`; OpenAPI válido con Redocly (2 advertencias no bloqueantes) |
 | Pendiente | Revisión y aprobación integral del diseño de Fase 1 | D-09 a D-17 están aprobadas; el contrato restante y las decisiones FD-* siguen pendientes. El backend existente es parcial y debe reconciliarse con el contrato |
 | Pendiente | Migración de datos de `moderator` a `historian` | Requiere backup, dry-run revisado y autorización; no se ejecutó |
-| Pendiente | Aprobación de D-18 a D-20 y D-22 a D-23, decisiones FD-* y alcance de audio/idiomas (D-21 retirada en v1) | Bloquea las partes dependientes de derechos, retención y operación |
+| Pendiente | Aprobación de D-18 a D-20 y D-22; D-23 parcial; decisiones FD-* y alcance de audio/idiomas (D-21 retirada en v1; D-24 a D-29 aceptadas el 2026-11-20) | Bloquea las partes dependientes de derechos, retención de evidencia y operación |
 | Pendiente | CI remoto verde | Requiere autorización para publicar rama/PR |
 | 2026-11-13 | Autorización backend | `requireAnyCapability`, permisos por recurso, auditoría de solo metadatos y revisor asignado implementados; 4/4 pruebas unitarias aprobadas; integración bloqueada por MongoDB replica set no disponible en `127.0.0.1:27018` |
 | 2026-11-15 | Replica set local operativo | `mongod` en `127.0.0.1:27018` con `replicaSet=falconsyncTest` verificado como `PRIMARY`; desbloquea conservación y evidencia |
@@ -36,6 +36,15 @@
 | 2026-11-17 | RAG v1 sin proveedor y corpus de POI | `docs/FUENTES-RAG.md` v1.1, `docs/CORPUS-POI.md`, ADR-005 revisado, D-03 revisada, D-21 retirada; fuentes oficiales y de historia verificadas; contradicciones de Wikipedia documentadas |
 | 2026-11-18 | T0 estructura verificada | `npm run verify`: 110/110 backend (14 suites), 53/53 frontend, build correcto y 19/19 E2E; `structure.test.js` y `uploads.test.js`; 0 registros con `storageKey` en `uploads-private/` |
 | 2026-11-19 | T1 CI preparado y reproducido en copia limpia | `.github/workflows/ci.yml` dispara en `develop`, `main` y `master`; inicia `mongo:9.0` con `--replSet falconsyncTest` y `rs.initiate()`, publica el mismo `mongod` en `27017` y `27018` y ejecuta auditorías, pruebas, build y E2E. Copia limpia sin `.env` ni `node_modules`: 110/110 backend, 53/53 frontend, build, 19/19 E2E con `CI=1` y 0 vulnerabilidades de producción. El paso Docker no se ejecutó localmente (no hay Docker); `rs.initiate()` se validó en un replica set desechable. GitHub Actions no se ejecutó |
+| 2026-11-20 | Fase 0 RAG cerrada | ADR-005 con addendum; D-24 a D-29 aceptadas; `FUENTES-RAG.md` v1.2; S-08, UC-14 y UC-15 sin proveedor; RF-60 diferido; modelo y contrato alineados. Sin cambios de código ni pruebas de ejecución |
+| 2026-11-20 | Primer núcleo backend del chatbot RAG | Modelos de fuente/fragmento y conversación/mensaje; búsqueda léxica, citas extractivas, abstención, RBAC técnico, TTL de 90 días y cierre por defecto hasta evaluación. `assistant.test.js`: 7/7. Ingesta CLI, corpus, UI y evaluación dorada pendientes |
+| 2026-11-23 | Guía turística V2 cerrada | Recuperación semántica local (embeddings multilingües) con `questions` curadas en S-002/S-003; resolución de POI sin selector con regla de dominancia; abstenciones por lugar no publicado, texto libre y año sin evidencia; citas una por fuente. Evaluación v2: 59/59 y `unmetTargets` vacío (`docs/evaluacion-rag/rag-v2-2026-11-23.json`). `npm run verify`: 149/149 backend, 89/89 frontend, build correcto y 21/21 E2E (incluye el nuevo `e2e/guia.spec.ts`). Base de desarrollo 27018 reconstruida (24 POI, 3 fuentes, 26 fragmentos) |
+| 2026-11-24 | Guía turística V3 cerrada | S-021/S-022 aprobadas y activas; corpus expandido a 14 fuentes y 131 fragmentos (S-024 blog adobe/tapia y S-025 ficha técnica nivel C; S-026–S-029 y S-032 resúmenes propios de Wikipedia/Wikivoyage nivel D; S-030 horario del MUCOR nivel A y S-031 horario de misas nivel C); preguntas compuestas con sub-consultas, evidencia por parte y hasta 3 citas; patrones de «estado Falcón», precio-vs-horario y adobe cultural. Evaluación v3: 125/125 y `unmetTargets` vacío (`docs/evaluacion-rag/rag-v3-2026-11-24.json`); regresión v2 con `--sources`: 59/59. `npm run verify`: 156/156 backend, 89/89 frontend, build correcto y 21/21 E2E |
+| 2026-11-25 | Guía turística V4 cerrada | Saludos con `answerType: greeting`; coincidencia exacta normalizada de preguntas curadas; umbral léxico de POI 0.6 con «Coro» fuera de los tokens distintivos; segunda cita filtrada por cobertura/POI/margen y fuentes internas sin URL pública; `S-026#introduccion` y preguntas curadas de ciudad, producto, turismo y tapia; deduplicación, capitalización, aviso de ruta y ámbito de reportes. Corpus 27018: 14 fuentes/132 fragmentos verificados. Evaluación v4: 134/134 y `unmetTargets` vacío; v2 con `--sources`: 59/59; v3 congelado: 123/125 (p-20/p-30 obsoletos). `npm run verify`: 164/164 backend, 89/89 frontend, build correcto y 23/23 E2E aprobadas + 5 omitidas por diseño |
+| 2026-11-26 | RAG V5: relevancia y compuestas | «ciudad»/«Coro» dejan de atribuir POI; preguntas dobles/triples por subconsulta con orden y evidencia propia; intenciones de ruta, estacionamiento, transporte, distancia y visitas nocturnas con abstención específica; «¿Qué es la Casa X?» sin evidencia se abstiene; horarios sin contradicción y precios con mensaje propio; S-022 V3 corrige el mapa y añade la Ruta del Casco Histórico. Corpus 14 fuentes/133 fragmentos. Evaluación v5: 146/146, 0 fallos, `unmetTargets` vacío (sourceHit 0.92, p95 110 ms). Backend: 187/187 |
+| 2026-11-25 | Identidad Chivito y celebración de check-in | Logo circular en header, administración y autenticación, favicon desde el logo completo, fondo de Médanos, avatar y poses; chat Chivito sobre RAG HTTP; modal de recompensa solo tras `201` con insignia nueva; medallones por categoría para insignias sin imagen. Tests: 164/164 backend, 94/94 frontend, build correcto y 29/29 E2E aprobadas + 5 omitidas por diseño |
+| 2026-11-25 | Canal de Telegram vía MCP | `bin/mcpServer.js` por stdio con herramientas de guía, POI, rutas, vínculo e incidencias; `bin/telegramBot.js` con `grammY`, polling y webhook opcional; vinculación por código de un solo uso, `ChannelLink`, `ChannelLinkCode` y `TelegramUpdate`; reportes con `sourceChannel=telegram`, idempotencia por `sourceActionKey` y sin exponer la clave; perfil web con sección Canales. Seed del recorrido curado aplicado en 27018 (5 paradas). `npm run verify`: 174/174 backend, 97/97 frontend, build correcto y 30/30 E2E aprobadas + 5 omitidas por diseño |
+| 2026-11-25 | Acceso web a Telegram y cierre de brechas del canal | Franja de acceso al bot en `/guia`; deep link `?start=CODIGO` en el perfil y manejo del payload en `/start`; `TELEGRAM_WEB_URL` para enlaces clicables; `/cerca`; paginación y detalle de `/misreportes`; avisos de cambio de estado; canal de origen visible en reportes y triaje; bot incluido en `ecosystem.config.cjs`; `TELEGRAM_ENABLED=true` en el entorno local. Tests: 178/178 backend, 99/99 frontend, build correcto y 30/30 E2E aprobadas + 5 omitidas por diseño |
 | Pendiente | Antimalware y retención definitiva | Producción bloquea cargas de evidencia con `503 EVIDENCE_SCAN_UNAVAILABLE` hasta desplegar escaneo |
 
 **Revisión de estado:** el árbol local contiene la estructura obligatoria del 2026-11-18 y
@@ -44,8 +53,10 @@ los avances de conservación, evidencia y autorización sin commit. T0 se verifi
 build correcto y 19/19 E2E. T1 se preparó el 2026-11-19: el workflow ya usa un replica set,
 dispara en `develop` y se reprodujo en una copia limpia con 110/110 backend, 53/53 frontend,
 build y 19/19 E2E con `CI=1`. El paso Docker de Mongo y GitHub Actions no se ejecutaron
-localmente; la publicación de la rama/PR sigue pendiente de autorización (A2). No se desplegó
-nada.
+localmente; la publicación de la rama/PR sigue pendiente de autorización (A2). El
+2026-11-23 se reprodujo `npm run verify` completo sobre el replica set local: 149/149
+backend, 89/89 frontend, build correcto y 21/21 E2E; la guía turística V2 quedó cerrada
+con la evaluación dorada en `unmetTargets` vacío. No se desplegó nada.
 
 ## 1. Objetivo
 
@@ -146,9 +157,13 @@ baseline real; esta tabla se conserva como evidencia histórica de la deriva.
   prefijo público, validación de contenido, eliminación de EXIF, hash SHA-256, idempotencia,
   autorización por recurso, registro append-only de accesos y retención configurable. La
   consulta de accesos está en `/api/admin/evidence/:id/access-log`.
-- No se encontraron en el backend notificaciones, Socket.IO, RAG ni panoramas 360°. La UI de
-  reportes e inspecciones existe en `projects/frontend/src/app/pages/conservation/` y está
-  cubierta por `e2e/conservation.spec.ts`.
+- No se encontraron en el backend notificaciones, Socket.IO ni RAG. La UI de reportes e
+  inspecciones existe en `projects/frontend/src/app/pages/conservation/` y está cubierta por
+  `e2e/conservation.spec.ts`.
+- La visita 360° ya tiene modelo `Panorama`, original privado, derivados con `sharp`, API
+  pública y administrativa, visor WebGL propio con fallback, flujo editorial separado y
+  pruebas. No hay panorámicas reales con derechos verificados; la galería pública queda vacía
+  y no se publicará contenido sintético.
 - `Intervention` exige evidencia para completar o verificar; con la carga y consulta ya
   implementadas, el camino puede terminar y cerrar hallazgos que requieren intervención.
 - Las rutas de conservación usan `requireAnyCapability`; los servicios comprueban propietario,
@@ -361,7 +376,7 @@ Convenciones existentes que se conservan: Mongoose 9, ESM, `timestamps`, `versio
 | `SourceChunk` | `documentId`, `ordinal`, `page`, `section`, `text`, `tokens`, `checksum`, `embedding?` | `documentId + ordinal`; `page`; texto completo o vector según almacén |
 | `Conversation` | `userId?`, `assistant`, `startedAt`, `lastMessageAt`, `retentionUntil` | `userId + startedAt`; TTL de retención |
 | `Message` | `conversationId`, `role`, `content`, `citations[]`, `createdAt`, `model`, `latencyMs` | `conversationId + createdAt` |
-| `Panorama` | `assetId?`, `locationId?`, `title`, `imageKey`, `projection`, `width`, `height`, `checksum`, `license`, `author`, `capturedAt`, `status`, `hotspots[]` | `assetId`; `locationId`; `status` |
+| `Panorama` | `assetId?`, `locationId?`, `title`, `description`, `imageKey`, `derivativeKey`, `thumbnailKey`, `projection`, `width`, `height`, `checksum`, `derivativeChecksum`, `thumbnailChecksum`, `bytes`, `license`, `licenseUrl`, `author`, `credit`, `capturedAt`, `status`, `visibility`, `hotspots[]`, `fallback`, `rights*`, `consent*`, `version` | `assetId`; `locationId`; `status + visibility`; `version` |
 | `AudioGuide` (condicional) | `assetId`, `language`, `audioKey`, `transcript`, `durationSeconds`, `license`, `status` | `assetId + language` |
 
 Reglas transversales:
@@ -403,6 +418,11 @@ Se conservan las rutas actuales. Las nuevas rutas se montan en `createApp()` y c
 | `POST /api/assistant/inspection/query` | inspector | Asistente técnico con citas. |
 | `GET /api/panoramas` | público | Panoramas publicados. |
 | `GET /api/panoramas/:id` | público | Escena, hotspots y créditos. |
+| `GET /api/panoramas/:id/image`, `/:id/thumbnail` | público | Derivados verificados por checksum. |
+| `GET/POST /api/admin/panoramas` | `panorama.manage` / `panorama.publish` | Inventario; alta multipart con `panorama.manage`. |
+| `GET/PATCH /api/admin/panoramas/:id` | `panorama.manage` / `panorama.publish` | Detalle y edición con `If-Match`. |
+| `GET /api/admin/panoramas/:id/image`, `/:id/thumbnail` | `panorama.manage` / `panorama.publish` | Derivados autenticados. |
+| `POST /api/admin/panoramas/:id/{approve,publish,archive}` | `panorama.publish` (público) / `panorama.manage` (inspección) | Transiciones con `If-Match`. |
 | `PATCH /api/admin/users/:id/role` | admin | Cambiar rol con reautenticación. |
 | `PATCH /api/admin/users/:id/status` | admin | Activar/desactivar con protecciones. |
 | `POST /api/admin/users/:id/revoke-sessions` | admin | Revocar sesiones. |
@@ -492,70 +512,76 @@ checksum, ubicación y estado (`active`, `superseded`, `retracted`).
 
 ### 11.2 Política de fuentes
 
-| Nivel | Fuente | Uso permitido | Etiqueta |
-|---|---|---|---|
-| A | UNESCO/ICOMOS actual: SOC 2026, decisiones 48COM/47COM; 100777 como histórico 2008 | Inspección y turismo | Oficial UNESCO / Histórico 2008 |
-| B | Autoridad patrimonial local, alcaldía, planes y normativa | Inspección y turismo | Oficial local |
-| C | Historia local, crónicas y trabajos académicos | Turismo y contexto | Referencia |
-| D | Wikipedia y sitios oficiales de POI | Solo turismo | Externo |
-| E | Redes sociales y reseñas | Solo contexto turístico, con fecha y enlace | No verificado |
+La política canónica es `docs/FUENTES-RAG.md` §2.1–§2.4. Este plan no duplica los niveles A–E.
 
-Reglas:
+Resumen operativo:
 
-- El asistente técnico usa A, B y C técnico; no usa redes sociales ni reseñas para
-  diagnosticar.
-- La guía turística usa A–D y E con etiqueta de baja confianza.
-- `100777` es de 2008: antecedente, no estado actual. El estado actual sale de SOC recientes
-  y de las inspecciones propias.
-- No todo POI del Casco Histórico es UNESCO. Se registra `unescoStatus` y no se etiqueta
-  automáticamente.
-- Para POI no patrimoniales, la respuesta indica fuente, fecha y que no es información
-  oficial.
+- Turístico: A–D como fuente final según `usagePolicy`; E solo contexto etiquetado.
+- Técnico: A/B/C técnico; sin D/E.
+- Hechos históricos: A/B, o doble B/C independiente; D solo puntero.
+- Estado actual: solo A vigente; 100777 es histórico 2008.
+- Cada fuente declara `usagePolicy` e `indexingPolicy`; una fuente `short_quotes_only` no se indexa en texto completo.
+- No todo POI del Casco Histórico es UNESCO. `patrimonialStatus` (D-24) se registra por POI; `sin_clasificar` no autoriza afirmar pertenencia.
 - Sin scraping: APIs permitidas, búsqueda licenciada o curación manual.
-- Los hechos históricos requieren fuente A o B, o doble fuente B o C. Wikipedia y Wikivoyage son punteros (ver `docs/FUENTES-RAG.md` §2.2).
 
 ### 11.3 Ingesta y recuperación
 
 1. Registro y verificación de derechos.
-2. Descarga autorizada o manual; checksum.
+2. Obtención manual o descarga autorizada; checksum con alcance explícito.
 3. Extracción conservando página y sección.
-4. Fragmentación con tamaño y solape definidos; trazabilidad al fragmento.
-5. Índice léxico con filtros de metadatos como línea base.
-6. Evaluación de recuperación antes de construir el chat.
-7. Decisión de almacén vectorial (D-12) solo si la evaluación léxica no alcanza. En v1 no hay embeddings.
-8. Respuesta con citas verificadas; abstención si no hay evidencia suficiente.
+4. Solo se indexa texto en español; una fuente solo en inglés queda `draft`.
+5. Fragmentación de 3 a 6 frases con `chunkKey` legible; trazabilidad al fragmento.
+6. Un único índice de texto sobre `SourceChunk.text`, con `default_language: 'spanish'` y `language_override: 'language'`; filtros en índices separados.
+7. Evaluación de recuperación antes de construir el chat.
+8. Decisión de almacén vectorial (D-12) solo si la evaluación léxica no alcanza. En v1 no hay embeddings.
+9. Respuesta con citas verificadas; abstención si no hay evidencia suficiente.
+10. Ingesta por CLI y manifiestos (`--dry-run`, `--apply`, `--verify`, `--rebuild-index`), sin subida de PDF ni parseo automático.
 
 ### 11.4 Controles del asistente
 
-- El asistente no tiene herramientas que modifiquen la base, cierren incidencias, asignen
-  severidad definitiva ni publiquen contenido.
-- Cada cita se valida contra un fragmento recuperado; si no coincide, se descarta la
-  respuesta y se abstiene.
-- Los documentos se delimitan y se instruye ignorar órdenes embebidas; se prueban inyecciones
-  de prompt.
-- Límite de tokens, cuota por usuario, caché y registro de coste.
-- Retención de conversaciones propuesta: 90 días configurable, con minimización de datos.
+- El asistente no tiene herramientas que modifiquen la base, cierren incidencias, asignen severidad definitiva ni publiquen contenido.
+- No hay generación libre: la respuesta se compone con citas literales de máximo 25 palabras o hechos estructurados verificados.
+- Cada cita se valida contra un fragmento recuperado; si falla una regla, se descarta la respuesta completa y se abstiene.
+- Los documentos son datos, no instrucciones: se ignoran las órdenes embebidas y se prueba con un documento sintético.
+- Cuota por usuario o IP, caché, latencia y registro de consultas. El coste externo por consulta es 0 en v1.
+- Retención: turismo anónimo sin persistencia; asistente técnico 90 días con TTL en `Conversation` y `Message`.
 - El asistente técnico responde “no consta” cuando la fuente no cubre el activo o la fecha.
 
 ### 11.5 Evaluación
 
-Conjunto dorado mínimo propuesto: 60 preguntas (20 respondibles, 20 multi-fuente, 20 sin
-respuesta o adversarias). Métricas: recall@5, precisión de citas, tasa de abstención correcta,
-latencia p50/p95 de recuperación, primer token y respuesta completa, y coste por consulta.
+Conjunto dorado mínimo: 60 preguntas (20 respondibles, 20 multi-fuente, 20 sin respuesta o adversarias). Métricas: recall@5, precisión de citas, tasa de abstención correcta y latencia p50/p95 de recuperación y de respuesta completa. No se mide primer token ni coste por consulta porque no hay proveedor externo.
+
+Evaluación v1 ejecutada el 2026-11-22: 60 casos, recall@5 1.00, precisión de citas 1.00,
+abstención correcta 0.9642857142857143, 0 citas inválidas, p50 14 ms y p95 30 ms.
+Informe reproducible en [`evaluacion-rag/rag-v1-2026-11-22.json`](./evaluacion-rag/rag-v1-2026-11-22.json).
 
 ## 12. Visita 360°, audio e idiomas
 
-- `Panorama` equirectangular con `assetId` o `locationId`, créditos, licencia, checksum,
-  fecha y estado.
-- Hotspots con destino, etiqueta, tipo y coordenadas; navegación por teclado.
-- Fallback obligatorio: imagen estática, texto descriptivo y transcripción si hay audio.
+Implementado:
+
+- `Panorama` equirectangular con `assetId` o `locationId`, créditos, licencia, checksums,
+  fecha, estado, visibilidad, versión y auditoría.
+- Original privado y derivados generados con `sharp`; el EXIF se elimina y el checksum se
+  verifica al servir.
+- API pública (`/api/panoramas`) limitada a `published + public` y API administrativa
+  (`/api/admin/panoramas`) con capacidades separadas.
+- Visor WebGL 1 propio, sin dependencia externa: activación explícita, fallback estático
+  primero, teclado, hotspots como enlaces accesibles y sin autogiro ni autoplay.
+- Flujo editorial: administración configura y sube (`panorama.manage`); historiador aprueba,
+  publica y archiva panoramas turísticos (`panorama.publish`); administración gestiona por
+  completo los de inspección.
 - Derechos documentados antes de publicar; consentimiento para imágenes de personas;
   difuminado cuando corresponda.
-- Panoramas de inspección separados de los públicos; nunca expuestos por la API turística.
-- La biblioteca de visualización se elige tras verificar licencia y accesibilidad; no se
-  afirma una elección antes de esa verificación.
-- Audio y multilingüe solo si se confirman: `AudioGuide` con transcripción, idioma, duración,
-  licencia y estado; sin autoplay; subtítulos.
+- Panoramas de inspección separados de los públicos; nunca expuestos por la API turística ni
+  a la curaduría.
+- Pruebas backend (`test/panorama.test.js`), unitarias de SPA y E2E (`panoramas.spec.ts`).
+
+Pendiente:
+
+- Contenido real con derechos verificados; no se publica material sintético.
+- Medición de rendimiento, revisión manual de accesibilidad y prueba en móvil.
+- Audio y multilingüe solo si se confirman (D-18): `AudioGuide` con transcripción, idioma,
+  duración, licencia y estado; sin autoplay; subtítulos.
 
 ## 13. UI, identidad visual y accesibilidad
 
@@ -584,6 +610,10 @@ latencia p50/p95 de recuperación, primer token y respuesta completa, y coste po
 - WCAG 2.2 AA: foco visible, teclado, orden de tabulación, etiquetas, contraste, movimiento
   reducido y zoom. Los paneles de evidencia repetidos generan ids únicos por instancia para
   no romper la asociación entre etiqueta y campo.
+- Implementación vigente (2026-11-25): los tokens viven en `src/styles.scss` con tipografía
+  de sistema; la identidad Chivito, el fondo de Médanos y la celebración de check-in se
+  documentan en [`IDENTIDAD.md`](./IDENTIDAD.md) y [`ADR-008`](./ADR/ADR-008-identidad-chivito.md).
+  Playfair Display/Inter y `_tokens.scss` siguen siendo propuesta, no implementación.
 
 ## 14. SLO, RPO, RTO y métricas
 
@@ -597,16 +627,15 @@ Propuesta para congelar en fase 0:
 | RTO | 4 h para servicio completo | Simulacro de restauración |
 | MTTR crítico | 4 h | Incidentes reales |
 | Backups | 3-2-1; restauración probada antes del lanzamiento y tras cada cambio de esquema | Acta de simulacro |
-| RAG primera respuesta visible | p95 ≤ 2 s corpus interno; ≤ 4 s con búsqueda externa | Medición separada de recuperación y primer token |
-| RAG respuesta completa | p95 ≤ 8 s para hasta 500 tokens | Medición extremo a extremo |
+| RAG recuperación | p95 ≤ 2 s | Medición separada de recuperación |
+| RAG respuesta completa | p95 ≤ 8 s para respuestas de hasta 5 frases | Medición extremo a extremo |
 | Flujo de reporte | p95 ≤ 45 s con foto en 4G | Inicio: toque “Reportar” con sesión iniciada; fin: confirmación 201 |
 | GPS | 90 % de lecturas con precisión reportada ≤ 10 m | Muestra de dispositivos; lecturas peores se marcan, no se aceptan en silencio |
 | Accesibilidad | WCAG 2.2 AA | Automatizado + revisión manual |
 | Seguridad | Sin hallazgos críticos o altos abiertos | Auditoría y pruebas de autorización |
 
-El “2 segundos” se interpreta como primera respuesta visible en consultas internas, no como
-respuesta completa con búsqueda externa. Si se exige 2 s extremo a extremo, se mide con
-modelo, hardware, red, top-k y caché concretos; no se promete antes.
+El “2 segundos” se interpreta como latencia de recuperación; la respuesta completa tiene su
+propio SLO. Se mide con hardware, red, top-k y caché concretos; no se promete antes.
 
 ## 15. Fases, entregables y puertas
 
@@ -618,7 +647,7 @@ modelo, hardware, red, top-k y caché concretos; no se promete antes.
 | 3. Núcleo de conservación | Modelos, servicios, API y UI mínima del flujo vertical; evidencia privada; historial | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-07-soporte-seguridad` | E2E completo; historial conservado; evidencia inaccesible sin permiso; transiciones inválidas rechazadas |
 | 4. Socket.IO | Ticket, salas, notificaciones persistidas, reconexión, deduplicación, carga | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-06-despliegue` | Handshake autorizado; alertas pertinentes; recuperación tras reconexión; carga medida |
 | 5. RAG | Registro de fuentes, ingesta, recuperación, evaluación, asistentes con citas y abstención | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-07-soporte-seguridad` | Citas correctas; abstención sin evidencia; p95 medido; fuentes autorizadas |
-| 6. Visita 360° | Modelo, derechos, visor, hotspots, fallback, accesibilidad y aislamiento | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-05-documentacion` | Derechos documentados; contenido aprobado; sin datos privados; accesible |
+| 6. Visita 360° | **Infraestructura implementada:** modelo, derechos, visor, hotspots, fallback, accesibilidad y aislamiento. Falta contenido real con derechos y evidencia de rendimiento/accesibilidad manual. | `unidad-03-desarrollo`, `unidad-04-pruebas`, `unidad-05-documentacion` | Derechos documentados; contenido aprobado; sin datos privados; accesible |
 | 7. Identidad visual y SPA | Tokens, fuentes, componentes, vistas pública e interna, accesibilidad | `unidad-03-desarrollo`, `unidad-04-pruebas` | WCAG 2.2 AA; contraste, teclado y responsive verificados |
 | 8. Pruebas integrales y piloto | Pirámide, API/E2E, carga, seguridad, usabilidad, accesibilidad y campo | `unidad-04-pruebas`, `unidad-07-soporte-seguridad` | Métricas con muestra, entorno y método; sin defectos críticos/altos; acta |
 | 9. Despliegue y operación | Docker, staging/producción, TLS, secretos, CI/CD, observabilidad, backups, rollback, runbook | `unidad-06-despliegue`, `unidad-07-soporte-seguridad` | Restauración probada; rollback probado; smoke tests; SLO monitoreado |
@@ -627,8 +656,8 @@ modelo, hardware, red, top-k y caché concretos; no se promete antes.
 Dependencias:
 
 - La fase 5 puede empezar en paralelo con la 3 si el equipo de contenidos trabaja el corpus.
-- La fase 6 puede preparar derechos y captura desde la fase 0, pero su publicación espera al
-  modelo de activos de la fase 1.
+- La fase 6 ya tiene la infraestructura implementada; la publicación sigue esperando
+  panorámicas reales con derechos verificados y la revisión de accesibilidad/rendimiento.
 - Las pruebas y la preparación de despliegue son puertas continuas, no fases finales.
 
 ## 16. Impacto por archivo
@@ -657,7 +686,7 @@ en el árbol local; el estado confirmado y los faltantes están en las secciones
 | `projects/backend/helpers/env.js` | Variables de evidencia, realtime, RAG, almacén vectorial y SLO. |
 | `projects/backend/test/*.test.js` | Actualizar expectativas de roles y añadir suites nuevas. |
 | `projects/backend/scripts/e2eServer.js` | Mantener compatibilidad con el nuevo servidor. |
-| `projects/backend/package.json` | Dependencias: `socket.io`, cliente de almacenamiento/escaneo, extracción PDF y, solo si se aprueba, cliente del proveedor RAG. |
+| `projects/backend/package.json` | Dependencias: `socket.io` y cliente de almacenamiento/escaneo. En v1 RAG no añade dependencias: MongoDB `$text` y `node:crypto` bastan; no hay extracción PDF ni cliente de proveedor. |
 
 ### 16.2 Backend nuevo
 
@@ -682,7 +711,7 @@ en el árbol local; el estado confirmado y los faltantes están en las secciones
 | `microservices/domainEventService.js` | Registro obligatorio y consulta. |
 | `microservices/notificationService.js` | Persistencia, cursor y emisión. |
 | `microservices/realtimeTicketService.js` | Ticket de corta duración y single-use. |
-| `microservices/rag/*` | Ingesta, recuperación léxica, respuesta con citas, abstención y validación de citas; adaptador de proveedor solo si se aprueba. |
+| `microservices/rag/*` | Ingesta, recuperación léxica, composición extractiva, abstención y validación de citas. Sin adaptador de proveedor ni generación libre en v1. |
 | `middlewares/capability.js` | Autorización por capacidad. |
 | `middlewares/idempotency.js` | Clave de idempotencia en operaciones críticas. |
 | `middlewares/uploadEvidence.js` | Carga privada de evidencia. |
@@ -740,7 +769,7 @@ en el árbol local; el estado confirmado y los faltantes están en las secciones
 | `README.md`, `docs/INSTALACION.md`, `.env.example` | Variables, arranque y operación. |
 | `.github/workflows/ci.yml` | Replica set, suites nuevas, artefactos y jobs. |
 | `docs/REQUISITOS.md`, `docs/RBAC.md`, `docs/FUENTES-RAG.md`, `docs/SEGURIDAD.md`, `docs/OPERACION.md`, `docs/ADR/` | Entregables de Fase 0 creados. |
-| `docs/MODELO-DATOS.md`, `docs/CASOS-USO.md`, `docs/EVENTOS-TIEMPO-REAL.md`, `docs/openapi.yaml`, `docs/WIREFRAMES.md`, `docs/360.md` | Entregables de Fase 1 creados; pendientes de revisión y aprobación. |
+| `docs/MODELO-DATOS.md`, `docs/CASOS-USO.md`, `docs/EVENTOS-TIEMPO-REAL.md`, `docs/openapi.yaml`, `docs/WIREFRAMES.md`, `docs/360.md` | Entregables de Fase 1 creados y actualizados; el contrato 360 está implementado y las rutas restantes se marcan como planificadas. |
 | `docs/PILOTO.md` | Entregable de Fase 8; pendiente. |
 | `docs/ADR/ADR-*.md` | Decisiones D-01 a D-08; D-09 a D-23 se registran en el plan y los documentos de Fase 1. |
 
@@ -854,8 +883,9 @@ No se declara terminado por número de pantallas, sino cuando:
 - La evidencia es privada, con hash, metadatos, acceso auditado y retención; no se expone por
   `/api/uploads`.
 - El asistente cita fuentes autorizadas, se abstiene sin evidencia y no ejecuta acciones.
-- La visita 360° tiene derechos, contenido, hotspots, fallback y accesibilidad; audio e
-  idiomas solo si se confirmaron.
+- La infraestructura de la visita 360° tiene derechos, hotspots, fallback, visor y
+  accesibilidad; la publicación queda bloqueada hasta disponer de contenido real con derechos
+  verificados. Audio e idiomas solo si se confirmaron.
 - Las métricas de campo y RAG se reportan con muestra, entorno, método y resultado.
 - Staging y producción tienen backups, restauración probada, monitoreo, rollback y
   documentación coincidente.
@@ -871,23 +901,24 @@ sigue fuera del alcance.
 
 | Orden | Paquete | Trabajo y dependencias | Criterio de salida |
 |---|---|---|---|
-| 0 | Cerrar alcance y contratos | Revisar el estado de D-09 a D-23 y FD-* contra las aprobaciones registradas; confirmar las decisiones aún abiertas sobre retención, fuentes, derechos y audio/idiomas; proveedor y presupuesto de IA no se requieren en v1. Aprobar el contrato OpenAPI y reconciliarlo con las rutas actuales. Obtener una ejecución de CI remoto con autorización. | Decisiones pendientes asignadas y aprobadas/rechazadas; contrato único; CI remoto verde o limitación formalmente aceptada antes del piloto. |
+| 0 | Cerrar alcance y contratos | Revisar el estado de D-09 a D-29 y FD-* contra las aprobaciones registradas; D-24 a D-29 quedaron cerradas el 2026-11-20; siguen abiertas D-18 a D-20, D-22, la parte de evidencia de D-23 y las FD-*. Confirmar derechos, retención y audio/idiomas; proveedor y presupuesto de IA no se requieren en v1. Aprobar el contrato OpenAPI y reconciliarlo con las rutas actuales. Obtener una ejecución de CI remoto con autorización. | Decisiones pendientes asignadas y aprobadas/rechazadas; contrato único; CI remoto verde o limitación formalmente aceptada antes del piloto. |
 | 1 | Proteger la migración de roles | Ejecutar solo el `--dry-run`, revisar cuentas afectadas y último administrador; generar y restaurar un backup; obtener autorización explícita antes de `--apply`. Verificar cero `moderator`, sesiones revocadas y luego retirar el rol en una liberación separada. | Migración reversible mediante backup probado; reporte de verificación; pruebas positivas/negativas de IDOR y privilegio mínimo; no quedan cuentas `moderator`. |
 | 2 | Terminar el dominio backend | Alinear estados, errores, transiciones, permisos y `docs/openapi.yaml` con la API existente. Resolver la asociación POI → activo patrimonial antes de convertir reportes. Probar concurrencia, idempotencia, transacciones y proyección pública; mantener MongoDB como replica set donde se ejecuten estos flujos. | Contratos y API coinciden; transiciones inválidas/duplicadas se rechazan; los reportes aceptados se convierten y conservan historial. |
 | 3 | Habilitar evidencia privada | Implementar carga, validación de tipo/contenido/tamaño, almacenamiento no público, hash, metadatos/EXIF, escaneo o cuarentena, autorización por recurso, registro de accesos y retención. Vincular evidencias a reportes, hallazgos e intervenciones; definir comportamiento seguro si el escaneo no está disponible. | Evidencia no accesible por URL pública; acceso no autorizado denegado y auditado; intervención puede completarse/verificarse con evidencia y no puede cerrarse sin los requisitos del dominio. |
 | 4 | Entregar UI de conservación | Construir primero `/reportes` (crear y consultar propios) y `/inspecciones` (bandeja asignada, ejecutar, hallazgos, revisar, intervención, evidencia y cierre). Aplicar guards por capacidad como UX, manteniendo autorización en backend. Incluir estados vacíos, errores, carga y accesibilidad básica. | E2E desde reporte hasta cierre verificado, además de denegaciones para usuario ajeno, inspector no asignado y rol incorrecto. |
 | 5 | Integrar flujo y consolidar calidad | Probar el recorrido completo en un replica set desde frontend hasta MongoDB; agregar pruebas de API/E2E, regresión, autorización, carga de evidencia y recuperación. Validar que el estado público procede solo de inspección revisada/cerrada. | E2E reproducible; historial consistente; sin hallazgos críticos/altos abiertos; baseline local repetible y CI remoto documentado. |
-| 6 | Construir capacidades complementarias | **Socket.IO:** después de persistir notificaciones, implementar ticket de un solo uso, salas autorizadas, cursores y reconexión. **RAG:** puede avanzar en paralelo al backend tras aprobar corpus, derechos y evaluación, sin proveedor externo; implementar citas y abstención antes de abrir acceso. **360°:** iniciar derechos/adquisición en paralelo; publicar solo tras validar activo, derechos, fallback y accesibilidad. | Cada capacidad tiene sus pruebas de autorización, calidad y operación; RAG cita fuentes verificables; 360° publica contenido con derechos registrados; realtime recupera eventos tras reconexión. |
+| 6 | Construir capacidades complementarias | **Socket.IO:** después de persistir notificaciones, implementar ticket de un solo uso, salas autorizadas, cursores y reconexión. **RAG:** puede avanzar en paralelo al backend tras aprobar corpus, derechos y evaluación, sin proveedor externo y con ingesta CLI; implementar citas y abstención antes de abrir acceso. **360°:** la infraestructura ya está implementada; quedan derechos/adquisición de contenido real y las verificaciones de accesibilidad, móvil y rendimiento antes de publicar. | Cada capacidad tiene sus pruebas de autorización, calidad y operación; RAG cita fuentes verificables; 360° publica contenido con derechos registrados; realtime recupera eventos tras reconexión. |
 | 7 | Preparar piloto y operación | Aplicar identidad visual progresivamente; revisar WCAG 2.2 AA y responsive; provisionar staging/producción, secretos, TLS, observabilidad, backups y runbooks. Ejecutar restauración y rollback; hacer piloto autorizado con protocolo de GPS, tiempos, accesibilidad y flujos reales. | SLO medidos; backup/restauración y rollback demostrados; piloto con muestra y resultados documentados; aceptación y transferencia operativa. |
 
 ### Próximo incremento recomendado
 
-La autorización por capacidades, el backend de conservación, la evidencia privada y la UI de
-conservación (`/reportes`, `/inspecciones`) ya están implementados y cubiertos por las suites
-de backend, frontend y E2E. El siguiente incremento es cerrar las decisiones D-18 a D-23, el
-dry-run/backup de roles, el antimalware y la migración del CI a replica set; no ejecutar la
-migración ni habilitar cargas en producción sin autorización. Después, Socket.IO, RAG y 360°
-pueden avanzar en carriles separados cuando sus dependencias estén resueltas.
+La autorización por capacidades, el backend de conservación, la evidencia privada, la UI de
+conservación (`/reportes`, `/inspecciones`) y la infraestructura de la visita 360° ya están
+implementados y cubiertos por las suites de backend, frontend y E2E. El siguiente incremento
+es cerrar las decisiones D-18 a D-23, el dry-run/backup de roles, el antimalware y la
+migración del CI a replica set; no ejecutar la migración ni habilitar cargas en producción sin
+autorización. Después, Socket.IO y RAG pueden avanzar en carriles separados; la visita 360°
+solo necesita contenido real con derechos y las verificaciones pendientes.
 
 Las pruebas, revisión de seguridad, accesibilidad y documentación son puertas continuas de
 cada paquete, no una fase final. La identidad visual puede avanzar incrementalmente, pero no

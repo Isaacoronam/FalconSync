@@ -12,14 +12,15 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AchievementCelebrationComponent } from '../../../components/achievements/achievement-celebration/achievement-celebration.component';
 import { LocationApiService } from '../../../services/location-api.service';
 import { CheckInApiService } from '../../../services/check-in-api.service';
 import { CheckInSessionService } from '../../../services/check-in-session.service';
 import { ProfileApiService } from '../../../services/profile-api.service';
 import {
   UserAchievement,
+  achievementBadgeImage,
   achievementCategoryLabel,
-  achievementIcon,
 } from '../../../models/achievement.model';
 import { apiErrorMessage } from '../../../services/utils/api-error';
 
@@ -37,7 +38,7 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 @Component({
   selector: 'app-checkin',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, AchievementCelebrationComponent],
   templateUrl: './checkin.component.html',
   styleUrl: './checkin.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,6 +69,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
   protected readonly photoStatus = signal<PhotoStatus>('idle');
   protected readonly photoError = signal<string | null>(null);
   protected readonly achievements = signal<UserAchievement[]>([]);
+  protected readonly celebrationOpen = signal(false);
+  protected readonly celebrationAchievement = signal<UserAchievement | null>(null);
 
   protected readonly hasToken = computed(() => Boolean(this.token()));
   private photoRawUrl: string | null = null;
@@ -88,7 +91,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     this.clearPhotoSelection();
   }
 
-  protected achievementIcon = achievementIcon;
+  protected achievementBadgeImage = achievementBadgeImage;
   protected achievementCategoryLabel = achievementCategoryLabel;
 
   private loadLocationTitle(locationId: string): void {
@@ -134,9 +137,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     this.photoFile.set(file);
     this.photoName.set(file.name);
     this.photoRawUrl = URL.createObjectURL(file);
-    this.photoPreview.set(
-      this.sanitizer.bypassSecurityTrustUrl(this.photoRawUrl),
-    );
+    this.photoPreview.set(this.sanitizer.bypassSecurityTrustUrl(this.photoRawUrl));
     this.photoError.set(null);
   }
 
@@ -145,6 +146,10 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   protected async realizarCheckIn(): Promise<void> {
+    if (this.checking()) {
+      return;
+    }
+
     const locationId = this.locationId();
     const token = this.token();
 
@@ -159,6 +164,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
     this.checking.set(true);
     this.message.set(null);
     this.messageType.set(null);
+    this.celebrationOpen.set(false);
+    this.celebrationAchievement.set(null);
 
     if (!('geolocation' in navigator)) {
       this.stage.set('idle');
@@ -203,6 +210,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/checkin']);
   }
 
+  protected cerrarCelebracion(): void {
+    this.celebrationOpen.set(false);
+    queueMicrotask(() => document.getElementById('checkin-exito-titulo')?.focus());
+  }
+
   private checkInId = signal<string | null>(null);
 
   private procesarPosicion(coords: { latitude: number; longitude: number }): void {
@@ -221,16 +233,17 @@ export class CheckinComponent implements OnInit, OnDestroy {
           this.checking.set(false);
           this.stage.set('success');
           this.checkInId.set(response.data.id);
-          this.achievements.set(
-            (response.achievementsAwarded ?? []).filter(
-              (achievement) => achievement.type === 'location',
-            ),
+          const awarded = (response.achievementsAwarded ?? []).filter(
+            (achievement) => achievement.type === 'location',
           );
+          this.achievements.set(awarded);
+          if (awarded.length > 0) {
+            this.celebrationAchievement.set(awarded[0]);
+            this.celebrationOpen.set(true);
+          }
           this.session.consume(this.locationId()!);
           this.token.set(null);
-          this.message.set(
-            '¡Visita confirmada! Chivito celebra este lugar descubierto contigo.',
-          );
+          this.message.set('¡Visita confirmada! Chivito celebra este lugar descubierto contigo.');
           this.messageType.set('success');
 
           const file = this.photoFile();
@@ -277,9 +290,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     switch (error.code) {
       case error.PERMISSION_DENIED:
-        this.finalizarError(
-          'No se pudo obtener tu ubicación. Concede permiso de ubicación.',
-        );
+        this.finalizarError('No se pudo obtener tu ubicación. Concede permiso de ubicación.');
         break;
       case error.POSITION_UNAVAILABLE:
       case error.TIMEOUT:
@@ -291,6 +302,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   private procesarErrorCheckIn(error: unknown): void {
+    this.celebrationOpen.set(false);
+    this.celebrationAchievement.set(null);
+
     const status = (error as { status?: number }).status;
     const body = (
       error as {
@@ -301,8 +315,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     ).error;
     const code = body?.error?.code;
     const details = body?.error?.details as
-      | { distanceMeters?: number; radiusMeters?: number }
-      | undefined;
+      { distanceMeters?: number; radiusMeters?: number } | undefined;
 
     if (code === 'CHECK_IN_ALREADY_EXISTS' || status === 409) {
       this.finalizarError(
@@ -338,9 +351,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     }
 
     if (code === 'LOCATION_NOT_AVAILABLE') {
-      this.finalizarError(
-        'Este lugar no está disponible para check-in en este momento.',
-      );
+      this.finalizarError('Este lugar no está disponible para check-in en este momento.');
       return;
     }
 

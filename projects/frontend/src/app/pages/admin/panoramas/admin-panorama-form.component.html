@@ -1,0 +1,424 @@
+<section class="admin-page" aria-labelledby="panorama-form-title">
+  <header class="admin-page__header">
+    <div>
+      <p class="admin-page__eyebrow">Administración</p>
+      <h1 id="panorama-form-title">
+        {{ isEditing() ? 'Editar panorama 360°' : 'Nuevo panorama 360°' }}
+      </h1>
+      <p class="admin-page__lead">
+        @if (isEditing()) {
+          Ajusta la configuración técnica y editorial sin reemplazar la imagen original.
+        } @else {
+          La imagen se guarda como original privado; el derivado público se genera al procesarla.
+        }
+      </p>
+    </div>
+    <a class="button button--ghost" routerLink="/admin/panoramas">Volver al listado</a>
+  </header>
+
+  @if (success()) {
+    <p class="form-success" role="status">{{ success() }}</p>
+  }
+
+  @if (error()) {
+    <p class="form-error" role="alert">{{ error() }}</p>
+  }
+
+  @if (targetsError()) {
+    <p class="admin-alert" role="alert">{{ targetsError() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="admin-state" role="status">Cargando el panorama…</p>
+  } @else {
+    <form class="admin-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Datos principales</legend>
+
+        <div class="admin-form-grid">
+          <div class="admin-field admin-form-grid__full">
+            <label for="panorama-title-field">Título</label>
+            <input
+              id="panorama-title-field"
+              type="text"
+              formControlName="title"
+              maxlength="160"
+              placeholder="Plaza Mayor al atardecer"
+            />
+          </div>
+
+          <div class="admin-field">
+            <label for="panorama-location-field">Lugar de interés</label>
+            <select id="panorama-location-field" formControlName="locationId">
+              <option value="">Selecciona un POI publicado</option>
+              @for (location of locationTargets(); track location.id) {
+                <option [value]="location.id">{{ location.title }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="admin-field">
+            <label for="panorama-visibility-field">Visibilidad</label>
+            <select id="panorama-visibility-field" formControlName="visibility">
+              <option value="public">Visita turística</option>
+              <option value="inspection">Inspección interna</option>
+            </select>
+            <p class="form-field__help">
+              Las visitas de inspección no se publican en la galería turística ni en la API pública.
+            </p>
+          </div>
+
+          <div class="admin-field">
+            <label for="panorama-captured-field">Fecha de captura</label>
+            <input id="panorama-captured-field" type="date" formControlName="capturedAt" />
+            <p class="form-field__help">Si no la conoces, déjala vacía.</p>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="panorama-description-field">Descripción</label>
+            <textarea
+              id="panorama-description-field"
+              rows="4"
+              formControlName="description"
+              maxlength="2000"
+              placeholder="Qué muestra la escena y por qué es relevante para el patrimonio."
+            ></textarea>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Derechos y créditos</legend>
+
+        <div class="admin-form-grid">
+          <div class="admin-field">
+            <label for="panorama-author-field">Autoría</label>
+            <input
+              id="panorama-author-field"
+              type="text"
+              formControlName="author"
+              maxlength="160"
+              placeholder="Nombre de la persona o institución"
+            />
+          </div>
+
+          <div class="admin-field">
+            <label for="panorama-license-field">Licencia</label>
+            <input
+              id="panorama-license-field"
+              type="text"
+              formControlName="license"
+              maxlength="200"
+              placeholder="CC BY-SA 4.0, dominio público…"
+            />
+          </div>
+
+          <div class="admin-field">
+            <label for="panorama-license-url-field">URL de la licencia</label>
+            <input
+              id="panorama-license-url-field"
+              type="url"
+              formControlName="licenseUrl"
+              maxlength="300"
+              placeholder="https://creativecommons.org/licenses/…"
+            />
+          </div>
+
+          <div class="admin-field">
+            <label for="panorama-credit-field">Crédito visible</label>
+            <input
+              id="panorama-credit-field"
+              type="text"
+              formControlName="credit"
+              maxlength="300"
+              placeholder="Autoría · licencia · fuente"
+            />
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="panorama-rights-notes-field">Notas de derechos</label>
+            <textarea
+              id="panorama-rights-notes-field"
+              rows="2"
+              formControlName="rightsNotes"
+              maxlength="500"
+              placeholder="Permiso del propietario, referencia documental…"
+            ></textarea>
+          </div>
+
+          <div class="admin-checkbox admin-form-grid__full">
+            <label for="panorama-rights-documented-field">
+              <input
+                id="panorama-rights-documented-field"
+                type="checkbox"
+                formControlName="rightsDocumented"
+              />
+              Derechos documentados
+            </label>
+
+            <label for="panorama-permit-documented-field">
+              <input
+                id="panorama-permit-documented-field"
+                type="checkbox"
+                formControlName="permitDocumented"
+              />
+              Permiso de captura o publicación documentado
+            </label>
+
+            <label for="panorama-people-blurred-field">
+              <input
+                id="panorama-people-blurred-field"
+                type="checkbox"
+                formControlName="peopleBlurred"
+              />
+              Personas identificables difuminadas
+            </label>
+
+            <label for="panorama-consent-documented-field">
+              <input
+                id="panorama-consent-documented-field"
+                type="checkbox"
+                formControlName="consentDocumented"
+              />
+              Consentimiento documentado cuando corresponda
+            </label>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="panorama-consent-notes-field">Notas de consentimiento</label>
+            <textarea
+              id="panorama-consent-notes-field"
+              rows="2"
+              formControlName="consentNotes"
+              maxlength="500"
+              placeholder="Cómo se gestionaron las personas visibles en la escena."
+            ></textarea>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Alternativa accesible</legend>
+
+        <div class="admin-form-grid">
+          <div class="admin-field admin-form-grid__full">
+            <label for="panorama-fallback-alt-field">Texto alternativo de la imagen fija</label>
+            <input
+              id="panorama-fallback-alt-field"
+              type="text"
+              formControlName="fallbackAlt"
+              maxlength="200"
+              placeholder="Vista panorámica de…"
+            />
+            <p class="form-field__help">Si lo dejas vacío se genera desde el título.</p>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="panorama-fallback-description-field">Descripción de la escena</label>
+            <textarea
+              id="panorama-fallback-description-field"
+              rows="3"
+              formControlName="fallbackDescription"
+              maxlength="2000"
+            ></textarea>
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="panorama-transcript-field">Transcripción</label>
+            <textarea
+              id="panorama-transcript-field"
+              rows="4"
+              formControlName="transcript"
+              maxlength="10000"
+              placeholder="Contenido textual completo de la escena, si existe."
+            ></textarea>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Imagen equirectangular</legend>
+
+        @if (isEditing()) {
+          <p class="admin-panel__note">
+            La imagen original y sus derivados no se reemplazan desde este formulario. Para cambiarla,
+            crea un panorama nuevo y archiva el anterior.
+          </p>
+        } @else {
+          <div class="admin-field">
+            <label for="panorama-image-field">Archivo de imagen</label>
+            <input
+              id="panorama-image-field"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onFileSelected($event)"
+              [attr.aria-invalid]="fileError() ? 'true' : null"
+              [attr.aria-describedby]="fileError() ? 'panorama-image-error' : 'panorama-image-help'"
+            />
+            <p id="panorama-image-help" class="form-field__help">
+              JPEG, PNG o WebP de hasta 40 MB, con proporción 2:1 (equirectangular).
+            </p>
+            @if (selectedFile(); as file) {
+              <p class="form-field__help" role="status">Archivo seleccionado: {{ file.name }}</p>
+            }
+            @if (fileError()) {
+              <p id="panorama-image-error" class="form-field__error">{{ fileError() }}</p>
+            }
+          </div>
+        }
+      </fieldset>
+
+      <fieldset class="admin-panel admin-fieldset">
+        <legend>Hotspots</legend>
+        <p class="admin-panel__note">
+          Coordenadas en grados: yaw entre −180 y 180, pitch entre −85 y 85. Los hotspots de escena y
+          lugar solo admiten destinos publicados.
+        </p>
+
+        @if (hotspotDrafts().length === 0) {
+          <p class="admin-state">No hay hotspots configurados.</p>
+        } @else {
+          <ol class="panorama-hotspots">
+            @for (hotspot of hotspotDrafts(); track $index; let index = $index) {
+              <li class="panorama-hotspot">
+                <div class="panorama-hotspot__head">
+                  <h3>Hotspot {{ index + 1 }}</h3>
+                  <button
+                    type="button"
+                    class="button button--ghost button--small"
+                    (click)="removeHotspot(index)"
+                  >
+                    Quitar
+                  </button>
+                </div>
+
+                <div class="admin-form-grid">
+                  <div class="admin-field">
+                    <label [for]="'hotspot-label-' + index">Etiqueta visible</label>
+                    <input
+                      [id]="'hotspot-label-' + index"
+                      type="text"
+                      [value]="hotspot.label"
+                      (input)="updateHotspotText(index, 'label', inputValue($event))"
+                      maxlength="120"
+                    />
+                  </div>
+
+                  <div class="admin-field">
+                    <label [for]="'hotspot-type-' + index">Tipo</label>
+                    <select
+                      [id]="'hotspot-type-' + index"
+                      [value]="hotspot.type"
+                      (change)="updateHotspotType(index, inputValue($event))"
+                    >
+                      @for (type of hotspotTypes; track type.value) {
+                        <option [value]="type.value">{{ type.label }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="admin-field">
+                    <label [for]="'hotspot-yaw-' + index">Yaw (grados)</label>
+                    <input
+                      [id]="'hotspot-yaw-' + index"
+                      type="number"
+                      min="-180"
+                      max="180"
+                      step="0.1"
+                      [value]="hotspot.yaw"
+                      (input)="updateHotspotNumber(index, 'yaw', inputValue($event))"
+                    />
+                  </div>
+
+                  <div class="admin-field">
+                    <label [for]="'hotspot-pitch-' + index">Pitch (grados)</label>
+                    <input
+                      [id]="'hotspot-pitch-' + index"
+                      type="number"
+                      min="-85"
+                      max="85"
+                      step="0.1"
+                      [value]="hotspot.pitch"
+                      (input)="updateHotspotNumber(index, 'pitch', inputValue($event))"
+                    />
+                  </div>
+
+                  @if (hotspot.type === 'scene') {
+                    <div class="admin-field admin-form-grid__full">
+                      <label [for]="'hotspot-scene-' + index">Escena de destino</label>
+                      <select
+                        [id]="'hotspot-scene-' + index"
+                        [value]="hotspot.targetPanoramaId ?? ''"
+                        (change)="updateHotspotTarget(index, 'targetPanoramaId', inputValue($event))"
+                      >
+                        <option value="">Selecciona una escena publicada</option>
+                        @for (target of sceneTargets(); track target.id) {
+                          <option [value]="target.id">{{ target.title }}</option>
+                        }
+                      </select>
+                    </div>
+                  } @else if (hotspot.type === 'location') {
+                    <div class="admin-field admin-form-grid__full">
+                      <label [for]="'hotspot-location-' + index">Lugar de destino</label>
+                      <select
+                        [id]="'hotspot-location-' + index"
+                        [value]="hotspot.targetLocationId ?? ''"
+                        (change)="updateHotspotTarget(index, 'targetLocationId', inputValue($event))"
+                      >
+                        <option value="">Selecciona un POI publicado</option>
+                        @for (target of locationTargets(); track target.id) {
+                          <option [value]="target.id">{{ target.title }}</option>
+                        }
+                      </select>
+                    </div>
+                  } @else {
+                    <div class="admin-field admin-form-grid__full">
+                      <label [for]="'hotspot-url-' + index">Ruta interna o URL</label>
+                      <input
+                        [id]="'hotspot-url-' + index"
+                        type="text"
+                        [value]="hotspot.targetUrl ?? ''"
+                        (input)="updateHotspotText(index, 'targetUrl', inputValue($event))"
+                        maxlength="500"
+                        placeholder="/lugares/catedral-de-coro"
+                      />
+                    </div>
+                  }
+
+                  <div class="admin-field admin-form-grid__full">
+                    <label [for]="'hotspot-aria-' + index">Texto accesible del enlace</label>
+                    <input
+                      [id]="'hotspot-aria-' + index"
+                      type="text"
+                      [value]="hotspot.ariaLabel"
+                      (input)="updateHotspotText(index, 'ariaLabel', inputValue($event))"
+                      maxlength="200"
+                      placeholder="Ir a la siguiente escena"
+                    />
+                  </div>
+                </div>
+              </li>
+            }
+          </ol>
+        }
+
+        <button type="button" class="button button--ghost button--small" (click)="addHotspot()">
+          Añadir hotspot
+        </button>
+      </fieldset>
+
+      <div class="admin-form__actions">
+        <button type="submit" class="button button--primary" [disabled]="saving()">
+          @if (saving()) {
+            Guardando…
+          } @else if (isEditing()) {
+            Guardar cambios
+          } @else {
+            Crear panorama
+          }
+        </button>
+        <a class="button button--ghost" routerLink="/admin/panoramas">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>

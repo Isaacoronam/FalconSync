@@ -1,0 +1,320 @@
+{
+  "schemaVersion": 2,
+  "dataset": "corpus/evaluation/rag-golden-v4.json",
+  "datasetName": "Conjunto dorado RAG v4 (guía turística: intención, identidad de Coro y citas relevantes)",
+  "executedAt": "2026-11-25T17:01:34.364Z",
+  "corpusVersion": "2026-11-22.1",
+  "embeddingModel": "Xenova/paraphrase-multilingual-MiniLM-L12-v2@q8",
+  "minSimilarity": 0.6,
+  "database": "falconsync_rag_eval",
+  "evaluationStatuses": [
+    "active",
+    "draft"
+  ],
+  "warmupMs": 144,
+  "sampleSize": 134,
+  "corpus": {
+    "ingested": [
+      {
+        "sourceId": "S-002",
+        "status": "active",
+        "usagePolicy": "final",
+        "level": "A",
+        "chunkCount": 2,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-003",
+        "status": "active",
+        "usagePolicy": "final",
+        "level": "A",
+        "chunkCount": 1,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-020",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 23,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-021",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 23,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-022",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 7,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-024",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 11,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-025",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 11,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-026",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "D",
+        "chunkCount": 18,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-027",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "D",
+        "chunkCount": 11,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-028",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "D",
+        "chunkCount": 10,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-029",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "D",
+        "chunkCount": 8,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-030",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "A",
+        "chunkCount": 2,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-031",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "C",
+        "chunkCount": 2,
+        "declaredAsDraft": false
+      },
+      {
+        "sourceId": "S-032",
+        "status": "active",
+        "usagePolicy": "context",
+        "level": "D",
+        "chunkCount": 3,
+        "declaredAsDraft": false
+      }
+    ],
+    "excluded": [
+      {
+        "sourceId": "S-005",
+        "reason": "Borrador sin casos en el conjunto dorado v2; sigue sin aprobar."
+      },
+      {
+        "sourceId": "S-023",
+        "reason": "Su manifiesto exige que el POI cataratas-de-hueque esté publicado y el POI sigue en borrador."
+      }
+    ],
+    "declaredAsDraft": [],
+    "note": "S-021 y S-022 fueron aprobadas por el responsable del proyecto el 2026-11-23 y ya responden en producción; S-024 a S-029 son fuentes externas de niveles C y D incorporadas en la expansión del corpus (resúmenes propios con atribución y enlace); S-030 y S-031 aportan horarios publicados por el museo y la catedral, y el resto de lugares responde «Sin horarios confirmados»."
+  },
+  "corpusVerification": {
+    "ok": true,
+    "documentCount": 14,
+    "chunkCount": 132,
+    "problems": []
+  },
+  "targets": {
+    "poiAccuracy": 0.9,
+    "clarificationAccuracy": 0.5,
+    "abstentionAccuracy": 0.9,
+    "sourceHit": 0.9,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "latencyP95Ms": 1500
+  },
+  "metrics": {
+    "poiAccuracy": 1,
+    "clarificationAccuracy": 1,
+    "abstentionAccuracy": 1,
+    "sourceHit": 0.9418604651162791,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "invalidCitations": 0,
+    "latencyP50Ms": 22,
+    "latencyP95Ms": 54
+  },
+  "unmetTargets": [],
+  "categoryBreakdown": {
+    "adversarial": {
+      "total": 3,
+      "passed": 3
+    },
+    "ambiguity": {
+      "total": 2,
+      "passed": 2
+    },
+    "arquitectura_tierra": {
+      "total": 1,
+      "passed": 1
+    },
+    "compound": {
+      "total": 6,
+      "passed": 6
+    },
+    "dataset_atractivos": {
+      "total": 10,
+      "passed": 10
+    },
+    "dataset_cultura": {
+      "total": 10,
+      "passed": 10
+    },
+    "dataset_logistica": {
+      "total": 10,
+      "passed": 10
+    },
+    "dataset_normativa": {
+      "total": 10,
+      "passed": 10
+    },
+    "dataset_robustez": {
+      "total": 10,
+      "passed": 10
+    },
+    "follow_up": {
+      "total": 3,
+      "passed": 3
+    },
+    "heritage": {
+      "total": 6,
+      "passed": 6
+    },
+    "hueque_unpublished": {
+      "total": 1,
+      "passed": 1
+    },
+    "identidad_ciudad": {
+      "total": 2,
+      "passed": 2
+    },
+    "multi_source": {
+      "total": 1,
+      "passed": 1
+    },
+    "orientacion": {
+      "total": 1,
+      "passed": 1
+    },
+    "out_of_scope": {
+      "total": 9,
+      "passed": 9
+    },
+    "paraphrase": {
+      "total": 10,
+      "passed": 10
+    },
+    "poi_detail": {
+      "total": 2,
+      "passed": 2
+    },
+    "poi_overview": {
+      "total": 24,
+      "passed": 24
+    },
+    "poi_paraphrase": {
+      "total": 2,
+      "passed": 2
+    },
+    "product": {
+      "total": 7,
+      "passed": 7
+    },
+    "producto": {
+      "total": 2,
+      "passed": 2
+    },
+    "saludo": {
+      "total": 2,
+      "passed": 2
+    }
+  },
+  "failures": [],
+  "sourceMisses": [
+    {
+      "id": "poi-05",
+      "sourceId": "S-026",
+      "question": "¿Dónde queda Médanos de Coro?"
+    },
+    {
+      "id": "poi-15",
+      "sourceId": "S-029",
+      "question": "Cuéntame sobre el Museo Diocesano"
+    },
+    {
+      "id": "p-01",
+      "sourceId": "S-021",
+      "question": "¿Cómo llegar a Santa Ana de Coro desde Caracas, Maracaibo o Valencia?"
+    },
+    {
+      "id": "p-05",
+      "sourceId": "S-002",
+      "question": "¿Dónde se pueden contratar guías turísticos certificados en el centro histórico de Coro?"
+    },
+    {
+      "id": "p-08",
+      "sourceId": "S-002",
+      "question": "¿Cuánto tiempo se necesita para recorrer los principales puntos patrimoniales de Coro?"
+    },
+    {
+      "id": "p-23",
+      "sourceId": "S-027",
+      "question": "¿Qué normas deben cumplir los turistas al visitar y fotografiar los monumentos históricos de Coro?"
+    },
+    {
+      "id": "p-36",
+      "sourceId": "S-026",
+      "question": "¿Cómo se llega a los Médanos de Coro desde el centro histórico de la ciudad?"
+    },
+    {
+      "id": "p-42",
+      "sourceId": "S-027",
+      "question": "¿Por qué dicen que las casas de Coro son de barro y cómo aguantan tanto tiempo?"
+    },
+    {
+      "id": "p-46",
+      "sourceId": "S-002",
+      "question": "¿Cuál es la diferencia entre visitar Coro y visitar La Vela de Coro?"
+    },
+    {
+      "id": "comp-04",
+      "sourceId": "S-026",
+      "question": "¿Cuándo es la Marcha de la Fe y qué se celebra?"
+    }
+  ]
+}

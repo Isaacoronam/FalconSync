@@ -20,6 +20,7 @@
 | Evidencia | Crítica | Inspectores, auditores |
 | Notificaciones Socket.IO | Alta | Usuarios, inspectores |
 | Asistentes RAG | Media | Turistas, inspectores |
+| Bot de Telegram y MCP | Media | Turistas y usuarios vinculados |
 | Visita 360° | Media | Turistas |
 | Administración de cuentas | Alta | Administradores |
 
@@ -32,8 +33,8 @@
 | SLO-03 | Latencia de API pública | p95 ≤ 800 ms | Mensual | Medición en staging y producción |
 | SLO-04 | Flujo de reporte | p95 ≤ 45 s con foto en 4G | Por muestra | Inicio: toque “Reportar” con sesión iniciada; fin: confirmación 201 |
 | SLO-05 | GPS | 90 % de lecturas con precisión reportada ≤ 10 m | Por muestra | Muestra de dispositivos y condiciones |
-| SLO-06 | RAG primera respuesta visible | p95 ≤ 2 s corpus interno; ≤ 4 s con búsqueda externa | Por muestra | Medición separada de recuperación y primer token |
-| SLO-07 | RAG respuesta completa | p95 ≤ 8 s para hasta 500 tokens | Por muestra | Extremo a extremo |
+| SLO-06 | RAG recuperación | p95 ≤ 2 s | Por muestra | Medición separada de recuperación |
+| SLO-07 | RAG respuesta completa | p95 ≤ 8 s para respuestas de hasta 5 frases | Por muestra | Extremo a extremo |
 | SLO-08 | Socket.IO entrega | p95 ≤ 2 s desde el evento persistido hasta el `ack` | Mensual | Prueba de carga y telemetría |
 | SLO-09 | Accesibilidad | WCAG 2.2 AA | Por release | Automatizado + revisión manual |
 | SLO-10 | Seguridad | Sin hallazgos críticos o altos abiertos | Por release | Auditoría y pruebas |
@@ -49,8 +50,7 @@
 - **GPS:** se registra `accuracyMeters` informado por el navegador; una lectura > 10 m se
   marca y no se acepta en silencio. La muestra mínima es 30 lecturas por dispositivo y
   condición.
-- **RAG:** se mide recuperación, primer token visible y respuesta completa por separado. Se
-  declara modelo, versión, hardware, red, top-k, caché y fecha.
+- **RAG:** se mide recuperación y respuesta completa por separado. Se declara versión del corpus, hardware, red, top-k, caché y fecha.
 - **Socket.IO:** desde la persistencia de la notificación hasta el `ack` del cliente; se
   incluye reconexión y recuperación por cursor.
 
@@ -88,6 +88,16 @@ Reglas:
 - Producción no se usa para pruebas manuales destructivas.
 - El despliegue a producción requiere aprobación explícita.
 
+### 4.1 Bases locales del asistente (réplica local 27018)
+
+| Base | Uso | Ciclo de vida |
+|---|---|---|
+| `falconsync` | Desarrollo: asistente, POI y usuarios | Persistente. Se reconstruye con `npm --prefix projects/backend run seed` (24 POI), los usuarios (copia local o `create-admin` con las variables del `.env`) y `npm run rag:ingest -- --apply --manifest <archivo> --actor-id <admin>` por manifiesto, cerrando con `--verify`. |
+| `falconsync_rag_eval` | Evaluación de los conjuntos dorados (v2 y v3) | Desechable: `node scripts/evaluateRagCorpus.js` la limpia e ingiere al inicio; solo se auto-limpia si el nombre empieza por `falconsync_rag_eval`. |
+| `falconsync_*_test` | Suites de pruebas | Creadas por las pruebas; no se borran ni se reutilizan. |
+
+El replica set de un nodo en `127.0.0.1:27018` (`replicaSet=falconsyncTest`) es obligatorio para conservación, evidencia y E2E (ver `memory/error_solutions.md`). Si el directorio de datos se pierde, la recuperación verificada el 2026-11-23 fue: iniciar `mongod --replSet falconsyncTest` en el directorio registrado, `rs.initiate()`, copiar los usuarios desde `falconsync` de 27017, `npm --prefix projects/backend run seed`, `npm --prefix projects/backend run create-admin` y ingerir S-002, S-003 y S-020 con `--apply` + `--verify` (3 fuentes, 26 fragmentos).
+
 ## 5. Observabilidad
 
 | Señal | Herramienta | Uso |
@@ -95,7 +105,7 @@ Reglas:
 | Health/readiness | `/api/health`, endpoint de readiness | Detectar caída o dependencia no disponible. |
 | Logs estructurados | JSON con `correlationId`, nivel y contexto | Diagnóstico sin secretos. |
 | Métricas | Latencia, errores, saturación, colas, Socket.IO, RAG | SLO y capacidad. |
-| Trazas | Petición API → base → proveedor RAG | Cuellos de botella. |
+| Trazas | Petición API → recuperación → composición | Cuellos de botella. |
 | Alertas | Disponibilidad, errores 5xx, latencia, backup, cola | Respuesta oportuna. |
 
 Reglas:
@@ -192,13 +202,38 @@ Rollback:
 
 ### 7.4 RAG con latencia o errores
 
-1. Verificar proveedor, cuota y región.
-2. Revisar recuperación y top-k.
+1. Verificar el estado del corpus y la versión activa.
+2. Revisar recuperación, top-k y filtros.
 3. Activar caché o degradar a abstención.
-4. Desactivar búsqueda externa si es la causa.
-5. Registrar coste y latencia.
+4. Reconstruir el índice si está corrupto o desactualizado.
+5. Registrar latencia y motivo de abstención.
+6. Antes de dar por cerrado un cambio de recuperación, ejecutar `npm run rag:evaluate -- --dataset corpus/evaluation/rag-golden-v5.json --report corpus/evaluation/rag-golden-v5-report.json` sobre `falconsync_rag_eval`; para regresión aislada de código, el v2 con `--sources S-002,S-003,S-020,S-021,S-022`. El v3 se conserva congelado y sus dos fallos conocidos (p-20 y p-30) son expectativas obsoletas de falsos positivos léxicos, corregidas en v4. V4 se conserva congelado; v5 corrige sus expectativas de rutas/estacionamiento y añade compuestas. La meta es `unmetTargets` vacío.
 
-### 7.5 Restauración
+### 7.5 Bot de Telegram o servidor MCP no responde
+
+1. Confirmar `TELEGRAM_ENABLED=true`, que `TELEGRAM_BOT_TOKEN` está en el entorno y que
+   `TELEGRAM_WEB_URL` apunta a la SPA pública (HTTPS en producción).
+2. Revisar el log del proceso: `npm run telegram:start` debe mostrar el `@usuario` del bot.
+   Con PM2: `pm2 status`, `pm2 logs falconsync-telegram` y `logs/telegram-error.log`.
+3. Si el error es `409 Conflict`, hay otra instancia en polling o un webhook activo.
+   Ejecutar `npm run telegram:webhook:delete` y dejar una sola instancia.
+4. Si falla la guía, probar primero la API y el corpus; el MCP reutiliza
+   `queryAssistant` y responde `ASSISTANT_UNAVAILABLE` si el corpus no está listo.
+5. Si falla la creación de incidencias, revisar que el usuario esté vinculado, que el
+   POI siga publicado y que MongoDB sea replica set (el reporte usa transacciones).
+6. Para desactivar el canal sin tumbar la API: detener el proceso del bot y poner
+   `TELEGRAM_ENABLED=false`. No hace falta borrar el vínculo de las cuentas.
+7. Para rotar el token: revocarlo en `@BotFather`, actualizar el entorno y reiniciar el
+   bot. Las sesiones de reporte en memoria se pierden; los vínculos se conservan.
+8. Si se usa webhook, verificar HTTPS, el secreto y
+   `npm run telegram:webhook:set`; luego `npm run telegram:webhook:delete` para volver
+   a polling.
+9. Si no llegan los avisos de cambio de estado, revisar que el autor tenga un
+   `ChannelLink` activo, que el reporte sea `sourceChannel=telegram` y que el log no
+   muestre un fallo de `notifyReportState`. El aviso es best-effort: la transición de
+   conservación ya quedó confirmada.
+
+### 7.6 Restauración
 
 1. Declarar incidente y ventana.
 2. Aislar escritura si hay corrupción.
@@ -211,7 +246,7 @@ Rollback:
 
 - Línea base: una instancia documentada.
 - Si se usa clúster: sesiones pegajosas y adaptador Redis para Socket.IO.
-- RAG y búsqueda externa se escalan por cuota y caché, no solo por CPU.
+- RAG se escala por cuota y caché, no solo por CPU.
 - La carga se prueba en staging con datos sintéticos.
 - Los límites de subida, body, consultas y conexiones se configuran en API y proxy.
 

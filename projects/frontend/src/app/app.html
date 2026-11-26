@@ -1,13 +1,7 @@
 <div class="app-shell">
   <header class="site-header">
     <a class="brand" routerLink="/" aria-label="FalconSync, ir al mapa">
-      <img
-        class="brand__mark"
-        src="brand/falconsync-logo.png"
-        alt=""
-        width="48"
-        height="48"
-      />
+      <img class="brand__mark" src="brand/falconsync-logo-128.png" alt="" width="56" height="56" />
       <span class="brand__copy">
         <span class="brand__eyebrow">Santa Ana de Coro · Patrimonio Mundial</span>
         <span class="brand__name">FALCONSYNC</span>
@@ -32,6 +26,14 @@
       >
         Explorar lugares
       </a>
+      <a
+        class="site-nav__link"
+        routerLink="/guia"
+        routerLinkActive="site-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Guía Chivito
+      </a>
 
       @if (auth.isAuthenticated()) {
         @if (auth.canCreateReport()) {
@@ -42,6 +44,16 @@
             ariaCurrentWhenActive="page"
           >
             Reportes
+          </a>
+        }
+        @if (auth.canPublishPanoramas()) {
+          <a
+            class="site-nav__link"
+            routerLink="/curaduria/panoramas"
+            routerLinkActive="site-nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            Curaduría 360°
           </a>
         }
         @if (auth.isInspector()) {

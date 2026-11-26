@@ -22,7 +22,7 @@ a una unidad académica.
 
 ## Roles y matriz RBAC
 
-Detalle completo, reglas por recurso y migración en [`docs/RBAC.md`](../docs/RBAC.md) (versión 1.1). La autorización se aplica en el servidor; los guards de Angular solo mejoran la experiencia.
+Detalle completo, reglas por recurso y migración en [`docs/RBAC.md`](../docs/RBAC.md) (versión 1.2). La autorización se aplica en el servidor; los guards de Angular solo mejoran la experiencia.
 
 | Rol de sistema | Etiqueta visible | Propósito | Estado |
 |---|---|---|---|
@@ -81,12 +81,30 @@ Un admin no puede usar su rol para inspeccionar, confirmar severidad ni cerrar u
 - La historia editorial y sus fuentes deben gestionarse separadas de la fuente cartográfica.
 - No asignar un estado de conservación como hecho verificado sin evidencia; los POI del
   catálogo documentado están en estado `unknown`.
+- La clasificación patrimonial se registra en `patrimonialStatus` (D-24, aceptada el
+  2026-11-20); la etiqueta `unesco` no prueba pertenencia al bien y `sin_clasificar` no
+  autoriza afirmar patrimonio.
 
 ## Check-in
 
 - Un check-in se asocia a un POI y a un usuario, con QR y geocerca validados por el servidor.
 - Un usuario no puede registrar dos veces el mismo POI.
 - La foto del check-in es opcional y se almacena como contenido privado.
+
+## Asistentes RAG (implementados)
+
+- El asistente turístico está activo con un corpus curado, citas verificables y abstención;
+  el asistente técnico está implementado pero cerrado hasta que su corpus sea aprobado.
+- RAG v1 es extractivo y sin proveedor externo: responde con citas literales de máximo 25
+  palabras o hechos estructurados verificados, o se abstiene.
+- El asistente técnico usa fuentes A/B/C técnicas y no datos de inspección en v1; el turístico
+  usa A–D y E etiquetada, sin búsqueda externa en vivo.
+- La ingesta es por CLI y manifiestos; no hay subida de PDF en v1.
+- El asistente turístico anónimo no persiste conversaciones; el técnico conserva 90 días.
+- Las rutas son recomendaciones y datos de acceso registrados: no hay navegación giro a giro
+  ni cálculo de rutas por calles.
+- Los horarios solo se responden con una fuente publicada y fechada; sin ella se responde
+  «Sin horarios confirmados».
 
 ## Referencias de detalle
 

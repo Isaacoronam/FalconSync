@@ -9,6 +9,19 @@ const mongoUri =
     process.env.E2E_MONGODB_URI ??
     'mongodb://127.0.0.1:27018/falconsync_e2e?replicaSet=falconsyncTest';
 
+// El .env del backend define las banderas RAG para desarrollo. Aquí se fijan
+// para que la suite E2E sea determinista: sin una petición explícita del
+// entorno que lanza la suite, el asistente turístico arranca apagado y no se
+// ingiere corpus (así siguen en verde `guia.spec.ts`, `npm run verify` y CI).
+const ragTouristEnabled = process.env.RAG_TOURIST_ENABLED ?? 'false';
+const ragCorpusVersion = process.env.RAG_CORPUS_VERSION ?? '';
+const ragTechnicalEnabled = process.env.RAG_TECHNICAL_ENABLED ?? 'false';
+// Con corpus, el arranque del backend ingerirá los manifiestos y calculará los
+// embeddings de sus fragmentos antes de responder al health check: ese tiempo
+// extra solo aplica cuando se pide el corpus y amplía el timeout de arranque.
+const ragIngestionPlanned =
+  ragTouristEnabled === 'true' && ragCorpusVersion.trim() !== '';
+
 export default defineConfig({
   testDir: './e2e',
   outputDir: 'test-results',
@@ -38,7 +51,7 @@ export default defineConfig({
       command: 'node scripts/e2eServer.js',
       cwd: '../backend',
       url: `${backendUrl}/api/health`,
-      timeout: 120_000,
+      timeout: ragIngestionPlanned ? 600_000 : 120_000,
       reuseExistingServer: false,
       env: {
         NODE_ENV: 'test',
@@ -57,6 +70,10 @@ export default defineConfig({
         TRUST_PROXY: 'false',
         UPLOAD_DIR: e2eUploadDir,
         UPLOAD_PRIVATE_DIR: path.resolve('test-results/e2e-uploads-private'),
+        // Fijadas aquí: ver el comentario superior sobre el .env del backend.
+        RAG_TOURIST_ENABLED: ragTouristEnabled,
+        RAG_CORPUS_VERSION: ragCorpusVersion,
+        RAG_TECHNICAL_ENABLED: ragTechnicalEnabled,
       },
     },
     {

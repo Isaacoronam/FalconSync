@@ -1,6 +1,6 @@
 # FalconSync — estado de los cortes 0 a 5
 
-Fecha de verificación: 2026-11-08.
+Fecha de verificación: 2026-11-08. Actualizado con la identidad Chivito el 2026-11-25.
 
 ## Alcance implementado
 
@@ -12,12 +12,15 @@ Fecha de verificación: 2026-11-08.
 - Mapa limitado al rectángulo operativo de Falcón con `maxBounds`,
   `maxBoundsViscosity=1` y `minZoom=8`.
 - Vista inicial en Coro a zoom 13 y control “Ver todo Falcón”.
-- Logo maestro integrado en `projects/frontend/src/assets/brand/falconsync-logo.png`
-  (PNG aprobado, 195×195, con transparencia), derivado a 48×48 sin deformar para el
-  marcador del header.
-- Favicon y `apple-touch-icon` regenerados desde el logo maestro
+- Identidad Chivito: logo circular en `projects/frontend/src/assets/brand/falconsync-logo.png`
+  (512×512, transparencia exterior), versión de 128 px para header, administración y
+  autenticación, favicon generado desde el logo completo y hoja de personaje recortada en
+  avatar y poses.
+- Fondo de Médanos en `src/assets/images/fondo-medanos.webp`, aplicado en una capa fija con
+  overlay de contraste y tratamiento responsive.
+- Favicon y `apple-touch-icon` regenerados desde los maestros
   (`favicon.ico` con 16/32/48 px, `favicon-32.png`, `apple-touch-icon.png` de 180×180)
-  mediante `npm run brand:assets`.
+  mediante `npm --prefix projects/frontend run brand:assets`.
 
 ### Corte 1 — Autenticación y permisos
 
@@ -103,7 +106,8 @@ La referencia histórica está en [`docs/AVENTURAS.md`](./AVENTURAS.md).
 - El escáner QR en `/checkin` usa `BarcodeDetector` cuando está disponible y ofrece entrada
   manual; el token vive solo en memoria y nunca se añade a la URL.
 - Check-in por POI con geolocalización del navegador (`/checkin/:locationId`), Chivito y
-  una insignia persistente por lugar.
+  una insignia persistente por lugar. La celebración con Chivito se abre solo tras `201` e
+  insignia nueva; nunca en errores, duplicados o QR inválido.
 - Generación, impresión y descarga de QR de check-in (`/admin/locations/:id/qr`).
 - Suite E2E con Playwright y geolocalización simulada para catálogo, QR, check-in, insignias
   y redirección de URL heredadas.
@@ -125,7 +129,8 @@ El detalle histórico de la interfaz anterior está en
 - Check-in y foto en dos fases: primero la visita, después la imagen.
 - Avatares y fotos en `uploads/documents/`, servidos solo por endpoints autenticados.
 - Estadísticas de check-ins, lugares descubiertos e insignias de lugares.
-- Bloque de Chivito celebra las visitas con mensajes basados en las estadísticas disponibles.
+- Bloque de Chivito con avatar celebra las visitas con mensajes basados en las estadísticas
+  disponibles; las insignias sin imagen persistida usan el medallón de su categoría.
 - Seed idempotente de la «Ruta del Casco Histórico de Coro» con cinco paradas reales.
 - E2E de perfil, avatar, check-in con foto, insignias, galería y visor (`e2e/perfil.spec.ts`).
 
@@ -233,9 +238,10 @@ const FALCON_BOUNDS = [
   hace `fitBounds` al rectángulo.
 - El rectángulo **no es el polígono oficial de Falcón**. Para el contorno exacto hace falta
   un GeoJSON verificado de OSM/INE con atribución.
-- El logo maestro se incorporó en `src/assets/brand/falconsync-logo.png` y de él se
-  derivaron favicon, `favicon-32.png` y `apple-touch-icon` (180×180) con
-  `npm run brand:assets`. La identidad visual queda cerrada en este corte.
+- El logo maestro y la hoja de Chivito se conservan en `projects/frontend/design/source/`.
+  `npm --prefix projects/frontend run brand:assets` genera el logo circular, la marca de
+  cabeza, favicons, avatar, poses y el fondo optimizado. La identidad se documenta en
+  [`IDENTIDAD.md`](./IDENTIDAD.md) y [`ADR-008`](./ADR/ADR-008-identidad-chivito.md).
 
 ## Autenticación
 
@@ -435,7 +441,7 @@ detalle está en [`docs/POI.md`](./POI.md).
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
-| Pruebas backend | `npm test` en `projects/backend` | 110/110 aprobadas, 14 suites (18 admin POI + 17 CoroAventura + 12 auth + 15 locations + 6 perfil + 6 insignias/galería + 10 roles + 4 autorización + 4 conservación + 2 evidencia + 2 seed aventuras + 4 seed POI + 5 estructura + 5 almacenamiento) |
+| Pruebas backend | `npm run test:backend` | 178/178 aprobadas, 19 suites (2026-11-25) |
 | Seed idempotente | `test/seedLocations.test.js` | 23 insertados la primera vez y 0 la segunda |
 | Seed de aventura | `npm run seed:adventures` + `--verify` | Aventura publicada con 5 paradas, orden y disponibilidad correctos |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada de Parque Nacional Médanos de Coro sincronizada y verificada |
@@ -443,10 +449,13 @@ detalle está en [`docs/POI.md`](./POI.md).
 | Backfill de usuarios | `npm run backfill:usernames` | 2 usuarios actualizados con `username` |
 | Backfill de insignias | `npm run backfill:achievements` | Simulación por defecto; `--apply` escribe. No ejecutado sobre datos locales en esta verificación |
 | Bootstrap admin | `npm run create-admin` | Admin creado; segunda ejecución sin cambios |
-| Pruebas frontend | `npm test -- --watch=false` | 53/53 aprobadas |
-| Build producción | `npm run build` | Correcto, sin advertencias; 24.25 s en la copia limpia del 2026-11-19 (presupuesto `anyComponentStyle` ajustado a 10/12 kB; el perfil compila en 9.41 kB) |
+| Pruebas frontend | `npm run test:frontend` | 101/101 aprobadas, 18 archivos (2026-11-26) |
+| Build producción | `npm run build` | Correcto, sin advertencias (2026-11-26) |
+| Evaluación RAG v5 | `npm run rag:evaluate -- --dataset corpus/evaluation/rag-golden-v5.json --report corpus/evaluation/rag-golden-v5-report.json` | 146/146, 0 fallos, `unmetTargets` vacío; sourceHit 0.92; p95 110 ms (2026-11-26) |
 | E2E de catálogo POI, QR y perfil | `npx playwright test e2e/coro-aventura.spec.ts e2e/perfil.spec.ts` | 7/7 aprobadas |
-| E2E permanente | `npm run e2e` | 19/19 en Edge local (2026-11-18, dentro de `npm run verify`) y 19/19 con `CI=1`/Chromium en copia limpia (2026-11-19); ejecución remota pendiente |
+| E2E de identidad y Chivito | `npm run e2e -- e2e/identidad.spec.ts e2e/brand.spec.ts e2e/guia.spec.ts` | 9/9 aprobadas (2026-11-25) |
+| E2E conversacional con corpus | `npx playwright test e2e/chatbot-guia.spec.ts` con `RAG_TOURIST_ENABLED=true` | 6/6 aprobadas y 1 omitida por diseño (2026-11-26) |
+| E2E permanente | `npm run e2e` | 29/29 aprobadas y 5 omitidas por corpus RAG deshabilitado (2026-11-25); 19/19 histórico en Edge local (2026-11-18) y en copia limpia con `CI=1`/Chromium (2026-11-19) |
 | Auditoría producción backend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría producción frontend | `npm audit --omit=dev` | 0 vulnerabilidades |
 | Auditoría completa frontend | `npm audit` | 16 moderadas en dependencias de desarrollo de Angular CLI |
@@ -491,20 +500,66 @@ La suite E2E comprueba:
 - archivo lógico, desaparición del API público y restauración como borrador;
 - escáner QR: entrada manual, login con `returnUrl` sin token y token conservado en memoria;
 - enlace heredado con token: limpieza de la URL y acceso conservado tras el login;
-- check-in con geolocalización simulada, felicitación de Chivito e insignia del lugar;
+- check-in con geolocalización simulada, celebración modal de Chivito e insignia del lugar;
 - rechazo de check-in duplicado y de posición fuera de la geocerca;
 - catálogo y detalle editorial por POI, con redirección de URL públicas heredadas;
 - perfil privado: edición de nombre, usuario y biografía, actualización del header, avatar,
   check-in con foto, insignia, visor ampliado, reemplazo y eliminación de foto y filtros de
   galería;
 - gestión de cuentas: cambio de rol, desactivación, reactivación y revocación de sesiones
-  con reautenticación.
+  con reautenticación;
+- Chivito `/guia`: creación de perfil por UI, avatar y rol, estado de disponibilidad y bloqueo
+  de la consulta sin corpus (`e2e/guia.spec.ts`) y —con el corpus RAG habilitado— la batería
+  de preguntas del E2E de conversación (`e2e/chatbot-guia.spec.ts`): saludos («hola» y «hi»),
+  lugares publicados, estado UNESCO, adobe y tapia por separado y compuestos, identidad de
+  Coro y FALCONSYNC sin enlaces internos, turismo, ruta sin fuente verificada y preguntas
+  compuestas de dos partes conocidas y de mezcla conocida+desconocida. La batería con corpus
+  comprobó 6 casos aprobados y 1 omitido (el caso D del modo sin RAG) el 2026-11-26; incluye
+  la cita separada de adobe/tapia y el mensaje específico de precios sin fuente.
 
 La E2E local usa Microsoft Edge mediante el canal de Playwright. La suite completa quedó en
-19/19 en Edge el 2026-11-18 y en 19/19 con `CI=1`/Chromium en una copia limpia el 2026-11-19.
-La ejecución remota del workflow sigue pendiente de autorización. Las imágenes de la E2E se
-guardan en `test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan
-las carpetas de desarrollo.
+19/19 en Edge el 2026-11-18 y en 19/19 con `CI=1`/Chromium en una copia limpia el 2026-11-19;
+el 2026-11-25, dentro de `npm run verify`, la suite completa quedó en **30 aprobadas y 5
+omitidas por diseño** (con la guía apagada se omiten B, B7, E, C y C3b). Incluye el caso de
+vinculación de Telegram en `/perfil` (`e2e/perfil.spec.ts`). La ejecución remota
+del workflow sigue pendiente de autorización. Las imágenes de la E2E se guardan en
+`test-results/e2e-uploads` y `test-results/e2e-uploads-private`, y no contaminan las carpetas
+de desarrollo.
+
+Por defecto la suite E2E corre con la guía apagada: `playwright.config.ts` fija
+`RAG_TOURIST_ENABLED`, `RAG_CORPUS_VERSION` y `RAG_TECHNICAL_ENABLED` (los toma del entorno
+que lanza la suite y, si no están, los apaga), de modo que el `.env` de desarrollo no cambia
+el resultado de `npm run verify` ni de CI. `scripts/e2eServer.js` solo ingiere las 14
+fuentes de la evaluación dorada (S-005 y S-023 quedan fuera) cuando la guía turística viene
+habilitada con corpus declarado; sin esa petición no se ingiere nada y el estado sigue en
+«Guía en preparación». Para conversar con la guía en E2E:
+`$env:RAG_TOURIST_ENABLED='true'; $env:RAG_CORPUS_VERSION='2026-11-22.1'; npm --prefix projects/frontend run e2e -- e2e/chatbot-guia.spec.ts`
+— la ingesta con embeddings tardó 18,3 s y el timeout de arranque del backend sube a 600 s
+solo en ese modo. En esa modalidad, los casos B7 (horario sin fuente del lugar preguntado)
+y C3b (mezcla «…y quién…») documentaban los defectos FG-01 y FG-02; ambos quedaron en
+verde tras la corrección de `assistantService.js` (evidencia de estado acotada al lugar
+preguntado y conector «y quién» reconocido), verificada con la batería completa.
+
+## Canal de Telegram y MCP
+
+El canal de Telegram se implementó el 2026-11-25 con `grammY` y un servidor MCP propio por
+stdio. El bot (`bin/telegramBot.js`) reutiliza la guía RAG, el catálogo de POI y el flujo de
+conservación; no accede a MongoDB directamente. La guía y los recorridos son públicos; los
+reportes exigen vincular la cuenta con un código de un solo uso generado en `/perfil`.
+
+- Herramientas MCP: guía, búsqueda de lugares, lugares cercanos, rutas, estado de vínculo,
+  vincular/desvincular, crear incidencia, consultar incidencias propias y ver su detalle.
+- `/misreportes` pagina de cinco en cinco y permite abrir el detalle; `/cerca` usa la
+  ubicación compartida para listar POI a menos de 2 km.
+- El chat de `/guia` enlaza al bot en una franja al pie; el perfil ofrece el deep link
+  `?start=CODIGO` para vincular sin copiar el código.
+- El recorrido publicado es «Ruta del Casco Histórico de Coro» (5 paradas) y se presenta como
+  recomendación, no como navegación giro a giro.
+- Los reportes llevan `sourceChannel=telegram`; la clave de idempotencia no se expone.
+- El autor recibe un aviso best-effort cuando su incidencia cambia de estado.
+- No se adjuntan fotos en v1: producción bloquea la evidencia hasta tener antimalware.
+- Runbook y configuración: [`INTEGRACION-TELEGRAM.md`](./INTEGRACION-TELEGRAM.md);
+  decisión: [`ADR/ADR-009-telegram-mcp.md`](./ADR/ADR-009-telegram-mcp.md).
 
 ## Seguridad y dependencias
 
@@ -552,7 +607,8 @@ las carpetas de desarrollo.
 ## Limitaciones y pendientes
 
 - El logo maestro y los iconos de marca se integraron y regeneraron en este corte
-  (`src/assets/brand/falconsync-logo.png`, `npm run brand:assets`).
+  (`src/assets/brand/falconsync-logo.png`, `falconsync-logo-128.png`,
+  `npm run brand:assets`).
 - El límite del mapa es rectangular y operativo, no el polígono oficial de Falcón.
 - No hay verificación de correo, recuperación de contraseña, MFA ni autogestión de sesiones
   por el usuario; un administrador puede revocar sesiones ajenas desde el panel.
@@ -577,6 +633,10 @@ las carpetas de desarrollo.
   turística ni administrativa para crear recorridos. Faltan la moderación, los artículos,
   los eventos y la agenda. Las fichas POI ya admiten historia, datos, información práctica y
   fuentes; todavía hay que completar y revisar editorialmente esos contenidos.
+- La Ruta del Casco Histórico se responde desde S-022 como recomendación con paradas; no hay
+  cálculo de rutas por calles ni navegación giro a giro. La S-022 V3 está en el manifiesto y
+  en la evaluación, pero la reingesta del corpus de desarrollo requiere un historiador activo
+  que verifique derechos.
 - Los QR no guardan imágenes en el servidor; el token solo se devuelve al rotar.
 - El QR puede fotografiarse y compartirse y la ubicación del cliente puede simularse; la
   geocerca reduce el abuso, pero no elimina el fraude. La aplicación mantiene el token solo en

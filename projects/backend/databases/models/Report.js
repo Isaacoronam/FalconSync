@@ -21,6 +21,8 @@ export const REPORT_STATES = [
   'closed',
 ];
 
+export const REPORT_SOURCE_CHANNELS = ['web', 'telegram'];
+
 const reportSchema = new mongoose.Schema(
   {
     reporterId: {
@@ -83,6 +85,23 @@ const reportSchema = new mongoose.Schema(
       min: 0,
       max: 10000,
     },
+    sourceChannel: {
+      type: String,
+      enum: {
+        values: REPORT_SOURCE_CHANNELS,
+        message: 'El canal del reporte no es válido',
+      },
+      default: 'web',
+      index: true,
+    },
+    // Clave interna de idempotencia del canal. No se expone en la API pública.
+    // Las altas web no escriben el campo: el índice único es sparse y así
+    // admite muchos reportes sin clave.
+    sourceActionKey: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+    },
     state: {
       type: String,
       enum: REPORT_STATES,
@@ -122,6 +141,7 @@ reportSchema.index({ state: 1, createdAt: -1 });
 reportSchema.index({ reporterId: 1, createdAt: -1 });
 reportSchema.index({ inspectionId: 1 }, { unique: true, sparse: true });
 reportSchema.index({ gps: '2dsphere' });
+reportSchema.index({ sourceActionKey: 1 }, { unique: true, sparse: true });
 
 reportSchema.pre('validate', function validateDestination() {
   if (!this.heritageAssetId && !this.locationId) {

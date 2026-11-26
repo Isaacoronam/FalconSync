@@ -13,7 +13,7 @@ export interface AuditEntry {
   action: string;
   actor: string;
   actorEmail: string;
-  entityType: 'Location' | 'Adventure' | 'AdventureStop' | 'User';
+  entityType: 'Location' | 'Adventure' | 'AdventureStop' | 'User' | 'ChannelLink';
   entityId: string;
   summary: string;
   metadata: Record<string, unknown>;

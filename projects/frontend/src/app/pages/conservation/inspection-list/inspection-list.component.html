@@ -57,6 +57,7 @@
                 <div>
                   <h3 class="conservation-card__title">{{ reportTarget(report) }}</h3>
                   <p class="conservation-card__meta">
+                    {{ report.sourceChannel === 'telegram' ? 'Telegram' : 'Web' }} ·
                     {{ report.capturedAt | date: 'dd/MM/yyyy HH:mm' }} ·
                     {{ report.evidenceIds.length }} evidencia(s) · Reporte {{ shortId(report.id) }}
                   </p>

@@ -7,7 +7,7 @@ Decisión del 18 de noviembre de 2026. Se adopta la estructura obligatoria defin
 Estructura resultante:
 
 - Raíz: `AGENTS.md`, `context/` (`system_context.md`, `business_rules.md`, `api_contracts.md`), `skills/`, `memory/` (`architecture_decisions.md`, `error_solutions.md`) y `projects/`.
-- Backend: `api/` (`auth`, `users`, `uploads`, `adventures`, `check-ins`, `locations`, `conservation`, `evidence`, `admin`), `assets/`, `bin/server.js`, `databases/`, `helpers/`, `logs/`, `microservices/`, `middlewares/`, `public/`, `scripts/`, `seeders/`, `uploads/` (`images/`, `documents/`, `apks/`), `.env.example`, `ecosystem.config.cjs`, `index.js` y `package.json`.
+- Backend: `api/` (`auth`, `users`, `uploads`, `adventures`, `check-ins`, `locations`, `conservation`, `evidence`, `panoramas`, `assistant`, `channels`, `sources`, `admin`), `assets/`, `bin/server.js`, `bin/mcpServer.js`, `bin/telegramBot.js`, `databases/`, `helpers/`, `logs/`, `microservices/` (incluye `mcp/` y `telegram/`), `middlewares/`, `public/`, `scripts/`, `seeders/`, `uploads/` (`images/`, `documents/`, `apks/`), `.env.example`, `ecosystem.config.cjs`, `index.js` y `package.json`.
 - Frontend: `src/app/{components,pages,services,models}` y `src/assets/`.
 - Mobile: `src/{screens,components,services,models}` y `package.json`.
 
@@ -26,7 +26,7 @@ Excepciones (fuera de la especificación; necesarias para herramientas o convenc
 
 - Raíz: `docs/` (documentación ampliada, según `AGENTS.md`), `.github/` (CI), `.opencode/` (agentes, skills y conocimiento de OpenCode), `.git`, `.gitignore`, `.editorconfig`, `.nvmrc`, `package.json` (scripts `npm run verify` y similares), `README.md` y `CONTRIBUTING.md`.
 - Backend: `test/` (pruebas de `node --test`), `package-lock.json` y `README.md` del proyecto.
-- Frontend: `e2e/`, `scripts/` (iconos de marca), `src/environments/`, `src/styles/`, los archivos de arranque `src/main.ts` e `src/index.html`, los archivos raíz `src/app/app.{ts,html,scss,spec.ts,config.ts,routes.ts}`, el `README.md` del proyecto y la configuración de Angular, TypeScript, Prettier y Playwright.
+- Frontend: `e2e/`, `scripts/` (iconos de marca), `design/source/` (maestros locales de identidad), `src/environments/`, `src/styles/`, los archivos de arranque `src/main.ts` e `src/index.html`, los archivos raíz `src/app/app.{ts,html,scss,spec.ts,config.ts,routes.ts}`, el `README.md` del proyecto y la configuración de Angular, TypeScript, Prettier y Playwright.
 - Mobile: `README.md` del esqueleto y `.gitkeep` de las carpetas reservadas.
 
 Registro de decisiones (ADR): el detalle vive en `docs/ADR/`, con su índice en `docs/ADR/README.md`. Este archivo resume las decisiones que afectan a la estructura y enlaza al ADR correspondiente cuando exista.
@@ -60,3 +60,9 @@ Criterios:
 - `CI` se define como cadena (`'true'`) para evitar la coerción booleana de YAML; Playwright lo usa para elegir Chromium, reintentos y reporte GitHub.
 - El reporte de Playwright y `test-results` se publican como artefacto solo si el job falla, con retención de 7 días. El contenedor de Mongo se elimina con `if: always()`.
 - La ejecución remota no se declara verde hasta que exista una corrida autorizada en GitHub. La copia limpia local y `rs.initiate()` en un replica set desechable son evidencia de reproducibilidad, no de CI remoto.
+
+## Identidad Chivito y assets
+
+Decisión del 25 de noviembre de 2026 (D-30 y D-31; ADR-008). La identidad visual se genera desde maestros locales en `projects/frontend/design/source/` con `npm --prefix projects/frontend run brand:assets`; los derivados se publican en `src/assets/brand/` y `src/assets/images/badges/`. El logo con damero incrustado se recorta y se enmascara a círculo; el header, la administración y la autenticación usan el badge oficial de 128 px, y el favicon se genera desde el logo completo. La variante de cabeza queda como recurso compacto alternativo.
+
+Chivito es la identidad del guía turístico; el apoyo técnico conserva su nombre y no usa su avatar. El chat sigue siendo HTTP/RAG, sin LLM externo ni WebSocket. La celebración del check-in solo se abre con `201` e insignia nueva; las insignias históricas sin `image` usan el medallón de su categoría. El detalle está en [`docs/IDENTIDAD.md`](../docs/IDENTIDAD.md) y [`docs/ADR/ADR-008-identidad-chivito.md`](../docs/ADR/ADR-008-identidad-chivito.md).

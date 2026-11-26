@@ -54,6 +54,15 @@ export class AuthService {
   readonly canManageAssets = computed(() =>
     ['inspector', 'admin'].includes(this.currentUserState()?.role ?? ''),
   );
+  readonly canManagePanoramas = computed(
+    () => this.currentUserState()?.role === 'admin',
+  );
+  readonly canPublishPanoramas = computed(
+    () => this.currentUserState()?.role === 'historian',
+  );
+  readonly canCuratePanoramas = computed(() =>
+    ['historian', 'admin'].includes(this.currentUserState()?.role ?? ''),
+  );
   readonly mustChangePassword = computed(
     () => this.currentUserState()?.mustChangePassword === true,
   );

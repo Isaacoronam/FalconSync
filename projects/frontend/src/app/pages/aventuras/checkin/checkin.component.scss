@@ -32,10 +32,11 @@
 }
 
 .checkin-exito {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(217, 154, 43, 0.45);
   border-radius: 16px;
   padding: 1.5rem;
-  background: #f4efe4;
+  background: var(--surface);
+  box-shadow: var(--shadow);
   text-align: center;
 }
 
@@ -50,15 +51,13 @@
 }
 
 .checkin-chivito__mascot {
-  display: grid;
   width: 4.5rem;
   height: 4.5rem;
   flex: 0 0 auto;
-  place-items: center;
-  border: 2px solid #d6bd89;
+  border: 2px solid var(--gold);
   border-radius: 50%;
-  background: #fff7df;
-  font-size: 2.7rem;
+  background: var(--cream);
+  object-fit: cover;
 }
 
 .checkin-exito h2 {
@@ -122,15 +121,11 @@
 }
 
 .checkin-logro__icono {
-  display: grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 3rem;
+  height: 3rem;
   flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--gold);
-  color: #3b2a12;
-  font-size: 1.15rem;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(43, 26, 19, 0.14));
 }
 
 .checkin-logro__texto {

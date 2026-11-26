@@ -15,18 +15,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
-import {
-  GalleryMeta,
-  Profile,
-  ProfileCheckIn,
-  ProfileStats,
-} from '../../models/profile.model';
+import { environment } from '../../../environments/environment';
+import { GalleryMeta, Profile, ProfileCheckIn, ProfileStats } from '../../models/profile.model';
+import { TelegramLinkCode, TelegramLinkStatus } from '../../models/channel-link.model';
 import {
   UserAchievement,
+  achievementBadgeImage,
   achievementCategoryLabel,
   achievementIcon,
 } from '../../models/achievement.model';
 import { AuthService } from '../../services/auth.service';
+import { ChannelLinkApiService } from '../../services/channel-link-api.service';
 import { ProfileApiService } from '../../services/profile-api.service';
 import { apiErrorMessage } from '../../services/utils/api-error';
 
@@ -52,11 +51,11 @@ const GALLERY_FILTERS: Array<{ value: GalleryFilter; label: string }> = [
 })
 export class PerfilComponent implements OnInit, OnDestroy {
   private readonly profileApi = inject(ProfileApiService);
+  private readonly channelLinkApi = inject(ChannelLinkApiService);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly sanitizer = inject(DomSanitizer);
-  private readonly viewerCloseButton =
-    viewChild<ElementRef<HTMLButtonElement>>('viewerClose');
+  private readonly viewerCloseButton = viewChild<ElementRef<HTMLButtonElement>>('viewerClose');
 
   protected readonly profile = signal<Profile | null>(null);
   protected readonly stats = signal<ProfileStats | null>(null);
@@ -68,9 +67,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   protected readonly error = signal<string | null>(null);
   protected readonly message = signal<string | null>(null);
   protected readonly messageType = signal<MessageType>(null);
-  protected readonly failedAchievementImages = signal<ReadonlySet<string>>(
-    new Set(),
-  );
+  protected readonly failedAchievementImages = signal<ReadonlySet<string>>(new Set());
 
   protected readonly gallery = signal<ProfileCheckIn[]>([]);
   protected readonly galleryMeta = signal<GalleryMeta>({
@@ -89,6 +86,14 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   protected readonly galleryFilters = GALLERY_FILTERS;
   protected readonly photoUrls = signal<Record<string, SafeUrl>>({});
+
+  protected readonly telegramLink = signal<TelegramLinkStatus | null>(null);
+  protected readonly telegramCode = signal<TelegramLinkCode | null>(null);
+  protected readonly telegramLoading = signal(false);
+  protected readonly telegramError = signal<string | null>(null);
+  protected readonly telegramMessage = signal<string | null>(null);
+  protected readonly telegramCopied = signal(false);
+  protected readonly telegramUnlinkPending = signal(false);
 
   protected readonly galleryEmptyMessage = computed(() => {
     switch (this.galleryFilter()) {
@@ -180,6 +185,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadProfile();
     this.loadGallery(1);
+    this.loadTelegramLink();
   }
 
   ngOnDestroy(): void {
@@ -228,9 +234,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
           this.profile.set(data.profile);
           this.stats.set(data.stats);
           this.achievements.set(
-            (data.achievements ?? []).filter(
-              (achievement) => achievement.type === 'location',
-            ),
+            (data.achievements ?? []).filter((achievement) => achievement.type === 'location'),
           );
           this.auth.updateCurrentUser({
             name: data.profile.name,
@@ -263,8 +267,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   protected loadGallery(page = 1): void {
     const requestId = ++this.galleryRequest;
     const filter = this.galleryFilter();
-    const hasPhoto =
-      filter === 'all' ? undefined : filter === 'withPhoto';
+    const hasPhoto = filter === 'all' ? undefined : filter === 'withPhoto';
 
     this.galleryLoading.set(true);
     this.galleryError.set(null);
@@ -292,9 +295,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
           }
 
           this.galleryLoading.set(false);
-          this.galleryError.set(
-            apiErrorMessage(error, 'No se pudo cargar la galería de visitas.'),
-          );
+          this.galleryError.set(apiErrorMessage(error, 'No se pudo cargar la galería de visitas.'));
         },
       });
   }
@@ -354,10 +355,116 @@ export class PerfilComponent implements OnInit, OnDestroy {
         },
         error: (error: unknown) => {
           this.saving.set(false);
-          this.message.set(
-            apiErrorMessage(error, 'No se pudo guardar el perfil.'),
-          );
+          this.message.set(apiErrorMessage(error, 'No se pudo guardar el perfil.'));
           this.messageType.set('error');
+        },
+      });
+  }
+
+  protected loadTelegramLink(): void {
+    this.telegramError.set(null);
+
+    this.channelLinkApi
+      .getTelegramStatus()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ data }) => this.telegramLink.set(data),
+        error: (error: unknown) => {
+          this.telegramError.set(
+            apiErrorMessage(error, 'No se pudo consultar el vínculo con Telegram.'),
+          );
+        },
+      });
+  }
+
+  protected createTelegramCode(): void {
+    if (this.telegramLoading()) {
+      return;
+    }
+
+    this.telegramLoading.set(true);
+    this.telegramError.set(null);
+    this.telegramMessage.set(null);
+    this.telegramCopied.set(false);
+
+    this.channelLinkApi
+      .createTelegramCode()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ data }) => {
+          this.telegramCode.set(data);
+          this.telegramLoading.set(false);
+          this.telegramMessage.set('Código generado. Envíalo al bot con /vincular CODIGO.');
+        },
+        error: (error: unknown) => {
+          this.telegramLoading.set(false);
+          this.telegramError.set(
+            apiErrorMessage(error, 'No se pudo generar el código de vinculación.'),
+          );
+        },
+      });
+  }
+
+  protected copyTelegramCode(): void {
+    const code = this.telegramCode()?.code;
+    if (!code) {
+      return;
+    }
+
+    if (!navigator.clipboard) {
+      this.telegramMessage.set('Copia el código manualmente.');
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(code)
+      .then(() => {
+        this.telegramCopied.set(true);
+        this.telegramMessage.set('Código copiado al portapapeles.');
+      })
+      .catch(() => {
+        this.telegramMessage.set('No se pudo copiar. Selecciona el código y cópialo manualmente.');
+      });
+  }
+
+  protected telegramDeepLink(code: string): string {
+    return `${environment.telegramBotUrl}?start=${encodeURIComponent(code)}`;
+  }
+
+  protected requestTelegramUnlink(): void {
+    this.telegramUnlinkPending.set(true);
+    this.telegramError.set(null);
+    this.telegramMessage.set(null);
+  }
+
+  protected cancelTelegramUnlink(): void {
+    this.telegramUnlinkPending.set(false);
+  }
+
+  protected unlinkTelegram(): void {
+    if (this.telegramLoading()) {
+      return;
+    }
+
+    this.telegramLoading.set(true);
+    this.telegramUnlinkPending.set(false);
+    this.telegramError.set(null);
+
+    this.channelLinkApi
+      .unlinkTelegram()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ data }) => {
+          this.telegramLink.set(data);
+          this.telegramCode.set(null);
+          this.telegramLoading.set(false);
+          this.telegramMessage.set('Tu cuenta quedó desvinculada de Telegram.');
+        },
+        error: (error: unknown) => {
+          this.telegramLoading.set(false);
+          this.telegramError.set(
+            apiErrorMessage(error, 'No se pudo desvincular la cuenta de Telegram.'),
+          );
         },
       });
   }
@@ -402,9 +509,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
         },
         error: (error: unknown) => {
           this.uploading.set(false);
-          this.message.set(
-            apiErrorMessage(error, 'No se pudo subir el avatar.'),
-          );
+          this.message.set(apiErrorMessage(error, 'No se pudo subir el avatar.'));
           this.messageType.set('error');
         },
       });
@@ -432,18 +537,13 @@ export class PerfilComponent implements OnInit, OnDestroy {
         },
         error: (error: unknown) => {
           this.uploading.set(false);
-          this.message.set(
-            apiErrorMessage(error, 'No se pudo eliminar el avatar.'),
-          );
+          this.message.set(apiErrorMessage(error, 'No se pudo eliminar el avatar.'));
           this.messageType.set('error');
         },
       });
   }
 
-  protected onCheckInPhotoSelected(
-    checkIn: ProfileCheckIn,
-    event: Event,
-  ): void {
+  protected onCheckInPhotoSelected(checkIn: ProfileCheckIn, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
@@ -453,9 +553,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
     }
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      this.photoActionError.set(
-        'La foto debe ser una imagen JPEG, PNG o WebP.',
-      );
+      this.photoActionError.set('La foto debe ser una imagen JPEG, PNG o WebP.');
       return;
     }
 
@@ -517,9 +615,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
           }
 
           this.applyCheckInUpdate(data.checkIn);
-          this.message.set(
-            `Foto eliminada de tu visita a ${data.checkIn.location.title}.`,
-          );
+          this.message.set(`Foto eliminada de tu visita a ${data.checkIn.location.title}.`);
           this.messageType.set('success');
         },
         error: (error: unknown) => {
@@ -553,10 +649,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
     }
 
     const current = this.viewerIndex();
-    const nextIndex =
-      current < 0
-        ? 0
-        : (current + delta + photos.length) % photos.length;
+    const nextIndex = current < 0 ? 0 : (current + delta + photos.length) % photos.length;
     const next = photos[nextIndex];
 
     this.loadCheckInPhoto(next);
@@ -568,14 +661,11 @@ export class PerfilComponent implements OnInit, OnDestroy {
   }
 
   protected achievementImage(achievement: UserAchievement): string | null {
-    if (
-      !achievement.image ||
-      this.failedAchievementImages().has(achievement.id)
-    ) {
+    if (this.failedAchievementImages().has(achievement.id)) {
       return null;
     }
 
-    return achievement.image;
+    return achievementBadgeImage(achievement);
   }
 
   protected onAchievementImageError(achievementId: string): void {
@@ -602,9 +692,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
   }
 
   private applyCheckInUpdate(updated: ProfileCheckIn): void {
-    this.gallery.update((items) =>
-      items.map((item) => (item.id === updated.id ? updated : item)),
-    );
+    this.gallery.update((items) => items.map((item) => (item.id === updated.id ? updated : item)));
 
     if (updated.photoAvailable) {
       this.loadCheckInPhoto(updated, true);
@@ -624,10 +712,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
 
   private galleryPageForReload(): number {
     const meta = this.galleryMeta();
-    const page = Math.min(
-      Math.max(meta.page, 1),
-      Math.max(meta.totalPages, 1),
-    );
+    const page = Math.min(Math.max(meta.page, 1), Math.max(meta.totalPages, 1));
 
     if (this.gallery().length <= 1 && page > 1) {
       return page - 1;
@@ -644,9 +729,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
         next: (blob) => {
           this.releaseAvatarUrl();
           this.avatarRawUrl = URL.createObjectURL(blob);
-          this.avatarUrl.set(
-            this.sanitizer.bypassSecurityTrustUrl(this.avatarRawUrl),
-          );
+          this.avatarUrl.set(this.sanitizer.bypassSecurityTrustUrl(this.avatarRawUrl));
         },
         error: () => {
           // El avatar es decorativo: el perfil sigue siendo utilizable.

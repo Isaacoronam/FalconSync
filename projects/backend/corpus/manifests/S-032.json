@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-032",
+    "title": "Catedral Basílica Menor de Santa Ana de Coro — Wikipedia",
+    "institution": "Wikipedia (Fundación Wikimedia)",
+    "version": "Artículo consultado el 2026-11-24",
+    "retrievedAt": "2026-11-24T00:00:00.000Z",
+    "verifiedAt": "2026-11-24T00:00:00.000Z",
+    "url": "https://es.wikipedia.org/wiki/Coro_(Venezuela)#Iglesias",
+    "level": "D",
+    "sourceLabel": "Externo",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Enciclopedia abierta con referencias mixtas; nivel D, apoyo contextual con enlace, nunca fuente de horarios ni de estado actual del templo. Incorporada por instrucción del responsable del proyecto el 2026-11-24; identidad, URL y fecha de consulta verificadas.",
+    "license": "CC BY-SA 4.0",
+    "rights": "Resúmenes propios de hasta 25 palabras con atribución a Wikipedia y enlace al artículo; obra derivada bajo CC BY-SA 4.0.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-24T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "Catedral de Coro",
+      "historia",
+      "diócesis"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-032#construccion",
+      "ordinal": 0,
+      "section": "Iglesias",
+      "text": "La Catedral Basílica de Coro fue iniciada en 1583; entre 1608 y 1615 Francisco Ramírez participó en su cúpula y bóvedas laterales.",
+      "assistantScopes": ["tourist"],
+      "topics": ["Catedral", "construcción"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo fue la construcción de la Catedral de Coro?",
+        "¿Cuál es la historia de la Catedral Basílica?",
+        "¿Quién participó en la obra de la Catedral de Coro?"
+      ]
+    },
+    {
+      "chunkKey": "S-032#diocesis",
+      "ordinal": 1,
+      "section": "Iglesias",
+      "text": "La diócesis de Coro fue creada por el Papa Clemente VII el 21 de julio de 1531, la primera de tierra firme suramericana.",
+      "assistantScopes": ["tourist"],
+      "topics": ["diócesis", "historia"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Por qué es importante la diócesis de Coro?",
+        "¿Cuándo se creó la diócesis de Coro?",
+        "¿Qué importancia histórica tiene la Catedral de Coro?"
+      ]
+    },
+    {
+      "chunkKey": "S-032#nevada",
+      "ordinal": 2,
+      "section": "Iglesias",
+      "text": "Bartolomé de Nevada asumió la obra de la Catedral en 1615 y fue determinante para su continuidad y culminación.",
+      "assistantScopes": ["tourist"],
+      "topics": ["Catedral", "historia"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Quién terminó la obra de la Catedral de Coro?",
+        "¿Qué hizo Bartolomé de Nevada en la Catedral?",
+        "¿Cómo continuó la construcción de la Catedral?"
+      ]
+    }
+  ]
+}

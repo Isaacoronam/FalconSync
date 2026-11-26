@@ -1,0 +1,268 @@
+:host {
+  display: block;
+}
+
+.panorama-viewer {
+  margin: 0;
+}
+
+.panorama-viewer__stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  max-height: 70vh;
+  overflow: hidden;
+  border: 1px solid #3c2d26;
+  border-radius: 18px;
+  background: #16110e;
+  box-shadow: var(--shadow);
+  touch-action: pan-y;
+}
+
+.panorama-viewer__stage--embedded {
+  min-height: 15rem;
+  max-height: 42vh;
+  aspect-ratio: auto;
+}
+
+.panorama-viewer__fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.panorama-viewer__placeholder {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  margin: 0;
+  padding: 2rem;
+  color: #ead9bf;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.panorama-viewer__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+  opacity: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.panorama-viewer__canvas--active {
+  visibility: visible;
+  opacity: 1;
+  cursor: grab;
+}
+
+.panorama-viewer__canvas--active:active {
+  cursor: grabbing;
+}
+
+.panorama-viewer__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, rgba(22, 17, 14, 0) 35%, rgba(22, 17, 14, 0.82) 100%);
+  text-align: center;
+}
+
+.panorama-viewer__overlay p {
+  max-width: 40rem;
+  margin: 0;
+  color: #f4eadb;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.panorama-viewer__toolbar {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.panorama-viewer__control {
+  min-height: 2.2rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid rgba(251, 247, 239, 0.35);
+  border-radius: 999px;
+  color: #fbf7ef;
+  background: rgba(22, 17, 14, 0.68);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+
+.panorama-viewer__control:hover {
+  background: rgba(22, 17, 14, 0.88);
+}
+
+.panorama-viewer__hotspots {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.panorama-viewer__hotspot {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0;
+  border: 0;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  transform-origin: center;
+}
+
+.panorama-viewer__hotspot-dot {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+  border: 3px solid #fbf7ef;
+  border-radius: 50%;
+  background: var(--terracotta);
+  box-shadow:
+    0 0 0 4px rgba(168, 76, 47, 0.32),
+    0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+.panorama-viewer__hotspot:hover .panorama-viewer__hotspot-dot,
+.panorama-viewer__hotspot:focus-visible .panorama-viewer__hotspot-dot {
+  background: var(--gold);
+}
+
+.panorama-viewer__hotspot-label {
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(22, 17, 14, 0.78);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.panorama-viewer__caption {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.panorama-viewer__description {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.panorama-viewer__credits {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.panorama-viewer__instructions {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.panorama-viewer__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.panorama-viewer__hotspot-list {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.panorama-viewer__hotspot-list h3 {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.panorama-viewer__hotspot-list ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.panorama-viewer__hotspot-list li {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+.panorama-viewer__hotspot-list a,
+.panorama-viewer__hotspot-link {
+  color: var(--terracotta-dark);
+  font-weight: 700;
+}
+
+.panorama-viewer__hotspot-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.panorama-viewer__hotspot-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+@media (max-width: 620px) {
+  .panorama-viewer__stage {
+    aspect-ratio: 4 / 3;
+  }
+
+  .panorama-viewer__stage--embedded {
+    max-height: none;
+    aspect-ratio: 4 / 3;
+  }
+
+  .panorama-viewer__toolbar {
+    top: auto;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    left: 0.6rem;
+    justify-content: center;
+  }
+
+  .panorama-viewer__overlay {
+    padding: 1rem;
+  }
+}

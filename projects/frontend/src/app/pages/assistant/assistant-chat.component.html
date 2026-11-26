@@ -1,0 +1,298 @@
+<section class="guide-page" aria-labelledby="guide-title">
+  <header class="guide-heading">
+    <a class="guide-heading__back" routerLink="/">Volver al mapa de Coro</a>
+    <h1 id="guide-title">Conoce Coro con Chivito, tu guía turístico.</h1>
+    <p>
+      Pregunta por el patrimonio de Coro, los lugares publicados y FALCONSYNC. Chivito responde solo
+      con información registrada o verificada y te muestra sus fuentes.
+    </p>
+  </header>
+
+  <div class="guide-layout">
+    <aside class="guide-context" aria-label="Alcance de la guía">
+      <div class="guide-context__host">
+        <img class="guide-context__avatar" [src]="chivito.avatar" alt="" width="72" height="72" />
+        <div>
+          <p class="guide-context__host-name">{{ chivito.name }}</p>
+          <p class="guide-context__host-role">{{ chivito.role }}</p>
+        </div>
+      </div>
+      <h2>Una guía para mirar con atención</h2>
+      <p>
+        Orientación sobre arquitectura colonial, historia local y patrimonio de Santa Ana de Coro.
+      </p>
+      <div class="guide-context__rule"></div>
+      <h3>Cómo responde</h3>
+      <ul>
+        <li>Cada respuesta muestra sus fuentes.</li>
+        <li>
+          Si no tiene evidencia suficiente, lo indica y te sugiere preguntas que sí puede responder.
+        </li>
+        <li>
+          No reemplaza una visita guiada ni informa horarios, accesos o estado actual sin fuente
+          vigente.
+        </li>
+      </ul>
+      @if (mode() === 'technical') {
+        <p class="guide-context__notice">
+          El apoyo técnico es preliminar. No constituye diagnóstico ni autoriza una intervención.
+        </p>
+      }
+    </aside>
+
+    <section class="chat" aria-label="Conversación con la guía">
+      <div class="chat__top">
+        <div class="chat__identity">
+          <img class="chat__avatar" [src]="chivito.avatar" alt="" width="48" height="48" />
+          <div>
+            <p class="chat__location">Santa Ana de Coro, Venezuela</p>
+            <h2>{{ chivito.name }}</h2>
+            <p class="chat__role">{{ chivito.role }}</p>
+          </div>
+        </div>
+        <div class="chat__status">
+          <span
+            class="chat__availability"
+            role="status"
+            [class.chat__availability--available]="availability().tone === 'available'"
+            [class.chat__availability--error]="availability().tone === 'error'"
+          >
+            <span aria-hidden="true"></span>
+            {{ availability().label }}
+          </span>
+          @if (statusState() === 'error') {
+            <button type="button" class="chat__retry" (click)="loadStatus()">Reintentar</button>
+          }
+        </div>
+      </div>
+
+      <div class="chat__modes" role="group" aria-label="Tipo de consulta">
+        <button
+          type="button"
+          [class.chat__mode--active]="mode() === 'tourist'"
+          [attr.aria-pressed]="mode() === 'tourist'"
+          (click)="setMode('tourist')"
+        >
+          Visita y patrimonio
+        </button>
+        @if (canUseTechnical()) {
+          <button
+            type="button"
+            [class.chat__mode--active]="mode() === 'technical'"
+            [attr.aria-pressed]="mode() === 'technical'"
+            [disabled]="!technicalAvailable()"
+            (click)="setMode('technical')"
+          >
+            @if (technicalAvailable()) {
+              Apoyo técnico preliminar
+            } @else {
+              Apoyo técnico (en preparación)
+            }
+          </button>
+        }
+      </div>
+
+      <div
+        #messageHistory
+        class="chat__messages"
+        role="log"
+        tabindex="0"
+        aria-label="Historial de la conversación"
+        aria-live="polite"
+        aria-relevant="additions text"
+        (scroll)="onMessagesScroll()"
+      >
+        @if (messages().length === 0) {
+          <div class="chat-welcome">
+            @if (mode() === 'tourist') {
+              <img
+                class="chat-welcome__chivito"
+                [src]="chivito.welcome"
+                alt=""
+                width="152"
+                height="372"
+              />
+            }
+            <div class="chat-welcome__copy">
+              <p class="chat-welcome__marker">
+                @if (mode() === 'tourist') {
+                  {{ chivito.name }} · {{ chivito.role }}
+                } @else {
+                  Apoyo técnico preliminar
+                }
+              </p>
+              <h3>
+                @if (mode() === 'tourist') {
+                  ¿Qué te gustaría descubrir de Coro?
+                } @else {
+                  ¿Qué aspecto constructivo deseas comprender mejor?
+                }
+              </h3>
+              <p>
+                @if (mode() === 'tourist') {
+                  ¡Epa! Soy Chivito. Elige una pregunta para empezar o escribe la tuya.
+                } @else {
+                  Comparte una duda general. No envíes datos personales ni informes de inspección.
+                }
+              </p>
+              <div class="chat-prompts" aria-label="Preguntas sugeridas">
+                @for (prompt of prompts(); track prompt) {
+                  <button
+                    type="button"
+                    [disabled]="!canUseChat() || sending()"
+                    (click)="usePrompt(prompt)"
+                  >
+                    {{ prompt }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        } @else {
+          @for (message of messages(); track message.id) {
+            <article
+              class="chat-message"
+              [class.chat-message--user]="message.role === 'user'"
+              [class.chat-message--assistant]="message.role === 'assistant'"
+              [class.chat-message--abstained]="message.abstained"
+              [attr.aria-label]="
+                message.role === 'user'
+                  ? 'Tu pregunta'
+                  : mode() === 'tourist'
+                    ? 'Respuesta de Chivito'
+                    : 'Respuesta del apoyo técnico'
+              "
+            >
+              @if (message.role === 'assistant' && mode() === 'tourist') {
+                <img
+                  class="chat-message__avatar"
+                  [src]="chivito.avatar"
+                  alt=""
+                  width="36"
+                  height="36"
+                />
+              }
+              <div class="chat-message__body">
+                <p class="chat-message__speaker">
+                  {{
+                    message.role === 'user'
+                      ? 'Tú'
+                      : mode() === 'tourist'
+                        ? chivito.name
+                        : technicalGuideName
+                  }}
+                </p>
+                <p class="chat-message__content">{{ message.content }}</p>
+                @if (message.options.length > 0) {
+                  <div class="chat-actions" role="group" aria-label="Lugares posibles">
+                    @for (option of message.options; track option.id) {
+                      <button
+                        type="button"
+                        [disabled]="!canUseChat() || sending()"
+                        (click)="askOption(option)"
+                      >
+                        {{ option.title }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (message.suggestions.length > 0) {
+                  <div class="chat-actions" role="group" aria-label="Preguntas sugeridas">
+                    @for (suggestion of message.suggestions; track $index) {
+                      <button
+                        type="button"
+                        [disabled]="!canUseChat() || sending()"
+                        (click)="askSuggestion(suggestion)"
+                      >
+                        {{ suggestion }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (message.citations.length > 0) {
+                  <ol class="chat-citations" aria-label="Fuentes de esta respuesta">
+                    @for (citation of message.citations; track citation.chunkId) {
+                      <li>
+                        <blockquote>“{{ citation.quote }}”</blockquote>
+                        <p>{{ citation.title }} — {{ citationDetails(citation) }}</p>
+                        @if (citation.url) {
+                          <a [href]="citation.url" target="_blank" rel="noopener noreferrer">
+                            Consultar fuente
+                          </a>
+                        }
+                      </li>
+                    }
+                  </ol>
+                }
+              </div>
+            </article>
+          }
+        }
+        @if (sending()) {
+          <p class="chat__thinking" role="status">
+            @if (mode() === 'tourist') {
+              <img
+                class="chat__thinking-avatar"
+                [src]="chivito.thinking"
+                alt=""
+                width="40"
+                height="22"
+              />
+            }
+            {{ thinkingLabel() }}
+          </p>
+        }
+        @if (error()) {
+          <p class="chat__error" role="alert">{{ error() }}</p>
+        }
+      </div>
+
+      <form class="chat-compose" (submit)="$event.preventDefault(); send()">
+        <label class="chat-compose__label" for="chat-question">Tu pregunta</label>
+        <textarea
+          id="chat-question"
+          rows="3"
+          maxlength="2000"
+          [value]="draft()"
+          [disabled]="!canUseChat() || sending()"
+          [attr.aria-describedby]="'chat-guidance chat-counter'"
+          (input)="updateDraft($event)"
+          (keydown.enter)="onEnter($event)"
+          placeholder="Escribe una pregunta sobre Coro…"
+        ></textarea>
+        <div class="chat-compose__footer">
+          <p id="chat-guidance">Enter para enviar · Shift + Enter para una nueva línea</p>
+          <span id="chat-counter">{{ characterCount() }}/2000</span>
+          <button
+            type="submit"
+            [disabled]="!canUseChat() || sending() || draft().trim().length < 2"
+            aria-label="Enviar pregunta"
+          >
+            {{ sending() ? 'Consultando…' : 'Enviar pregunta' }}
+          </button>
+        </div>
+      </form>
+
+      @if (mode() === 'tourist') {
+        <aside class="chat-telegram" aria-label="Continuar en Telegram">
+          <div class="chat-telegram__copy">
+            <p class="chat-telegram__title">¿Prefieres escribir desde el móvil?</p>
+            <p class="chat-telegram__text">
+              Chivito también responde en Telegram. La guía y los recorridos son abiertos; para
+              reportar una incidencia, vincula tu cuenta desde Mi perfil.
+            </p>
+          </div>
+          <a
+            class="button button--primary chat-telegram__action"
+            [href]="telegramBotUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir &#64;Falconsync_bot
+            <span aria-hidden="true">↗</span>
+          </a>
+        </aside>
+      }
+    </section>
+  </div>
+</section>

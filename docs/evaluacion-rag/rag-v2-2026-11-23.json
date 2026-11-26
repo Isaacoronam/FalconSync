@@ -1,0 +1,38 @@
+{
+  "corpusVersion": "2026-11-22.1",
+  "date": "2026-11-23",
+  "environment": "MongoDB replica set local falconsyncTest en 127.0.0.1:27018, base temporal falconsync_rag_eval",
+  "dataset": "projects/backend/corpus/evaluation/rag-golden-v2.json",
+  "report": "projects/backend/corpus/evaluation/rag-golden-v2-report.json",
+  "sampleSize": 59,
+  "embeddingModel": "Xenova/paraphrase-multilingual-MiniLM-L12-v2@q8",
+  "minSimilarity": 0.6,
+  "metrics": {
+    "poiAccuracy": 1,
+    "clarificationAccuracy": 1,
+    "abstentionAccuracy": 1,
+    "sourceHit": 1,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "invalidCitations": 0,
+    "latencyP50Ms": 24,
+    "latencyP95Ms": 42
+  },
+  "unmetTargets": [],
+  "failures": 0,
+  "scope": {
+    "tourist": "enabled",
+    "technical": "disabled"
+  },
+  "sources": ["S-002", "S-003", "S-020", "S-021", "S-022"],
+  "declaredAsDraft": ["S-021", "S-022"],
+  "excludedSources": ["S-005", "S-023"],
+  "sourceAttribution": "Las respuestas incluyen institución, título, etiqueta, enlace oficial o enlace interno y localizador cuando corresponde.",
+  "limitations": [
+    "El asistente técnico no está activado; S-021 y S-022 se incluyen como borradores para medir el comportamiento previsto tras su aprobación y en producción siguen sin responder.",
+    "S-020 es contexto del sistema y no verifica hechos externos.",
+    "Los datos de horario, acceso, precio y estado práctico requieren fuentes vigentes adicionales.",
+    "El conjunto tiene 59 casos frente al mínimo editorial de 60 de FUENTES-RAG §9.1."
+  ]
+}

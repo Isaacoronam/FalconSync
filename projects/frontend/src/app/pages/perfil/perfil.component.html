@@ -3,9 +3,7 @@
 } @else if (error()) {
   <h1>Mi perfil</h1>
   <p class="form-error" role="alert">{{ error() }}</p>
-  <button type="button" class="button button--ghost" (click)="loadProfile()">
-    Reintentar
-  </button>
+  <button type="button" class="button button--ghost" (click)="loadProfile()">Reintentar</button>
 } @else if (profile(); as user) {
   <section class="perfil">
     <header class="perfil__cabecera">
@@ -52,9 +50,9 @@
     </header>
 
     <p class="perfil__privacidad">
-      Tu perfil, tus insignias y tus fotos son privados. Las imágenes se sirven mediante
-      endpoints autenticados y no se publican hasta que existan moderación, eliminación
-      de EXIF y roles de cuenta.
+      Tu perfil, tus insignias y tus fotos son privados. Las imágenes se sirven mediante endpoints
+      autenticados y no se publican hasta que existan moderación, eliminación de EXIF y roles de
+      cuenta.
     </p>
 
     @if (message()) {
@@ -69,7 +67,13 @@
     }
 
     <aside class="perfil__chivito" aria-label="Mensaje de Chivito">
-      <span class="perfil__chivito-mascota" aria-hidden="true">🐐</span>
+      <img
+        class="perfil__chivito-mascota"
+        src="brand/chivito-avatar.png"
+        alt=""
+        width="45"
+        height="45"
+      />
       <span class="perfil__chivito-nombre">Chivito</span>
       <p>{{ chivitoMessage() }}</p>
     </aside>
@@ -89,6 +93,113 @@
       </article>
     </section>
 
+    <section class="perfil__panel perfil__canales" aria-labelledby="perfil-canales">
+      <div class="perfil__panel-cabecera">
+        <h2 id="perfil-canales">Canales</h2>
+        <span class="perfil__contador">Telegram</span>
+      </div>
+
+      <p class="perfil__canales-texto">
+        Vincula tu cuenta para reportar incidencias patrimoniales desde Telegram. La guía y los
+        recorridos se pueden consultar sin vincular.
+      </p>
+
+      @if (telegramError()) {
+        <p class="form-message form-message--error" role="alert">{{ telegramError() }}</p>
+        <button type="button" class="button button--ghost" (click)="loadTelegramLink()">
+          Reintentar
+        </button>
+      }
+
+      @if (telegramMessage()) {
+        <p class="form-message form-message--success" role="status">{{ telegramMessage() }}</p>
+      }
+
+      @if (telegramLink(); as link) {
+        @if (link.linked) {
+          <p class="perfil__canales-estado">
+            @if (link.linkedAt) {
+              Vinculado desde {{ formatDate(link.linkedAt) }}.
+            } @else {
+              Vinculado.
+            }
+            Puedes usar /reportar y /misreportes en el bot.
+          </p>
+
+          @if (telegramUnlinkPending()) {
+            <span class="perfil__confirmar" role="group" aria-label="Confirmar desvinculación">
+              <button
+                type="button"
+                class="button perfil__accion--peligro"
+                [disabled]="telegramLoading()"
+                (click)="unlinkTelegram()"
+              >
+                Sí, desvincular
+              </button>
+              <button type="button" class="button button--ghost" (click)="cancelTelegramUnlink()">
+                Cancelar
+              </button>
+            </span>
+          } @else {
+            <button
+              type="button"
+              class="button button--ghost"
+              [disabled]="telegramLoading()"
+              (click)="requestTelegramUnlink()"
+            >
+              Desvincular Telegram
+            </button>
+          }
+        } @else {
+          @if (telegramCode(); as code) {
+            <div class="perfil__canales-codigo">
+              <p>
+                Envía este código al bot con <code>/vincular {{ code.code }}</code
+                >:
+              </p>
+              <code class="perfil__canales-codigo-valor">{{ code.code }}</code>
+              <p class="perfil__canales-ayuda">
+                Vence el {{ formatDate(code.expiresAt) }}. Es de un solo uso.
+              </p>
+            </div>
+
+            <div class="perfil__canales-acciones">
+              <a
+                class="button button--primary"
+                [href]="telegramDeepLink(code.code)"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Abrir en Telegram
+              </a>
+              <button type="button" class="button button--ghost" (click)="copyTelegramCode()">
+                {{ telegramCopied() ? 'Copiado' : 'Copiar código' }}
+              </button>
+              <button
+                type="button"
+                class="button button--ghost"
+                [disabled]="telegramLoading()"
+                (click)="createTelegramCode()"
+              >
+                Generar otro
+              </button>
+            </div>
+          } @else {
+            <button
+              type="button"
+              class="button button--primary"
+              [disabled]="telegramLoading()"
+              (click)="createTelegramCode()"
+            >
+              {{ telegramLoading() ? 'Generando…' : 'Vincular Telegram' }}
+            </button>
+          }
+        }
+      } @else if (!telegramError()) {
+        <p role="status">Cargando estado del canal…</p>
+      }
+    </section>
+
     <section class="perfil__panel perfil__insignias" aria-labelledby="perfil-insignias">
       <div class="perfil__panel-cabecera">
         <h2 id="perfil-insignias">Mis insignias</h2>
@@ -99,8 +210,8 @@
 
       @if (achievements().length === 0) {
         <p class="perfil__vacio">
-          Aún no tienes insignias. Escanea el QR oficial cuando visites un punto de interés
-          para guardar su insignia en tu perfil.
+          Aún no tienes insignias. Escanea el QR oficial cuando visites un punto de interés para
+          guardar su insignia en tu perfil.
         </p>
       } @else {
         <ul class="perfil__insignias-lista">
@@ -187,8 +298,8 @@
               [(ngModel)]="form.username"
             />
             <p class="form-field__help">
-              Minúsculas, números, puntos, guiones y guiones bajos. No se muestra en un
-              directorio público.
+              Minúsculas, números, puntos, guiones y guiones bajos. No se muestra en un directorio
+              público.
             </p>
           </div>
 
@@ -214,7 +325,6 @@
           </div>
         </form>
       </section>
-
     </div>
 
     <section class="perfil__panel perfil__galeria" aria-labelledby="perfil-galeria">
@@ -226,8 +336,8 @@
       </div>
 
       <p class="perfil__galeria-privacidad">
-        Solo tú puedes ver estas fotos. Cada visita permite una foto; puedes cambiarla o
-        quitarla sin borrar el check-in ni las insignias.
+        Solo tú puedes ver estas fotos. Cada visita permite una foto; puedes cambiarla o quitarla
+        sin borrar el check-in ni las insignias.
       </p>
 
       <div class="perfil__filtros" role="group" aria-label="Filtrar la galería">
@@ -266,24 +376,16 @@
       } @else {
         <div class="perfil__galeria-grid">
           @for (checkIn of gallery(); track checkIn.id) {
-            <article
-              class="perfil__visita"
-              [attr.aria-busy]="photoActionId() === checkIn.id"
-            >
+            <article class="perfil__visita" [attr.aria-busy]="photoActionId() === checkIn.id">
               <div class="perfil__visita-foto">
                 @if (photoUrl(checkIn.id); as photo) {
                   <button
                     type="button"
                     class="perfil__foto-boton"
-                    [attr.aria-label]="
-                      'Ampliar foto de tu visita a ' + checkIn.location.title
-                    "
+                    [attr.aria-label]="'Ampliar foto de tu visita a ' + checkIn.location.title"
                     (click)="openViewer(checkIn)"
                   >
-                    <img
-                      [src]="photo"
-                      [alt]="'Foto de tu visita a ' + checkIn.location.title"
-                    />
+                    <img [src]="photo" [alt]="'Foto de tu visita a ' + checkIn.location.title" />
                   </button>
                 } @else if (checkIn.location.images[0]; as image) {
                   <img [src]="image" alt="" />
@@ -298,10 +400,7 @@
 
               <div class="perfil__visita-texto">
                 <h3>{{ checkIn.location.title }}</h3>
-                <p>
-                  {{ formatDate(checkIn.createdAt) }} · a
-                  {{ checkIn.distanceMeters }} m
-                </p>
+                <p>{{ formatDate(checkIn.createdAt) }} · a {{ checkIn.distanceMeters }} m</p>
               </div>
 
               <div class="perfil__visita-acciones">
@@ -377,9 +476,7 @@
             <button
               type="button"
               class="button button--ghost"
-              [disabled]="
-                galleryMeta().page >= galleryMeta().totalPages || galleryLoading()
-              "
+              [disabled]="galleryMeta().page >= galleryMeta().totalPages || galleryLoading()"
               (click)="goToGalleryPage(galleryMeta().page + 1)"
             >
               Siguiente
@@ -417,10 +514,7 @@
 
         <div class="perfil__visor-imagen">
           @if (photoUrl(viewer.id); as photo) {
-            <img
-              [src]="photo"
-              [alt]="'Foto ampliada de tu visita a ' + viewer.location.title"
-            />
+            <img [src]="photo" [alt]="'Foto ampliada de tu visita a ' + viewer.location.title" />
           } @else {
             <p role="status">Cargando foto…</p>
           }

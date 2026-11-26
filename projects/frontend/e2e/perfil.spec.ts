@@ -64,12 +64,9 @@ async function tokenQrDeCatedral(
   expect(loginAdmin.ok(), 'login admin').toBeTruthy();
   const adminToken = (await loginAdmin.json()).data.accessToken;
 
-  const locations = (
-    await (await request.get(`${BACKEND_URL}/api/locations`)).json()
-  ).data as LocationApi[];
-  const catedral = locations.find(
-    (location) => location.slug === 'catedral-de-coro',
-  );
+  const locations = (await (await request.get(`${BACKEND_URL}/api/locations`)).json())
+    .data as LocationApi[];
+  const catedral = locations.find((location) => location.slug === 'catedral-de-coro');
   expect(catedral).toBeDefined();
 
   const rotacion = await request.post(
@@ -110,6 +107,31 @@ async function abrirCheckIn(
   await expect(page.locator('.checkin__token')).toContainText('QR verificado');
 }
 
+test('perfil privado: genera un código de vinculación de Telegram', async ({ page, request }) => {
+  const usuario = await crearUsuario(request);
+  await registrarUsuario(request, usuario);
+  await iniciarSesion(page, usuario.email, usuario.password);
+
+  await page.goto('/perfil');
+  const canales = page.locator('.perfil__canales');
+  await expect(canales).toBeVisible();
+  await expect(canales).toContainText('Telegram');
+
+  await canales.getByRole('button', { name: 'Vincular Telegram' }).click();
+
+  const codigo = canales.locator('.perfil__canales-codigo-valor');
+  await expect(codigo).toHaveText(/^[A-HJ-NP-Z2-9]{8}$/);
+  await expect(canales).toContainText('Es de un solo uso');
+  await expect(canales.getByRole('button', { name: 'Copiar código' })).toBeVisible();
+  await expect(canales.getByRole('button', { name: 'Generar otro' })).toBeVisible();
+
+  const codigoTexto = (await codigo.textContent())?.trim() ?? '';
+  await expect(canales.getByRole('link', { name: 'Abrir en Telegram' })).toHaveAttribute(
+    'href',
+    `https://t.me/Falconsync_bot?start=${codigoTexto}`,
+  );
+});
+
 test('perfil privado: edita datos, sube avatar, registra check-in con foto e insignia', async ({
   page,
   request,
@@ -132,9 +154,7 @@ test('perfil privado: edita datos, sube avatar, registra check-in con foto e ins
     .fill('Recorro el casco histórico de Coro y registro cada visita.');
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
-  await expect(page.locator('.form-message--success')).toContainText(
-    'Perfil actualizado.',
-  );
+  await expect(page.locator('.form-message--success')).toContainText('Perfil actualizado.');
   await expect(page.locator('h1')).toContainText('Cronista E2E');
   await expect(page.locator('.perfil__usuario')).toContainText('@cronista.e2e');
   await expect(page.locator('.site-nav__user')).toContainText('Cronista E2E');
@@ -144,13 +164,9 @@ test('perfil privado: edita datos, sube avatar, registra check-in con foto e ins
     mimeType: 'image/png',
     buffer: PNG_PIXEL,
   });
-  await expect(page.locator('.form-message--success')).toContainText(
-    'Avatar actualizado.',
-  );
+  await expect(page.locator('.form-message--success')).toContainText('Avatar actualizado.');
   await expect(page.locator('.perfil__avatar img')).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Quitar avatar' }),
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Quitar avatar' })).toBeVisible();
 
   const catedral = await tokenQrDeCatedral(request);
   await abrirCheckIn(page, catedral);
@@ -164,33 +180,23 @@ test('perfil privado: edita datos, sube avatar, registra check-in con foto e ins
   await page.getByRole('button', { name: 'Registrar check-in' }).click();
 
   await expect(page.locator('.checkin-exito')).toBeVisible();
-  await expect(page.locator('.form-message--success').first()).toContainText(
-    'Visita confirmada',
-  );
+  await expect(page.locator('.form-message--success').first()).toContainText('Visita confirmada');
   await expect(
     page.locator('.checkin-logro').filter({ hasText: 'Catedral de Coro' }),
   ).toBeVisible();
-  await expect(page.locator('.checkin-foto-gestion__estado--ok')).toContainText(
-    'Foto guardada',
-  );
+  await expect(page.locator('.checkin-foto-gestion__estado--ok')).toContainText('Foto guardada');
   await expect(page.locator('.checkin-exito__foto')).toBeVisible();
 
   await page.goto('/perfil');
 
-  const visita = page
-    .locator('.perfil__visita')
-    .filter({ hasText: 'Catedral de Coro' });
+  const visita = page.locator('.perfil__visita').filter({ hasText: 'Catedral de Coro' });
   await expect(visita).toBeVisible();
   await expect(visita.locator('.perfil__foto-boton img')).toBeVisible();
   await expect(
     page.locator('.perfil__insignia').filter({ hasText: 'Catedral de Coro' }),
   ).toBeVisible();
-  await expect(
-    page.locator('.perfil__stat').filter({ hasText: 'Check-in' }),
-  ).toContainText('1');
-  await expect(
-    page.locator('.perfil__stat').filter({ hasText: 'Insignias' }),
-  ).toContainText('1');
+  await expect(page.locator('.perfil__stat').filter({ hasText: 'Check-in' })).toContainText('1');
+  await expect(page.locator('.perfil__stat').filter({ hasText: 'Insignias' })).toContainText('1');
 
   await visita.locator('.perfil__foto-boton').click();
   const visor = page.getByRole('dialog');
@@ -204,22 +210,16 @@ test('perfil privado: edita datos, sube avatar, registra check-in con foto e ins
     mimeType: 'image/png',
     buffer: PNG_PIXEL,
   });
-  await expect(page.locator('.form-message--success')).toContainText(
-    'Foto guardada',
-  );
+  await expect(page.locator('.form-message--success')).toContainText('Foto guardada');
   await expect(visita.getByRole('button', { name: 'Cambiar foto' })).toBeVisible();
 
   await visita.getByRole('button', { name: 'Quitar foto' }).click();
   await visita.getByRole('button', { name: 'Sí, quitar' }).click();
-  await expect(page.locator('.form-message--success')).toContainText(
-    'Foto eliminada',
-  );
+  await expect(page.locator('.form-message--success')).toContainText('Foto eliminada');
   await expect(visita.getByRole('button', { name: 'Añadir foto' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Con foto', exact: true }).click();
-  await expect(page.locator('.perfil__vacio')).toContainText(
-    'Todavía no has guardado fotos',
-  );
+  await expect(page.locator('.perfil__vacio')).toContainText('Todavía no has guardado fotos');
 
   await page.getByRole('button', { name: 'Sin foto', exact: true }).click();
   await expect(

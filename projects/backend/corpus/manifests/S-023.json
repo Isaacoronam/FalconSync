@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-023",
+    "title": "Cataratas de Hueque: registro publicado en FALCONSYNC (borrador V2)",
+    "institution": "Proyecto FALCONSYNC",
+    "version": "Borrador V2 redactado el 2026-11-22. Solo se ingiere cuando el POI cataratas-de-hueque esté publicado",
+    "retrievedAt": "2026-11-22T00:00:00.000Z",
+    "level": "C",
+    "sourceLabel": "No verificado",
+    "usagePolicy": "context",
+    "indexingPolicy": "full_text",
+    "credibilityNotes": "Coordenadas tomadas de OpenStreetMap (nodo 1617812154). No acreditan la pertenencia al Parque Nacional Juan Crisóstomo Falcón ni su clasificación oficial. Pendiente de revisión del historiador.",
+    "license": "Contenido interno de FALCONSYNC; coordenadas de OpenStreetMap (ODbL 1.0), con atribución.",
+    "rights": "Uso como contexto interno del proyecto, con atribución a OpenStreetMap para las coordenadas.",
+    "rightsVerified": false,
+    "accessLevel": "public",
+    "language": "es",
+    "topics": ["POI publicados", "naturaleza"],
+    "poiSlugs": ["cataratas-de-hueque"],
+    "status": "draft"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-023#poi.cataratas-de-hueque",
+      "ordinal": 0,
+      "section": "Cataratas de Hueque",
+      "text": "Cataratas de Hueque es un atractivo natural registrado en FALCONSYNC, en el circuito Naturaleza y miradores. Dirección registrada: Carretera Nacional Coro–Churuguara, El Calvario, parroquia Colina, municipio Petit, estado Falcón. Coordenadas registradas: 11.17844, -69.56210. Su pertenencia al Parque Nacional Juan Crisóstomo Falcón y su clasificación oficial no están verificadas en el corpus.",
+      "assistantScopes": ["tourist"],
+      "topics": ["POI", "orientación turística"],
+      "poiSlugs": ["cataratas-de-hueque"],
+      "questions": [
+        "¿Qué son las Cataratas de Hueque?",
+        "¿Dónde están las Cataratas de Hueque?",
+        "¿Dónde queda Hueque?"
+      ]
+    }
+  ]
+}

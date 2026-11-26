@@ -44,7 +44,6 @@ Fronteras:
 - navegador ↔ API;
 - API ↔ MongoDB;
 - API ↔ almacenamiento público y privado;
-- API ↔ proveedor externo;
 - API ↔ clientes Socket.IO;
 - consola administrativa ↔ API;
 - CI/CD ↔ entornos;
@@ -63,8 +62,8 @@ Fronteras:
 | S-07 | Fallo de auditoría silencioso | `recordAudit` best-effort | Sin trazabilidad | Evento obligatorio en transiciones críticas; fallar la operación | Pruebas de fallo de evento |
 | S-08 | Sala Socket.IO no autorizada | Cliente elige sala | Fuga en tiempo real | Ticket, salas server-side, pertenencia, single-use | `notifications.test.js` |
 | S-09 | Repetición o duplicado de eventos | Reenvío | Notificaciones falsas | `eventId` único, cursor, deduplicación, `ack` | Pruebas de reconexión |
-| S-10 | Inyección de prompt | Documento o consulta | Respuesta manipulada | Delimitación, instrucciones de sistema, allowlist, sin herramientas de escritura | Conjunto adversario |
-| S-11 | Fuga de datos al proveedor | Contexto RAG | Privacidad | Minimización, acceso por recurso, retención, contrato | Revisión de payloads |
+| S-10 | Instrucciones embebidas en documento o consulta | Documento o pregunta | Respuesta manipulada | Sin generación libre; documentos tratados como datos, allowlist y sin herramientas de escritura | Conjunto adversario |
+| S-11 | Fuga de datos a terceros | Contexto RAG | Privacidad | No hay proveedor RAG en v1; minimización, acceso por recurso y retención | Revisión de payloads |
 | S-12 | Cita inventada | Alucinación | Desinformación | Validación contra fragmentos, abstención | Evaluación dorada |
 | S-13 | Fuga de secretos | Logs, repo, errores | Compromiso total | Variables de entorno, redacción, `.gitignore`, rotación | Escaneo y revisión |
 | S-14 | Cadena de suministro | Dependencias | RCE, robo | Lockfiles, `npm audit`, revisión de cambios | CI y auditoría |
@@ -76,6 +75,11 @@ Fronteras:
 | S-20 | Amenaza interna | Operador o admin | Abuso | Menor privilegio, separación de funciones, auditoría, break-glass | Revisión de accesos |
 | S-21 | Fuga de evidencia por URL pública | `/api/uploads` | Exposición | Evidencia fuera del prefijo público; endpoint autorizado o URL firmada | Pruebas de acceso |
 | S-22 | Borrado o alteración de historial | Update/delete | Pérdida de trazabilidad | Append-only, permisos, eventos, backups | Pruebas de inmutabilidad |
+| S-23 | Robo del token de Telegram | `.env`, logs, repositorio | Control total del bot | Token solo en entorno/secret manager, sin logs ni capturas, rotación con BotFather | Revisión de configuración y logs |
+| S-24 | Webhook falso o replay | Peticiones al endpoint | Reportes falsos, spam | `X-Telegram-Bot-Api-Secret-Token`, HTTPS, idempotencia por `update_id` | `telegramChannel.test.js` |
+| S-25 | Suplantación de cuenta | Vincular Telegram ajeno | Reportes a nombre de otro | Código de un solo uso con hash, TTL, índices únicos y auditoría | Pruebas de conflicto y expiración |
+| S-26 | Inyección de prompt en Telegram | Texto libre o foto | Herramientas no autorizadas | Flujos deterministas, herramientas de escritura con confirmación e idempotencia; sin acceso a secretos | Revisión de handlers y pruebas |
+| S-27 | Exceso de datos personales | Ubicación, chat, mensajes | Privacidad | Datos mínimos, sin historial, `/privacidad`, expiración de sesión y `/desvincular` | Revisión de modelos y retención |
 
 ## 4. Controles por dominio
 
@@ -133,15 +137,40 @@ operativa, la purga por retención y el flujo de bloqueo legal.
 
 ### 4.6 RAG
 
-- El modelo no tiene herramientas de escritura, cierre, asignación ni publicación.
-- Citas validadas contra fragmentos recuperados; abstención si falla.
-- Documentos delimitados; instrucciones para ignorar órdenes embebidas.
-- Allowlist de fuentes y dominios de búsqueda.
-- Minimización de datos enviados al proveedor.
-- Cuota, caché, límite de tokens y registro de coste.
-- Retención de conversaciones y acceso por usuario.
+- El asistente no tiene herramientas de escritura, cierre, asignación ni publicación.
+- Sin generación libre: composición extractiva con citas literales de máximo 25 palabras o hechos estructurados verificados.
+- Citas validadas contra fragmentos recuperados; si falla una regla, abstención total.
+- Los documentos son datos: se ignoran las órdenes embebidas y se prueba con un documento sintético.
+- Allowlist de fuentes; sin búsqueda externa ni scraping en v1.
+- Sin envío de datos a terceros.
+- Cuota, caché, límite de latencia y registro de consultas; coste externo 0.
+- Retención: turismo anónimo sin persistencia; asistente técnico 90 días con TTL.
+- El registro de fuentes nunca expone `storageKey` ni texto completo de fuentes restringidas.
 
-### 4.7 Infraestructura y operación
+### 4.7 Canal de Telegram y MCP
+
+- El bot de Telegram es un proceso separado (`bin/telegramBot.js`); no se ejecuta
+  dentro de OpenCode ni de la SPA.
+- El servidor MCP usa stdio como proceso hijo: no abre puertos ni acepta conexiones de
+  red. El único secreto del bot es `TELEGRAM_BOT_TOKEN`, fuera del repositorio.
+- El bot solo responde en chats privados y no persiste el historial de mensajes.
+- La guía y los recorridos son de lectura anónima; crear incidencias exige un vínculo
+  con una cuenta activa y la capacidad `report.create`.
+- La vinculación usa un código de 8 caracteres, hash SHA-256, TTL de 10 minutos, un
+  solo uso e índices únicos por cuenta y por Telegram.
+- Los reportes de Telegram llevan `sourceChannel=telegram` y una
+  `sourceActionKey` interna para idempotencia; la clave no se expone por la API.
+- En modo webhook se exige HTTPS, puerto permitido por Telegram y el secreto
+  `X-Telegram-Bot-Api-Secret-Token`. En modo polling se elimina cualquier webhook
+  previo para evitar `getUpdates` en conflicto.
+- El deep link `?start=CODIGO` transporta un código de un solo uso con TTL de 10
+  minutos; no incluye datos de la cuenta y se invalida al canjearse.
+- Los avisos de estado se envían solo al `chatId` del vínculo activo y no revierten
+  la transición si Telegram falla. El texto no incluye notas internas de triaje.
+- Las fotos permanecen desactivadas en producción hasta que el antimalware y la
+  cuarentena de evidencia estén operativos.
+
+### 4.8 Infraestructura y operación
 
 - Secretos por entorno, fuera del repositorio y con rotación.
 - TLS, proxy inverso, cabeceras de seguridad y límites de cuerpo.
@@ -159,7 +188,7 @@ operativa, la purga por retención y el flujo de bloqueo legal.
 | Sin dominio de evidencia | Resuelto parcialmente: backend privado y auditado con 2/2 pruebas | Falta antimalware, cuarentena operativa, purga por retención y bloqueo legal; producción bloquea cargas. |
 | Sin Socket.IO | Confirmada | Implementar ticket y salas server-side. |
 | Sin RAG | Confirmada | Implementar corpus, citas y abstención. |
-| Sin visor 360 | Confirmada | Implementar con derechos y fallback. |
+| Visor 360 y contenido | Resuelto el visor: renderer propio, fallback, API pública/admin y aislamiento de inspección | Falta contenido real con derechos, revisión manual de accesibilidad y medición de rendimiento. |
 | Rol `moderator` legacy sin rutas | Confirmada | Migrar a `historian`; `inspector` ya es asignable. |
 | Gestión de cuentas desde la UI | Resuelto: rol, estado y revocación con reautenticación | Ejecutar la migración de `moderator` y revisar la exportación de datos. |
 | CI remoto no verificado | Confirmada | Primera ejecución autorizada en Fase 0. |

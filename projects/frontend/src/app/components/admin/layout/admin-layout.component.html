@@ -1,8 +1,17 @@
 <div class="admin-shell">
   <aside class="admin-sidebar" aria-label="Navegación de administración">
     <div class="admin-sidebar__heading">
-      <p class="admin-sidebar__eyebrow">Administración</p>
-      <p class="admin-sidebar__title">FalconSync</p>
+      <img
+        class="admin-sidebar__mark"
+        src="brand/falconsync-logo-128.png"
+        alt=""
+        width="40"
+        height="40"
+      />
+      <div>
+        <p class="admin-sidebar__eyebrow">Administración</p>
+        <p class="admin-sidebar__title">FalconSync</p>
+      </div>
     </div>
 
     <nav class="admin-nav">
@@ -30,6 +39,14 @@
         ariaCurrentWhenActive="page"
       >
         Aventuras
+      </a>
+      <a
+        class="admin-nav__link"
+        routerLink="/admin/panoramas"
+        routerLinkActive="admin-nav__link--active"
+        ariaCurrentWhenActive="page"
+      >
+        Panoramas 360°
       </a>
       <a
         class="admin-nav__link"

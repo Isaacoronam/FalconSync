@@ -12,9 +12,9 @@
   padding: 1rem clamp(1rem, 4vw, 3rem);
   color: var(--paper);
   background:
-    radial-gradient(circle at 15% 20%, rgba(201, 154, 75, 0.18), transparent 30%),
-    linear-gradient(135deg, var(--ink) 0%, #4a241c 58%, var(--terracotta-dark) 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    radial-gradient(circle at 15% 20%, rgba(217, 154, 43, 0.22), transparent 32%),
+    linear-gradient(135deg, var(--ink) 0%, #35241f 52%, var(--navy) 100%);
+  border-bottom: 1px solid rgba(217, 154, 43, 0.32);
 }
 
 .brand {
@@ -26,11 +26,13 @@
 }
 
 .brand__mark {
-  width: 3rem;
-  height: 3rem;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid rgba(217, 154, 43, 0.72);
   border-radius: 50%;
+  background: var(--cream);
   object-fit: cover;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
 
 .brand__copy {
@@ -138,8 +140,9 @@
   flex-wrap: wrap;
   padding: 1.1rem clamp(1rem, 4vw, 3rem);
   color: var(--muted);
-  background: var(--sand);
+  background: rgba(234, 217, 191, 0.86);
   border-top: 1px solid var(--line);
+  backdrop-filter: blur(6px);
   font-size: 0.74rem;
 }
 
@@ -155,6 +158,11 @@
   .site-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .brand__mark {
+    width: 3rem;
+    height: 3rem;
   }
 
   .site-nav {

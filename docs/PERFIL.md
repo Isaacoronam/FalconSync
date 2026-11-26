@@ -21,7 +21,7 @@ real del repositorio y por buenas prácticas de ingeniería.
   reemplazar o eliminar después del check-in.
 - Endpoints autenticados para servir el avatar y las fotos de check-in.
 - Estadísticas de lugares visitados, check-ins e insignias para el perfil.
-- Bloque de Chivito que celebra las visitas y anima a explorar otros lugares.
+- Bloque de Chivito con avatar que celebra las visitas y anima a explorar otros lugares.
 
 ## Privacidad por diseño
 
@@ -356,36 +356,54 @@ ignoradas por Git. En la suite E2E se usan `test-results/e2e-uploads` y
 - El cambio de contraseña se enlaza desde el perfil.
 - Las imágenes privadas se solicitan como `Blob` y se muestran con URLs de objeto; el
   componente las revoca al destruirse, al reemplazarlas o al eliminarlas.
-- Sección «Mis insignias» con insignias de lugares, descripción, fecha e imagen opcional.
-  Cada insignia activa enlaza a la ficha del lugar; los orígenes archivados se muestran con
-  una marca y sin enlace.
+- Sección «Mis insignias» con insignias de lugares, descripción, fecha e imagen.
+  Si la insignia persistida no tiene `image`, se usa el medallón de su categoría
+  (`src/assets/images/badges/`) sin inventar el nombre ni la descripción. Cada insignia activa
+  enlaza a la ficha del lugar; los orígenes archivados se muestran con una marca y sin enlace.
 - Galería de visitas paginada (9 por página) con filtros «Todas», «Con foto» y «Sin foto».
   Cada tarjeta permite añadir o cambiar la foto y eliminarla con confirmación explícita.
   Eliminar la foto no borra el check-in ni las insignias.
 - Visor ampliado accesible: `role="dialog"`, cierre con `Escape`, navegación con flechas,
   contador de posición y foco inicial en el botón de cierre.
-- Chivito es un bloque local de mensajes; no llama a un servicio externo ni inventa datos.
-  Celebra lugares descubiertos e insignias de POI con los datos del perfil.
+- Chivito es un bloque local de mensajes con avatar; no llama a un servicio externo ni
+  inventa datos. Celebra lugares descubiertos e insignias de POI con los datos del perfil.
 - Al guardar el nombre, el header se actualiza mediante `AuthService.updateCurrentUser`.
+- Sección «Canales» para vincular Telegram: genera un código de un solo uso, muestra su
+  vencimiento y permite copiarlo, abrir el bot con el deep link `?start=CODIGO` o
+  regenerarlo. El estado del vínculo se consulta al cargar el perfil; desvincular exige
+  confirmación.
+
+## Canal de Telegram
+
+- Endpoints: `GET /api/channels/telegram`, `POST /api/channels/telegram/link-code` y
+  `DELETE /api/channels/telegram`.
+- El código tiene 8 caracteres, se guarda solo como hash, vence a los 10 minutos y es de un
+  solo uso. Se envía al bot con `/vincular CODIGO` o se abre el deep link
+  `https://t.me/Falconsync_bot?start=CODIGO`.
+- Una cuenta solo puede tener un Telegram activo y un Telegram solo puede apuntar a una
+  cuenta. La auditoría registra `channel.linked` y `channel.unlinked`.
+- El bot puede consultar la guía y los recorridos sin vínculo; crear incidencias y consultar
+  las propias exige el vínculo.
+- Detalle operativo: [`INTEGRACION-TELEGRAM.md`](./INTEGRACION-TELEGRAM.md).
 
 ## Verificación ejecutada
 
 | Comprobación | Comando | Resultado |
 |---|---|---|
 | Pruebas de perfil y logros | `node --test test/achievements.test.js` | Aprobadas |
-| Suite backend completa | `npm test` en `projects/backend` | 89/89 aprobadas |
+| Suite backend completa | `npm run test:backend` | 178/178 aprobadas (2026-11-25) |
 | Pruebas del seed de aventura | `node --test test/seedAdventures.test.js` | 2/2 aprobadas |
-| Pruebas frontend | `npm test -- --watch=false` | 53/53 aprobadas |
+| Pruebas frontend | `npm run test:frontend` | 99/99 aprobadas (2026-11-25) |
 | Build de producción | `npm run build` | Correcto, sin advertencias |
 | E2E de perfil | `npx playwright test e2e/perfil.spec.ts` | Ver `docs/FALCONSYNC.md` |
 | Seed local | `npm run seed:adventures` + `--verify` | Aventura con 5 paradas, publicada y verificada |
 | Backfill local | `npm run backfill:usernames` | 2 usuarios actualizados |
 
-La prueba E2E de perfil cubre: registro, apertura de `/perfil`, edición de nombre, usuario y
-biografía, actualización del header, carga de avatar, check-in con foto en la Catedral de
-Coro, insignia en pantalla de éxito, aparición de la insignia y la visita con foto en el
-perfil, visor ampliado con `Escape`, reemplazo de la foto, eliminación con confirmación y
-filtros de la galería.
+La prueba E2E de perfil cubre: registro, apertura de `/perfil`, generación de un código de
+vinculación de Telegram, edición de nombre, usuario y biografía, actualización del header,
+carga de avatar, check-in con foto en la Catedral de Coro, insignia en pantalla de éxito,
+aparición de la insignia y la visita con foto en el perfil, visor ampliado con `Escape`,
+reemplazo de la foto, eliminación con confirmación y filtros de la galería.
 
 ## Límites y pendientes
 

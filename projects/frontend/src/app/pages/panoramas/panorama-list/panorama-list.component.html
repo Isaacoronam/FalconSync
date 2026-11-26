@@ -1,0 +1,71 @@
+<section class="panorama-page" aria-labelledby="panoramas-title">
+  <header class="panorama-header">
+    <div>
+      <p class="panorama-eyebrow">Visita 360°</p>
+      <h1 id="panoramas-title" class="panorama-title">Panoramas del patrimonio</h1>
+      <p class="panorama-lead">
+        Recorre escenas equirectangulares de Santa Ana de Coro. Cada visita se publica solo cuando su
+        autoría, licencia y crédito están documentados, y siempre ofrece una imagen fija y una
+        descripción textual como alternativa.
+      </p>
+    </div>
+    <a class="button button--ghost" routerLink="/lugares">Explorar lugares</a>
+  </header>
+
+  @if (loading()) {
+    <p class="panorama-state" role="status">Cargando las visitas 360°…</p>
+  } @else if (error()) {
+    <p class="form-error" role="alert">{{ error() }}</p>
+  } @else if (panoramas().length === 0) {
+    <div class="panorama-empty">
+      <h2>Todavía no hay visitas 360° publicadas</h2>
+      <p>
+        La galería permanecerá vacía hasta que existan panorámicas con derechos verificados,
+        aprobación editorial y derivados íntegros. No se publica material sintético ni imágenes sin
+        licencia.
+      </p>
+      <a class="button button--ghost" routerLink="/lugares">Consultar las fichas de los lugares</a>
+    </div>
+  } @else {
+    <p class="panorama-count" role="status">
+      {{ panoramas().length }}
+      {{ panoramas().length === 1 ? 'visita publicada' : 'visitas publicadas' }}
+    </p>
+
+    <ul class="panorama-grid">
+      @for (panorama of panoramas(); track panorama.id) {
+        <li>
+          <a class="panorama-card" [routerLink]="['/panoramas', panorama.id]">
+            <span class="panorama-card__media">
+              @if (panorama.thumbnailUrl) {
+                <img
+                  [src]="panorama.thumbnailUrl"
+                  [alt]="'Miniatura de ' + panorama.title"
+                  loading="lazy"
+                  (error)="onImageError($event)"
+                />
+              } @else {
+                <span class="panorama-card__placeholder" aria-hidden="true">360°</span>
+              }
+              <span class="panorama-card__badge">360°</span>
+            </span>
+            <span class="panorama-card__body">
+              <span class="panorama-card__title">{{ panorama.title }}</span>
+              @if (panorama.location; as location) {
+                <span class="panorama-card__location">{{ location.title }}</span>
+              }
+              <span class="panorama-card__meta">
+                @if (panorama.capturedAt) {
+                  Capturada el {{ formatDate(panorama.capturedAt) }}
+                } @else {
+                  Fecha de captura no declarada
+                }
+              </span>
+              <span class="panorama-card__credits">{{ panorama.credits }}</span>
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</section>

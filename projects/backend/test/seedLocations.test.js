@@ -110,18 +110,22 @@ describe("Seed de POI", () => {
     );
   });
 
-  it("mantiene los 23 POI publicados y con metadatos de publicación coherentes", () => {
-    assert.equal(locations.length, 23);
-    assert.equal(
-      locations.filter((location) => location.status === "published").length,
-      23,
-    );
+  it("mantiene los 23 POI publicados y deja Cataratas de Hueque como borrador fuera del catálogo", () => {
+    const published = locations.filter((location) => location.status === "published");
+    const hueque = locations.find((location) => location.slug === "cataratas-de-hueque");
+
+    assert.equal(locations.length, 24);
+    assert.equal(published.length, 23);
     assert.equal(
       locations.filter((location) => location.isProvisional).length,
       0,
     );
+    assert.equal(hueque.status, "draft");
+    assert.equal(hueque.isCatalogVisible, false);
+    assert.equal(hueque.coordinateVerifiedAt, null);
+    assert.equal(hueque.tags.includes("unesco"), false);
 
-    for (const location of locations) {
+    for (const location of published) {
       assert.ok(
         location.coordinateVerifiedAt,
         `${location.title} debe tener fecha de revisión de coordenadas`,
@@ -156,6 +160,33 @@ describe("Seed de POI", () => {
       (location) => location.slug === "casa-museo-locos-de-la-vela",
     );
     assert.equal(casaMuseo.checkInRadiusMeters, 100);
+  });
+
+  it("no etiqueta como UNESCO los POI fuera del bien o sin designación verificada", () => {
+    const slugs = [
+      "catedral-de-coro",
+      "plaza-bolivar-de-coro",
+      "arco-de-la-federacion",
+      "museo-de-arte-de-coro",
+      "museo-alberto-henriquez",
+      "museo-guadalupano",
+      "museo-diocesano",
+    ];
+
+    for (const slug of slugs) {
+      const location = locations.find((item) => item.slug === slug);
+      assert.ok(location, `${slug} debe existir en el seed`);
+      assert.equal(
+        location.tags.includes("unesco"),
+        false,
+        `${slug} no debe llevar la etiqueta unesco`,
+      );
+    }
+
+    assert.match(
+      locations.find((location) => location.slug === "catedral-de-coro").description,
+      /fuera de los límites actuales del bien/,
+    );
   });
 
   it("sincroniza solo el contenido editorial vacío y no borra ni sobrescribe otros datos", async () => {
@@ -211,7 +242,7 @@ describe("Seed de POI", () => {
       (location) => location.isCatalogVisible !== false,
     );
 
-    assert.equal(locations.length, 23);
+    assert.equal(locations.length, 24);
     assert.equal(catalogLocations.length, 23);
     assert.equal(
       locations.some((location) => location.slug === "mirador-del-pueblo"),

@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-025",
+    "title": "Ficha técnica: sistema constructivo adobe/tapial",
+    "institution": "ASFE / ASIAPRODI — Proyecto OXLAJUJ TZ'IKIN (PCR)",
+    "version": "Ficha facilitada por el responsable del proyecto; consultada el 2026-11-23",
+    "retrievedAt": "2026-11-23T00:00:00.000Z",
+    "verifiedAt": "2026-11-23T00:00:00.000Z",
+    "level": "C",
+    "sourceLabel": "Referencia",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Ficha técnica de un proyecto de habitabilidad básica (ASFE/ASIAPRODI) con autoría declarada (Cristina Blanco Montero y Paula Morales Pereira) y bibliografía de referencia (Minke, CRATerre, Norma peruana E.080). Sin licencia abierta declarada: uso limitado a extractos breves (<=25 palabras) con atribución. Nivel C por autoría y fuentes citadas; nunca estado de conservación ni norma de obra. Incorporación instruida por el responsable del proyecto el 2026-11-23; el archivo fue verificado por contenido, autoría y fecha.",
+    "license": "Sin licencia abierta declarada; uso como referencia con cita breve, atribución a las autoras y al proyecto ASFE/ASIAPRODI.",
+    "rights": "Incorporado por instrucción del responsable del proyecto (2026-11-23) para la guía turística. Extractos breves (<=25 palabras) con atribución al proyecto ASFE/ASIAPRODI y a las autoras. Uso educativo y no comercial; no se presenta como norma oficial ni como prescripción para un inmueble concreto.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-23T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "adobe",
+      "tapial",
+      "sistemas de tierra",
+      "durabilidad"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-025#generalidades.adobe",
+      "ordinal": 0,
+      "page": "3",
+      "section": "Generalidades",
+      "text": "El adobe es un bloque de barro producido a mano rellenando barro en moldes y secados al aire libre.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["adobe", "definición"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo es un adobe?",
+        "¿Cómo se fabrica un ladrillo de adobe?",
+        "¿Qué es un bloque de barro?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#generalidades.tapial",
+      "ordinal": 1,
+      "page": "3",
+      "section": "Generalidades",
+      "text": "La técnica del tapial consiste en rellenar un encofrado con capas de tierra de 10 a 15 cm compactando cada una con un pistón.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["tapial", "tierra apisonada"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo se construye un muro de tapial?",
+        "¿Cómo construir con tapia?",
+        "tapial",
+        "¿Qué es el encofrado de tapial?",
+        "¿Cómo se apisona la tierra en un muro?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#tipos.de.tierras",
+      "ordinal": 2,
+      "page": "4",
+      "section": "Tipos de tierras",
+      "text": "La arcilla tiene partículas menores que 0,002 mm; el limo va de 0,002 a 0,06 mm y la arena de 0,06 a 2 mm.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["tierra", "arcilla", "arena"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué tipos de tierra hay para construcción?",
+        "¿Cuál es la diferencia entre arcilla, limo y arena?",
+        "¿Qué componentes tiene la tierra de construcción?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#caracteristicas.higrometricas",
+      "ordinal": 3,
+      "page": "9",
+      "section": "Características higrométricas. Expansión y retracción",
+      "text": "Absorción de agua 5 a 8% en peso seco; retracción lineal sin estabilizar de 3 mm por metro.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["tierra", "características técnicas"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuánta agua absorbe un muro de tierra?",
+        "¿Qué tan mucho se encoge un muro de adobe?",
+        "¿Cuál es la retracción de los materiales de tierra?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#erosion.lluvia",
+      "ordinal": 4,
+      "page": "10",
+      "section": "Características higrométricas. Expansión y retracción",
+      "text": "Un barro arenoso tiene poca resistencia a la lluvia, pero si no tiene fisuras por retracción es resistente al congelamiento.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["lluvia", "durabilidad", "erosión"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo afecta la lluvia a las construcciones de barro?",
+        "¿Qué le hace la lluvia a un muro de tierra?",
+        "¿Por qué se degradan las casas de barro con la lluvia?",
+        "¿Cómo afecta el cambio climático a las estructuras de barro?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#ventajas.tapial",
+      "ordinal": 5,
+      "page": "23",
+      "section": "Evaluación del sistema. Ventajas",
+      "text": "El tapial, al ser una construcción monolítica, tiene mayor resistencia y durabilidad que el adobe.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["tapial", "ventajas"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué ventajas tiene el tapial frente al adobe?",
+        "¿Por qué el tapial dura más que el adobe?",
+        "¿Cuál es mejor, adobe o tapial?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#inconvenientes.durabilidad",
+      "ordinal": 6,
+      "page": "23",
+      "section": "Evaluación del sistema. Inconvenientes",
+      "text": "La tierra puede tener problemas de durabilidad si no se le da mantenimiento, sobre todo si se expone al agua.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["durabilidad", "mantenimiento"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Por qué duran las construcciones de tierra?",
+        "¿Cuánto duran los muros de tierra?",
+        "¿Qué le pasa a un muro de tierra sin mantenimiento?",
+        "¿Cómo aguantan tanto tiempo las casas de barro?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#inconvenientes.traccion",
+      "ordinal": 7,
+      "page": "23",
+      "section": "Evaluación del sistema. Inconvenientes",
+      "text": "La tierra no tiene resistencia a tracción y sus muros son más gruesos, lo que reduce el área útil.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["tierra", "limitaciones"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Por qué los muros de tierra son tan gruesos?",
+        "¿Qué limitación estructural tiene la tierra?",
+        "¿Cuánto espacio ocupan los muros de adobe?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#sismo.muros",
+      "ordinal": 8,
+      "page": "19",
+      "section": "Diseño sismorresistente",
+      "text": "La tarea principal del diseño antisísmico es asegurar que los muros no caigan hacia el exterior para que la cubierta no se derrumbe sobre ellos.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["sismo", "diseño"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Por qué caen los muros en un terremoto?",
+        "¿Qué busca el diseño antisísmico?",
+        "¿Cómo se protege una casa de tierra de un sismo?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#proteccion.humedad",
+      "ordinal": 9,
+      "page": "22",
+      "section": "Construcción",
+      "text": "Para garantizar la durabilidad del muro de tierra es importante protegerlo frente a la humedad con aleros y zócalos.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["durabilidad", "humedad"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo se protege un muro de tierra de la humedad?",
+        "¿Qué son los aleros y los zócalos?",
+        "¿Cómo se conserva una construcción de barro?"
+      ]
+    },
+    {
+      "chunkKey": "S-025#combustion.barro",
+      "ordinal": 10,
+      "page": "8",
+      "section": "Características técnicas",
+      "text": "El barro no se considera combustible, ni cuando está aligerado con paja.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["barro", "fuego"],
+      "poiSlugs": [],
+      "questions": [
+        "¿El barro arde?",
+        "¿Las casas de barro son inflamables?",
+        "¿El adobe resiste el fuego?"
+      ]
+    }
+  ]
+}

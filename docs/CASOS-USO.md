@@ -422,12 +422,12 @@ Alternativas:
 Flujo principal:
 
 1. `POST /api/assistant/tourist/query` con pregunta y POI opcional.
-2. El servidor recupera fragmentos A–D; para POI no UNESCO puede usar E con etiqueta.
-3. El modelo responde solo con contexto permitido.
-4. Cada cita se valida contra un `chunkId` recuperado.
-5. Si no hay evidencia suficiente, responde `abstained=true` y explica qué falta.
-6. Devuelve fuentes, fecha y etiqueta (`Oficial UNESCO`, `Oficial local`, `Referencia`,
-   `Externo`, `No verificado`).
+2. El servidor normaliza la pregunta, detecta el POI y la intención, y recupera fragmentos con `$text` y filtros.
+3. Aplica la política de fuentes: A–D como fuente final según `usagePolicy`; E solo contexto etiquetado.
+4. Compone la respuesta solo con citas literales de máximo 25 palabras o hechos estructurados verificados. No hay generación libre.
+5. Valida cada cita contra un `chunkId` recuperado, su literalidad, página o sección y nivel; si una falla, se abstiene por completo.
+6. Si no hay evidencia suficiente, responde `abstained=true` con `abstentionReason` y explica qué falta.
+7. Devuelve fuentes, fecha, `corpusVersion` y etiqueta (`Oficial UNESCO`, `Oficial estatal`, `Oficial local`, `Histórico 2008`, `Académico`, `Referencia`, `Externo`, `No verificado`, `Documentación del proyecto`, `Tradición local`).
 
 Alternativas:
 
@@ -449,9 +449,10 @@ Flujo principal:
 
 1. `POST /api/assistant/inspection/query` con pregunta, activo o inspección.
 2. El servidor recupera solo fuentes A, B y C técnico.
-3. No usa Wikipedia, redes sociales ni reseñas para diagnosticar.
-4. Valida citas y responde; si no hay evidencia, “no consta”.
-5. No ejecuta escrituras, no asigna severidad, no cierra inspecciones.
+3. No usa Wikipedia, redes sociales ni reseñas para diagnosticar; tampoco datos de inspección, evidencia o reportes en v1.
+4. Compone con citas literales o hechos estructurados y valida cada cita contra el fragmento recuperado.
+5. Si no hay evidencia, responde “no consta” con `abstained=true`.
+6. No ejecuta escrituras, no asigna severidad, no cierra inspecciones.
 
 Alternativas:
 
@@ -465,24 +466,28 @@ Alternativas:
 |---|---|
 | Actor | Visitante |
 | Capacidad | Lectura pública |
-| Precondiciones | Panorama `published`, `visibility=public`, derechos documentados. |
-| Resultado | Escena 360° con hotspots, créditos y fallback accesible. |
+| Precondiciones | Panorama `published`, `visibility=public`, derechos documentados y destino publicado. |
+| Resultado | Fallback accesible primero; escena 360° bajo activación explícita, con hotspots y créditos. |
 
 Flujo principal:
 
 1. `GET /api/panoramas` o `GET /api/panoramas/:id`.
 2. El servidor filtra `published` y `visibility=public`.
 3. Devuelve escena, hotspots, créditos, licencia y fallback.
-4. El visor carga la imagen; si falla, muestra la imagen estática y el texto.
-5. La navegación por teclado mueve el foco entre hotspots; cada hotspot tiene etiqueta.
-6. El usuario puede abrir el fallback o la transcripción si existe.
+4. La SPA muestra el fallback con alt, descripción y créditos; no inicializa WebGL.
+5. La persona pulsa «Activar vista 360°»; se descarga el derivado verificado y se crea el
+   renderer WebGL propio.
+6. Flechas, `+`/`-`, «Centrar» y «Ver imagen fija» controlan la vista. Los hotspots del lienzo
+   son ayudas visuales; la navegación accesible usa una lista de enlaces reales.
+7. El usuario puede volver al fallback o abrir la transcripción si existe.
 
 Alternativas:
 
-- Panorama `inspection`: `404 NOT_FOUND` en la API pública.
-- Derechos incompletos: no se publica.
-- Imagen no disponible: fallback obligatorio.
-- Movimiento reducido: se desactiva la animación.
+- Panorama `inspection`: `404 NOT_FOUND` en la API pública y en la curaduría.
+- Derechos incompletos: no se publica (`409 RIGHTS_INCOMPLETE`).
+- Imagen no disponible o checksum alterado: `503 PANORAMA_INTEGRITY_ERROR`; se conserva el fallback.
+- Sin WebGL o fallo del renderer: se informa y se mantiene el fallback.
+- No hay autogiro, autoplay, pantalla completa ni botón de movimiento.
 
 ### UC-17 — Registrar y versionar fuentes RAG
 
@@ -765,24 +770,27 @@ sequenceDiagram
     autonumber
     actor U as Visitante o inspector
     participant API as API Express
-    participant RAG as Recuperación
-    participant LLM as Proveedor externo (variante no adoptada en v1)
+    participant RAG as Recuperación léxica
+    participant CMP as Compositor extractivo
+    participant VAL as Validador de citas
     participant DB as MongoDB
 
     U->>API: POST /api/assistant/{tourist|inspection}/query
     API->>API: authorize + rate limit
-    API->>RAG: search(question, filters)
-    RAG->>DB: lexical search + metadata filters
+    API->>RAG: normalize + search(question, filters)
+    RAG->>DB: $text + metadata filters
     DB-->>RAG: chunks with page/section/sourceLevel
     alt evidencia suficiente
-        RAG->>LLM: prompt + delimited chunks
-        LLM-->>RAG: answer + citation candidates
-        RAG->>RAG: validate each citation against retrieved chunk
-        RAG-->>API: answer + citations
-        API->>DB: store Conversation/Message
+        RAG->>CMP: top-k + source policy
+        CMP-->>VAL: answer + citation candidates
+        VAL->>VAL: validate chunk, literal quote, page and level
+        VAL-->>API: answer + citations
+        opt asistente técnico autenticado
+            API->>DB: store Conversation/Message
+        end
         API-->>U: 200 answer + citations
-    else sin evidencia
-        API-->>U: 200 abstained=true + reason
+    else sin evidencia o cita inválida
+        API-->>U: 200 abstained=true + abstentionReason
     end
 ```
 
@@ -794,21 +802,25 @@ sequenceDiagram
     actor U as Visitante
     participant SPA as Angular SPA
     participant API as API Express
-    participant CDN as Almacenamiento de panorama
+    participant FS as Derivado privado
     participant FB as Fallback estático
 
     U->>SPA: Abre /panoramas/:id
     SPA->>API: GET /api/panoramas/:id
     API->>API: require published + visibility=public
-    API-->>SPA: scene + hotspots + credits + fallback
-    SPA->>CDN: load equirectangular image
-    alt imagen disponible
-        SPA->>SPA: render 360 + hotspots
-    else error o movimiento reducido
-        SPA->>FB: show static image + description
+    API-->>SPA: escena + hotspots + créditos + fallback
+    SPA->>FB: muestra imagen fija, alt y descripción
+    U->>SPA: pulsa «Activar vista 360°»
+    SPA->>API: GET /api/panoramas/:id/image
+    API->>FS: lee derivado y verifica checksum
+    alt derivado e integridad correctos
+        API-->>SPA: imagen WebP equirectangular
+        SPA->>SPA: crea renderer WebGL y pinta hotspots
+    else sin WebGL, error de red o checksum alterado
+        SPA->>FB: conserva el fallback e informa
     end
-    U->>SPA: keyboard navigation / hotspot
-    SPA->>SPA: move focus + announce label
+    U->>SPA: flechas / zoom / enlaces de hotspots
+    SPA->>SPA: mueve cámara o navega a la escena
 ```
 
 ### S-10 — Alta de activo patrimonial

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-030",
+    "title": "MUCOR Museo de Arte de Coro — cuenta oficial en Instagram",
+    "institution": "Museo de Arte de Coro (Fundación Museos Nacionales)",
+    "version": "Bio de la cuenta oficial consultada el 2026-11-24",
+    "retrievedAt": "2026-11-24T00:00:00.000Z",
+    "verifiedAt": "2026-11-24T00:00:00.000Z",
+    "url": "https://www.instagram.com/museodeartecoro1988/",
+    "level": "A",
+    "sourceLabel": "Oficial estatal",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Bio de la cuenta oficial del museo en Instagram, leída directamente el 2026-11-24; es la fuente primaria del horario que el propio museo publica. Sin licencia abierta: uso limitado a cita breve con atribución y enlace. El horario puede cambiar sin aviso; confirmar antes de la visita. Incorporación instruida por el responsable del proyecto el 2026-11-24.",
+    "license": "Sin licencia abierta declarada; uso como referencia con cita breve, atribución y enlace a la cuenta oficial.",
+    "rights": "Incorporado por instrucción del responsable del proyecto (2026-11-24) para la guía turística. Cita breve (<=25 palabras) con atribución al MUCOR y enlace a su cuenta oficial. Uso informativo; el horario se ofrece como publicado por el museo, no como garantía de apertura.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-24T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "horarios",
+      "Museo de Arte de Coro",
+      "museos"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-030#mucor-horario",
+      "ordinal": 0,
+      "section": "Bio oficial",
+      "text": "El Museo de Arte de Coro (MUCOR) abre de martes a sábado de 9:00 a.m. a 4:00 p.m., según su cuenta oficial.",
+      "claimType": "current_status",
+      "assistantScopes": ["tourist"],
+      "topics": ["horarios", "Museo de Arte de Coro"],
+      "poiSlugs": [],
+      "questions": [
+        "¿A qué hora abre el Museo de Arte de Coro?",
+        "¿Cuál es el horario del MUCOR?",
+        "¿Los días que abre el Museo de Arte de Coro?"
+      ]
+    },
+    {
+      "chunkKey": "S-030#mucor-identidad",
+      "ordinal": 1,
+      "section": "Bio oficial",
+      "text": "El Museo de Arte de Coro (MUCOR) fue fundado el 26 de noviembre de 1988 y pertenece a la Fundación Museos Nacionales.",
+      "claimType": "historical",
+      "assistantScopes": ["tourist"],
+      "topics": ["Museo de Arte de Coro", "fundación"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuándo se fundó el Museo de Arte de Coro?",
+        "¿Quién administra el MUCOR?",
+        "¿Qué es el Museo de Arte de Coro?"
+      ]
+    }
+  ]
+}

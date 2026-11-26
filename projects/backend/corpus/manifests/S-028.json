@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-028",
+    "title": "Santa Ana de Coro — guía de viaje",
+    "institution": "Wikivoyage en español",
+    "version": "Guía consultada el 2026-11-23",
+    "retrievedAt": "2026-11-23T00:00:00.000Z",
+    "verifiedAt": "2026-11-23T00:00:00.000Z",
+    "url": "https://es.wikivoyage.org/wiki/Santa_Ana_de_Coro",
+    "level": "D",
+    "sourceLabel": "Externo",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Guía de viaje colaborativa con licencia CC BY-SA 4.0 verificable. Se usan resúmenes propios de hasta 25 palabras con enlace a la guía original; nivel D: el dato debe atribuirse y señalarse como no verificado de forma independiente. Incorporación instruida por el responsable del proyecto el 2026-11-23.",
+    "license": "CC BY-SA 4.0 (texto de Wikivoyage en español).",
+    "rights": "Resumen propio con atribución a Wikivoyage en español y enlace a la guía. No presentar como fuente oficial ni como verificación independiente.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-23T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "Coro",
+      "llegada",
+      "Médanos",
+      "posadas"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-028#llegada-avion",
+      "ordinal": 0,
+      "section": "Llegar",
+      "claimType": "tourism",
+      "text": "Coro tiene el aeropuerto José Leonardo Chirino; Punto Fijo está a una hora por carretera.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "llegada",
+        "aeropuerto"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo llego en avión a Coro?",
+        "¿Hay aeropuerto en Coro?",
+        "¿Dónde aterrizo para ir a Coro?"
+      ],
+      "checksum": "4C6E43F0E56BFD7285DA3982E086D99BF9988023E10B9DF846A57A6CD8FF8ED7"
+    },
+    {
+      "chunkKey": "S-028#llegada-caracas",
+      "ordinal": 1,
+      "section": "Llegar",
+      "claimType": "tourism",
+      "text": "Para llegar en carro desde Caracas hay autopista de cuatro carriles por Valencia y Morón.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "llegada",
+        "carretera"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo llego en carro desde Caracas a Coro?",
+        "¿Qué autopista va de Caracas a Coro?",
+        "¿Cuánto se demora en carro desde Caracas?"
+      ],
+      "checksum": "BEE956080B18FECF7628635B3109F7A51DE3FF351C06825510968765D5DCB1C0"
+    },
+    {
+      "chunkKey": "S-028#llegada-otras",
+      "ordinal": 2,
+      "section": "Llegar",
+      "claimType": "tourism",
+      "text": "También se llega por autopista desde Punto Fijo, por carretera desde Maracaibo y por Sierra San Luis desde Barquisimeto, en mal estado.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "llegada",
+        "carretera"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo llego desde Maracaibo a Coro?",
+        "¿Cómo llego desde Punto Fijo a Coro?",
+        "¿Cómo llego desde Barquisimeto a Coro?"
+      ],
+      "checksum": "27213595DD2D91D83582B4315B73840BBA1C22654DAAAA5B5683F72715B5D31B"
+    },
+    {
+      "chunkKey": "S-028#llegada-tierra-caracas",
+      "ordinal": 3,
+      "section": "Por tierra",
+      "claimType": "tourism",
+      "text": "Desde Caracas por tierra son unas 7 horas promedio, con más de la mitad en autopistas.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "llegada",
+        "duración del viaje"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuánto se demora en carro desde Caracas a Coro?",
+        "¿Cuántas horas de carro hay desde Caracas?",
+        "¿Cómo es el viaje en carro desde Caracas?"
+      ],
+      "checksum": "15666297DF33084B1210775466AC7E3D7564EDE73030FED96338DE87D6595D47"
+    },
+    {
+      "chunkKey": "S-028#medanos-dunas",
+      "ordinal": 4,
+      "section": "Ver",
+      "claimType": "tourism",
+      "text": "Los Médanos son dunas de arena de hasta 30 metros; son la única área desértica de Venezuela.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Médanos",
+        "dunas"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué tan altos son los Médanos de Coro?",
+        "¿Qué son las dunas de Coro?",
+        "¿Cuál es la única área desértica de Venezuela?"
+      ],
+      "checksum": "2F7D7ACF7368CFAECDAC38BA887BC56ABD69A252E39B44E7AF5DAB3AEB9F943C"
+    },
+    {
+      "chunkKey": "S-028#medanos-autobus",
+      "ordinal": 5,
+      "section": "Siguiente destino",
+      "claimType": "tourism",
+      "text": "Para los Médanos, tome el bus Carabobo en la esquina de las avenidas Falcón y Manaure; el parque queda a cinco minutos a pie.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Médanos",
+        "transporte",
+        "autobús"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo llego en bus a los Médanos de Coro?",
+        "¿Dónde tomo el bus a los Médanos?",
+        "¿Qué bus va a los Médanos de Coro?"
+      ],
+      "checksum": "6B2259842324E4C442D4832341BA0650A720ECC79E16EE0F679AE92881D01637"
+    },
+    {
+      "chunkKey": "S-028#sierra-san-luis",
+      "ordinal": 6,
+      "section": "Siguiente destino",
+      "claimType": "tourism",
+      "text": "La Sierra de San Luis ofrece un recorrido de tres horas por tres cuevas, con posadas que dan vistas de Coro.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Sierra de San Luis",
+        "rutas cercanas"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué puedo hacer en la Sierra de San Luis?",
+        "¿Hay cuevas cerca de Coro?",
+        "¿Dónde ver cuevas cerca de Coro?"
+      ],
+      "checksum": "80F6EA6DE026624D9377FA354B495CA360EF5DB0B9E53BEB0CF0F0E091300934"
+    },
+    {
+      "chunkKey": "S-028#paraguana",
+      "ordinal": 7,
+      "section": "Otros destinos",
+      "claimType": "tourism",
+      "text": "La Península de Paraguaná es otro destino cercano a Coro, con playas.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Península de Paraguaná",
+        "rutas cercanas"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es la Península de Paraguaná?",
+        "¿Qué puedo visitar cerca de Coro además de Coro?",
+        "¿Hay playas cerca de Coro?"
+      ],
+      "checksum": "FB55176FA7FC11F30D90480767C29E47E49D97CB08B36A912137CAC69B17D69C"
+    },
+    {
+      "chunkKey": "S-028#restaurantes-sabado",
+      "ordinal": 8,
+      "section": "Comer",
+      "claimType": "tourism",
+      "text": "Los sábados, la mayoría de los restaurantes de Coro cierran después de las 16:00.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "restaurantes",
+        "comer en Coro"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Hasta qué hora abren los restaurantes en Coro?",
+        "¿Los sábados comen temprano en Coro?",
+        "¿Cuándo cierran los restaurantes de Coro?"
+      ],
+      "checksum": "5C2EDD139E6FED8CBF810FCC0DA2AA089521A912A2CECE745F9C584140F3259F"
+    },
+    {
+      "chunkKey": "S-028#posadas",
+      "ordinal": 9,
+      "section": "Dormir",
+      "claimType": "tourism",
+      "text": "Entre las posadas de Coro están Los Pajaros, El Gallo, La Morada, Da Domenico y Taima Taima.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "posadas",
+        "alojamiento"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Dónde hospedarme en Coro?",
+        "¿Qué posadas hay en Coro?",
+        "¿Cuáles son los hoteles de Coro?"
+      ],
+      "checksum": "31319CE36DC2112F65DB5AAFB0EBA6FB28347E585DEC3FAFD96A3443864DA622"
+    }
+  ]
+}

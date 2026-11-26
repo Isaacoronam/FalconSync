@@ -1,0 +1,167 @@
+<section class="admin-page" aria-labelledby="panorama-admin-title">
+  <header class="admin-page__header">
+    <div>
+      <p class="admin-page__eyebrow">{{ isCurate() ? 'Curaduría' : 'Administración' }}</p>
+      <h1 id="panorama-admin-title">Panoramas 360°</h1>
+      <p class="admin-page__lead">
+        @if (loading()) {
+          Cargando registros…
+        } @else if (isCurate()) {
+          {{ meta().total }} panoramas turísticos · revisa derechos y publica o archiva
+        } @else {
+          {{ meta().total }} registros · configuración técnica y visitas de inspección
+        }
+      </p>
+    </div>
+    <div class="admin-page__actions">
+      <a class="button button--ghost" [routerLink]="isCurate() ? '/' : '/admin'">
+        {{ isCurate() ? 'Volver al mapa' : 'Volver al panel' }}
+      </a>
+      @if (!isCurate()) {
+        <a class="button button--primary" routerLink="/admin/panoramas/nuevo">Nuevo panorama</a>
+      }
+    </div>
+  </header>
+
+  @if (notice()) {
+    <p class="form-success" role="status">{{ notice() }}</p>
+  }
+
+  <form class="admin-toolbar" [formGroup]="filters" (ngSubmit)="applyFilters()">
+    <div class="admin-field admin-field--grow">
+      <label for="panorama-search">Buscar por título</label>
+      <input id="panorama-search" type="search" formControlName="q" placeholder="Plaza, templo…" />
+    </div>
+
+    <div class="admin-field">
+      <label for="panorama-status">Estado</label>
+      <select id="panorama-status" formControlName="status">
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    @if (!isCurate()) {
+      <div class="admin-field">
+        <label for="panorama-visibility">Visibilidad</label>
+        <select id="panorama-visibility" formControlName="visibility">
+          @for (option of visibilityOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    <div class="admin-toolbar__actions">
+      <button type="submit" class="button button--primary">Filtrar</button>
+      <button type="button" class="button button--ghost" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <p class="form-error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="admin-state" role="status">Cargando panoramas…</p>
+  } @else if (panoramas().length === 0) {
+    <div class="admin-empty">
+      <p>
+        @if (isCurate()) {
+          No hay panoramas turísticos que coincidan con los filtros.
+        } @else {
+          No hay panoramas que coincidan con los filtros.
+        }
+      </p>
+      @if (!isCurate()) {
+        <a class="button button--primary" routerLink="/admin/panoramas/nuevo">Crear el primero</a>
+      }
+    </div>
+  } @else {
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th scope="col">Título</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Visibilidad</th>
+            <th scope="col">Lugar</th>
+            <th scope="col">Versión</th>
+            <th scope="col">Actualizado</th>
+            <th scope="col"><span class="admin-table__actions-label">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (panorama of panoramas(); track panorama.id) {
+            <tr>
+              <td data-label="Título">
+                <span class="admin-table__title">{{ panorama.title }}</span>
+                <span class="admin-table__meta">{{ panorama.width }} × {{ panorama.height }} px</span>
+              </td>
+              <td data-label="Estado">
+                <span class="admin-badge" [class]="'admin-badge ' + statusBadgeClass(panorama.status)">
+                  {{ statusLabels[panorama.status] }}
+                </span>
+              </td>
+              <td data-label="Visibilidad">
+                <span
+                  class="admin-badge"
+                  [class]="'admin-badge ' + visibilityBadgeClass(panorama.visibility)"
+                >
+                  {{ visibilityLabels[panorama.visibility] }}
+                </span>
+              </td>
+              <td data-label="Lugar">
+                @if (panorama.location) {
+                  {{ panorama.location.title }}
+                } @else if (panorama.asset) {
+                  {{ panorama.asset.name ?? panorama.asset.code }}
+                } @else {
+                  Sin destino
+                }
+              </td>
+              <td data-label="Versión">v{{ panorama.version }}</td>
+              <td data-label="Actualizado">{{ formatDate(panorama.updatedAt) }}</td>
+              <td data-label="Acciones">
+                <div class="admin-actions">
+                  <a class="button button--ghost button--small" [routerLink]="[baseLink(), panorama.id]">
+                    {{ isCurate() ? 'Revisar' : 'Abrir' }}
+                  </a>
+                  @if (!isCurate() && panorama.status !== 'archived') {
+                    <a
+                      class="button button--ghost button--small"
+                      [routerLink]="[baseLink(), panorama.id, 'editar']"
+                    >
+                      Editar
+                    </a>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="admin-pagination" aria-label="Paginación de panoramas">
+      <span>Página {{ meta().page }} de {{ meta().totalPages }}</span>
+      <button
+        type="button"
+        class="button button--ghost button--small"
+        [disabled]="meta().page <= 1"
+        (click)="goToPage(meta().page - 1)"
+      >
+        Anterior
+      </button>
+      <button
+        type="button"
+        class="button button--ghost button--small"
+        [disabled]="meta().page >= meta().totalPages"
+        (click)="goToPage(meta().page + 1)"
+      >
+        Siguiente
+      </button>
+    </nav>
+  }
+</section>

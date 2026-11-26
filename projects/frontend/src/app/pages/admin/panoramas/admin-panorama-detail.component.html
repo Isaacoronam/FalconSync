@@ -1,0 +1,316 @@
+@if (loading()) {
+  <p class="admin-state" role="status">Cargando el panorama…</p>
+} @else if (error() || !panorama()) {
+  <section class="admin-page" aria-labelledby="panorama-detail-error">
+    <p class="form-error" role="alert">{{ error() }}</p>
+    <a class="button button--ghost" [routerLink]="listLink()">Volver al listado</a>
+  </section>
+} @else {
+  @let p = panorama()!;
+  <section class="admin-page panorama-admin" aria-labelledby="panorama-detail-title">
+    <header class="admin-page__header">
+      <div>
+        <p class="admin-page__eyebrow">{{ isCurate() ? 'Curaduría' : 'Administración' }}</p>
+        <h1 id="panorama-detail-title">{{ p.title }}</h1>
+        <p class="admin-page__lead">
+          <span class="admin-badge" [class]="'admin-badge ' + statusBadgeClass(p.status)">
+            {{ statusLabels[p.status] }}
+          </span>
+          <span class="admin-badge" [class]="'admin-badge ' + visibilityBadgeClass(p.visibility)">
+            {{ visibilityLabels[p.visibility] }}
+          </span>
+          · versión {{ p.version }} · {{ p.width }} × {{ p.height }} px
+        </p>
+      </div>
+      <div class="admin-page__actions">
+        <a class="button button--ghost" [routerLink]="listLink()">Volver al listado</a>
+        @if (canEdit()) {
+          <a class="button button--ghost" [routerLink]="[listLink(), p.id, 'editar']">
+            Editar configuración
+          </a>
+        }
+        @if (p.status === 'published' && p.visibility === 'public') {
+          <a class="button button--primary" [routerLink]="['/panoramas', p.id]">
+            Ver visita pública
+          </a>
+        }
+      </div>
+    </header>
+
+    @if (notice()) {
+      <p class="form-success" role="status">{{ notice() }}</p>
+    }
+
+    @if (actionError()) {
+      <p class="form-error" role="alert">{{ actionError() }}</p>
+    }
+
+    <div class="panorama-admin__grid">
+      <section class="admin-panel panorama-admin__preview" aria-labelledby="panorama-preview-title">
+        <h2 id="panorama-preview-title">Vista previa autenticada</h2>
+        <p class="admin-panel__note">
+          El original nunca se sirve al navegador. Esta vista usa el derivado WebP y exige la sesión
+          de tu cuenta.
+        </p>
+        @if (p.imageUrl) {
+          <app-panorama-viewer
+            [imageUrl]="p.imageUrl"
+            [fallbackUrl]="p.thumbnailUrl"
+            [fallbackAlt]="p.fallbackAlt"
+            [fallbackDescription]="p.fallbackDescription"
+            [hotspots]="p.hotspots"
+            [credits]="p.credit"
+            [authenticated]="true"
+          />
+        } @else {
+          <p class="admin-state">Este panorama todavía no tiene derivados públicos.</p>
+        }
+      </section>
+
+      <aside class="admin-panel panorama-admin__side" aria-labelledby="panorama-side-title">
+        <h2 id="panorama-side-title">Estado y acciones</h2>
+
+        @if (p.description) {
+          <p>{{ p.description }}</p>
+        }
+
+        @if (canApprove() || canPublishNow() || canArchive()) {
+          <div class="panorama-admin__actions">
+            @if (canApprove()) {
+              <button
+                type="button"
+                class="button button--primary"
+                [disabled]="busyAction() !== null"
+                (click)="approve()"
+              >
+                {{ busyAction() === 'approve' ? 'Aprobando…' : 'Aprobar panorama' }}
+              </button>
+            }
+            @if (canPublishNow()) {
+              <button
+                type="button"
+                class="button button--primary"
+                [disabled]="busyAction() !== null"
+                (click)="publish()"
+              >
+                {{ busyAction() === 'publish' ? 'Publicando…' : 'Publicar en la visita 360°' }}
+              </button>
+            }
+            @if (canArchive()) {
+              <button
+                type="button"
+                class="button button--ghost"
+                [disabled]="busyAction() !== null"
+                (click)="archive()"
+              >
+                {{ busyAction() === 'archive' ? 'Archivando…' : 'Archivar panorama' }}
+              </button>
+            }
+          </div>
+        } @else if (p.status === 'archived') {
+          <p class="admin-panel__note">Este panorama está archivado y ya no se puede editar.</p>
+        } @else {
+          <p class="admin-panel__note">
+            No tienes una acción editorial disponible para este panorama en su estado actual.
+          </p>
+        }
+
+        @if (p.visibility === 'public' && auth.isAdmin()) {
+          <p class="admin-panel__note">
+            La aprobación y publicación de visitas turísticas corresponde al historiador. Como
+            administración puedes preparar la ficha técnica y las imágenes.
+          </p>
+        }
+
+        <dl class="panorama-admin__facts">
+          <div>
+            <dt>Destino</dt>
+            <dd>
+              @if (p.location) {
+                @if (auth.isAdmin()) {
+                  <a [routerLink]="['/admin/poi', p.location.id, 'editar']">{{ p.location.title }}</a>
+                } @else {
+                  {{ p.location.title }}
+                }
+              } @else if (p.asset) {
+                {{ p.asset.name ?? p.asset.code }}
+              } @else {
+                Sin destino
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Proyección</dt>
+            <dd>{{ p.projection }}</dd>
+          </div>
+          <div>
+            <dt>Captura</dt>
+            <dd>{{ p.capturedAt ? formatDate(p.capturedAt) : 'No declarada' }}</dd>
+          </div>
+          <div>
+            <dt>Creado</dt>
+            <dd>{{ formatDate(p.createdAt) }}</dd>
+          </div>
+          <div>
+            <dt>Actualizado</dt>
+            <dd>{{ formatDate(p.updatedAt) }}</dd>
+          </div>
+          @if (p.approvedAt) {
+            <div>
+              <dt>Aprobado</dt>
+              <dd>{{ formatDate(p.approvedAt) }}</dd>
+            </div>
+          }
+          @if (p.publishedAt) {
+            <div>
+              <dt>Publicado</dt>
+              <dd>{{ formatDate(p.publishedAt) }}</dd>
+            </div>
+          }
+          @if (p.archivedAt) {
+            <div>
+              <dt>Archivado</dt>
+              <dd>{{ formatDate(p.archivedAt) }}</dd>
+            </div>
+          }
+        </dl>
+      </aside>
+    </div>
+
+    <section class="admin-panel" aria-labelledby="panorama-rights-title">
+      <h2 id="panorama-rights-title">Derechos, consentimiento y accesibilidad</h2>
+      <div class="panorama-admin__columns">
+        <div>
+          <h3>Derechos</h3>
+          <ul class="panorama-checklist">
+            <li [class.panorama-checklist--ok]="p.author" [class.panorama-checklist--pending]="!p.author">
+              Autoría declarada: {{ p.author || 'pendiente' }}
+            </li>
+            <li [class.panorama-checklist--ok]="p.license" [class.panorama-checklist--pending]="!p.license">
+              Licencia: {{ p.license || 'pendiente' }}
+            </li>
+            <li [class.panorama-checklist--ok]="p.credit" [class.panorama-checklist--pending]="!p.credit">
+              Crédito visible: {{ p.credit || 'pendiente' }}
+            </li>
+            <li
+              [class.panorama-checklist--ok]="p.rightsDocumented"
+              [class.panorama-checklist--pending]="!p.rightsDocumented"
+            >
+              Derechos documentados: {{ p.rightsDocumented ? 'sí' : 'no' }}
+            </li>
+            <li
+              [class.panorama-checklist--ok]="p.permitDocumented"
+              [class.panorama-checklist--pending]="!p.permitDocumented"
+            >
+              Permiso de captura o publicación: {{ p.permitDocumented ? 'documentado' : 'no documentado' }}
+            </li>
+            <li
+              [class.panorama-checklist--ok]="p.licenseUrl || p.rightsNotes"
+              [class.panorama-checklist--pending]="!p.licenseUrl && !p.rightsNotes"
+            >
+              Referencia de licencia o nota documental:
+              @if (p.licenseUrl) {
+                <a [href]="p.licenseUrl" target="_blank" rel="noopener noreferrer">{{ p.licenseUrl }}</a>
+              } @else {
+                {{ p.rightsNotes || 'pendiente' }}
+              }
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3>Personas y accesibilidad</h3>
+          <ul class="panorama-checklist">
+            <li
+              [class.panorama-checklist--ok]="p.peopleBlurred"
+              [class.panorama-checklist--pending]="!p.peopleBlurred"
+            >
+              Personas difuminadas: {{ p.peopleBlurred ? 'sí' : 'no' }}
+            </li>
+            <li
+              [class.panorama-checklist--ok]="p.consentDocumented"
+              [class.panorama-checklist--pending]="!p.consentDocumented"
+            >
+              Consentimiento documentado: {{ p.consentDocumented ? 'sí' : 'no' }}
+            </li>
+            <li
+              [class.panorama-checklist--ok]="p.fallbackAlt"
+              [class.panorama-checklist--pending]="!p.fallbackAlt"
+            >
+              Texto alternativo del fallback: {{ p.fallbackAlt || 'pendiente' }}
+            </li>
+            <li
+              [class.panorama-checklist--ok]="p.fallbackDescription"
+              [class.panorama-checklist--pending]="!p.fallbackDescription"
+            >
+              Descripción textual: {{ p.fallbackDescription ? 'presente' : 'pendiente' }}
+            </li>
+            <li
+              [class.panorama-checklist--ok]="p.transcript"
+              [class.panorama-checklist--pending]="!p.transcript"
+            >
+              Transcripción: {{ p.transcript ? 'presente' : 'no declarada' }}
+            </li>
+            @if (p.consentNotes) {
+              <li>Notas de consentimiento: {{ p.consentNotes }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-panel" aria-labelledby="panorama-technical-title">
+      <h2 id="panorama-technical-title">Datos técnicos e integridad</h2>
+      <dl class="panorama-admin__facts panorama-admin__facts--wide">
+        <div>
+          <dt>Original</dt>
+          <dd>{{ formatBytes(p.bytes) }} · SHA-256 <code class="panorama-code">{{ p.checksum }}</code></dd>
+        </div>
+        <div>
+          <dt>Derivado público</dt>
+          <dd>
+            @if (p.derivativeChecksum) {
+              {{ formatBytes(p.derivativeBytes ?? 0) }} · SHA-256
+              <code class="panorama-code">{{ p.derivativeChecksum }}</code>
+            } @else {
+              Pendiente
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Miniatura</dt>
+          <dd>
+            @if (p.thumbnailChecksum) {
+              SHA-256 <code class="panorama-code">{{ p.thumbnailChecksum }}</code>
+            } @else {
+              Pendiente
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Hotspots</dt>
+          <dd>{{ p.hotspots.length }} configurados</dd>
+        </div>
+      </dl>
+
+      @if (p.hotspots.length) {
+        <ul class="panorama-admin__hotspots">
+          @for (hotspot of p.hotspots; track hotspot.hotspotId) {
+            <li>
+              <strong>{{ hotspot.label }}</strong>
+              <span>{{ hotspotLabels[hotspot.type] }}</span>
+              <span>yaw {{ hotspot.yaw }}° · pitch {{ hotspot.pitch }}°</span>
+              @if (hotspot.targetLocationSlug) {
+                <span>POI: {{ hotspot.targetLocationSlug }}</span>
+              } @else if (hotspot.targetPanoramaTitle) {
+                <span>Escena: {{ hotspot.targetPanoramaTitle }}</span>
+              } @else if (hotspot.targetUrl) {
+                <span>Ruta: {{ hotspot.targetUrl }}</span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </section>
+}

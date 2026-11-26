@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-005",
+    "title": "Decisiones UNESCO 48 COM 7A.36 y 48 COM 8C.2 sobre Coro y su puerto",
+    "institution": "Comité del Patrimonio Mundial, UNESCO",
+    "version": "48.ª sesión, 2026; traducción de trabajo no oficial",
+    "retrievedAt": "2026-11-21T00:00:00.000Z",
+    "url": "https://whc.unesco.org/en/decisions/9025/",
+    "level": "A",
+    "sourceLabel": "No verificado",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Decisión oficial 48 COM 7A.36 y actualización 48 COM 8C.2, consultadas en inglés. Los fragmentos son traducciones de trabajo no oficiales; no presentar como texto oficial ni usar antes de revisión.",
+    "license": "Material UNESCO; uso y conservación en RAG pendientes de revisión de las condiciones aplicables.",
+    "rights": "No se declara verificado el permiso para mantener traducciones en el índice persistente.",
+    "rightsVerified": false,
+    "rightsVerifiedAt": null,
+    "rightsVerifiedBy": null,
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "estado de conservación",
+      "Lista del Patrimonio Mundial en Peligro",
+      "decisiones UNESCO"
+    ],
+    "poiSlugs": [],
+    "status": "draft"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-005#48com.7a36.p10",
+      "ordinal": 0,
+      "section": "48 COM 7A.36, párrafo 10; traducción de trabajo no oficial",
+      "text": "Decide mantener Coro y su puerto (República Bolivariana de Venezuela) en la Lista del Patrimonio Mundial en Peligro.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["estado de conservación", "Lista del Patrimonio Mundial en Peligro"]
+    },
+    {
+      "chunkKey": "S-005#48com.7a36.p9",
+      "ordinal": 1,
+      "section": "48 COM 7A.36, párrafo 9; traducción de trabajo no oficial",
+      "text": "Solicita presentar antes del 1 de febrero de 2027 un informe actualizado sobre el estado de conservación y la aplicación de las medidas.",
+      "assistantScopes": ["tourist", "technical"],
+      "topics": ["informe de conservación", "seguimiento UNESCO"]
+    }
+  ]
+}

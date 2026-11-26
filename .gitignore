@@ -19,6 +19,7 @@ blob-report/
 projects/backend/uploads/**
 !projects/backend/uploads/**/
 !projects/backend/uploads/**/.gitkeep
+projects/backend/models/
 
 # QR de check-in generados localmente (contienen tokens)
 projects/backend/assets/qr-codes/

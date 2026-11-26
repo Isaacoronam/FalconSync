@@ -5,7 +5,7 @@
 | Versión | 1.0 |
 | Fecha | 2026-11-17 |
 | Estado | Verificación documental. No modifica `projects/backend/seeders/seedLocations.js` ni la base de datos |
-| Relacionados | [`FUENTES-RAG.md`](./FUENTES-RAG.md) v1.1, [`ADR/ADR-005-rag-fuentes.md`](./ADR/ADR-005-rag-fuentes.md), [`REQUISITOS.md`](./REQUISITOS.md) (RN-20 y RN-22) |
+| Relacionados | [`FUENTES-RAG.md`](./FUENTES-RAG.md) v1.7, [`ADR/ADR-005-rag-fuentes.md`](./ADR/ADR-005-rag-fuentes.md), [`REQUISITOS.md`](./REQUISITOS.md) (RN-20 y RN-22) |
 
 > Alcance: los 23 POI del seed. Las afirmaciones se citan con los identificadores S-### de `FUENTES-RAG.md` §5.
 > **Verificado**: lo confirma una fuente A, o dos fuentes independientes de nivel B o C. **Puntero**: aparece solo en Wikipedia o Wikivoyage. **Pendiente**: no hay fuente suficiente.
@@ -53,7 +53,7 @@ Códigos de estado según `FUENTES-RAG.md` §4: P-UNESCO-ENTORNO, P-UNESCO-FUERA
 
 | # | Afirmación | Fuente | Conflicto | Tratamiento |
 |---|---|---|---|---|
-| 1 | Coro salió de la lista en peligro en 2018 | S-006 (Wikipedia) | S-002 y S-003: en la lista desde 2005, según la consulta del 17/11/2026 | Desestimar. Usar el estado oficial |
+| 1 | Coro salió de la lista en peligro en 2018 | S-006 (Wikipedia) | S-002 y S-003: en la lista desde 2005; la decisión oficial 48 COM 7A.36 (2026) ordena mantener Coro y su puerto en la lista | Desestimar. Usar el estado oficial vigente |
 | 2 | La Vela saldría de la lista de riesgo en 2016 | S-008 (Wikipedia) | Igual que el caso 1 | Desestimar |
 | 3 | Coro fue fundada en 1577 | Texto en español de S-002 | S-002 en inglés dice 1527. S-006 da 1527 y vincula 1577 con el cambio de nombre a Coro | Mostrar 1527 y explicar 1577 como cambio de nombre |
 | 4 | Inscripción número 633 | PDF S-001, p. 12 | S-002: ID 658. El 633 corresponde a Vladimir y Suzdal | Usar 658 |
@@ -90,7 +90,7 @@ Las propuestas son para aprobación del responsable de contenido. Esta versión 
 4. Lectura directa de la bibliografía de S-014: González Batista, Blanca de Lima, Arcaya (1996), Beaujón (1982).
 5. Dirección actual del Teatro Armonía y fecha de reinauguración (Orquesta Sinfónica de Falcón o Gobernación).
 6. Identidad del informe de 2008 frente a la ficha 658, por comparación manual de SHA-256.
-7. Informe SOC 2026 y decisiones 47COM y 48COM sobre Coro (verificación manual).
+7. Texto íntegro del Informe SOC 2026, doc. 224543, y traducción revisada de las decisiones oficiales 48 COM 7A.36 y 48 COM 8C.2.
 8. Horarios y accesos de los museos: Museo de Arte, Casa Museo Locos de la Vela, Museo Alberto Henríquez y Museo Guadalupano.
 9. Nombre oficial del complejo deportivo («Ciudad Deportiva»).
 
@@ -102,7 +102,7 @@ Las propuestas son para aprobación del responsable de contenido. Esta versión 
 
 ## 7. Fuentes consultadas y limitaciones
 
-**Consultadas el 17/11/2026:** S-002 y S-003 (UNESCO, ficha 658 y lista en peligro), S-004 (Términos de Uso), S-006 a S-010 y S-013 (Wikipedia y Wikivoyage, como punteros), S-011 (IAM Venezuela, 2018), S-001 (informe de 2008, archivo local).
+**Consultadas el 17/11/2026:** S-002 y S-003 (UNESCO, ficha 658 y lista en peligro), S-004 (Términos de Uso), S-006 a S-010 y S-013 (Wikipedia y Wikivoyage, como punteros), S-011 (IAM Venezuela, 2018), S-001 (informe de 2008, archivo local). **Consultadas directamente el 21/11/2026:** decisiones UNESCO 48 COM 7A.36 y 48 COM 8C.2; confirman que el bien sigue en la Lista en Peligro. Solo se consultó el texto oficial en inglés; no se indexó una traducción.
 
 **Limitaciones:**
 - Wikipedia es un puntero. Varias afirmaciones de sus artículos no tienen cita, y algunas contradicen fuentes oficiales.

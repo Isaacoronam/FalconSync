@@ -19,8 +19,21 @@
 }
 
 .admin-sidebar__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
   padding-bottom: 0.9rem;
   border-bottom: 1px solid var(--line);
+}
+
+.admin-sidebar__mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  background: var(--cream);
+  object-fit: cover;
 }
 
 .admin-sidebar__eyebrow {

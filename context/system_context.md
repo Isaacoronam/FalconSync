@@ -21,6 +21,11 @@ con QR y administración de POI.
   hash SHA-256, autorización por recurso y registro de accesos. En producción, sin motor
   antimalware desplegado, la carga responde `503 EVIDENCE_SCAN_UNAVAILABLE`.
 - Roles: `user`, `moderator` (legacy en migración), `historian`, `inspector` y `admin`.
+- RAG: Chivito, guía turística activa con corpus curado, citas, abstención y evaluación; el
+  asistente técnico está implementado pero cerrado hasta aprobar su corpus. Las rutas son
+  recomendaciones y datos de acceso registrados, sin navegación giro a giro ni cálculo de
+  rutas por calles. Los horarios solo se responden con fuente publicada y fechada.
+- Visitas 360°: panoramas publicados, visor WebGL propio, hotspots y fallback estático.
 - Conservación y evidencia usan transacciones: requieren replica set. En local se usa
   `127.0.0.1:27018` (`replicaSet=falconsyncTest`).
 - `test/structure.test.js` comprueba que el árbol mantiene la estructura aprobada y
@@ -32,10 +37,9 @@ con QR y administración de POI.
 
 ## Alcance futuro no implementado
 
-La idea de producto contempla notificaciones en tiempo real con Socket.IO, un visor 360° y
-asistencia con IA/RAG sobre normativa e historia patrimonial. Hay documentación de diseño y
-fuentes, pero no código en producción. Estos componentes no deben presentarse como
-capacidades existentes hasta que se implementen y verifiquen.
+La idea de producto contempla notificaciones en tiempo real con Socket.IO. Hay documentación de
+diseño, pero el servidor Socket.IO no está implementado. Este componente no debe presentarse
+como capacidad existente hasta que se implemente y verifique.
 
 La app móvil puede requerir captura de inspecciones y sincronización; falta definir trabajo
 offline, permisos del dispositivo, formatos de evidencia y contratos API antes de diseñarla.

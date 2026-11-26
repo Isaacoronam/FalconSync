@@ -178,6 +178,22 @@ contiene tokens. El manifiesto solo registra slug, título, versión y fecha de 
 - `npm run backfill:achievements` reconstruye las insignias desde los check-in y el progreso.
   Es una simulación por defecto; `--apply` escribe, `--user=` limita a una cuenta y
   `--allow-production` es obligatorio en producción.
+- Las insignias nuevas guardan `image: null` en el backend; la SPA resuelve el medallón de la
+  categoría real (`src/assets/images/badges/`). No se inventan nombres ni descripciones.
+
+### 8. Celebración del check-in
+
+- La pantalla de check-in abre un diálogo con Chivito solo cuando `POST /api/check-ins`
+  responde `201` y `achievementsAwarded` contiene una insignia nueva de tipo `location`.
+- El diálogo muestra el nombre del POI, el nombre de la insignia, su categoría, su descripción
+  y el medallón de la categoría si no hay imagen persistida.
+- «Ver mis insignias» enlaza a `/perfil`; «Seguir explorando» cierra y devuelve el foco a la
+  confirmación inline.
+- Escape, el botón de cierre y el clic en el fondo cierran; el foco queda atrapado mientras
+  el diálogo está abierto.
+- No se abre en errores, duplicados, QR inválido, fuera de geocerca o cuando la insignia ya
+  estaba en el perfil. El doble envío se bloquea en cliente y el backend es idempotente.
+- `prefers-reduced-motion` desactiva la animación de entrada y el confeti.
 
 ## Modelos
 
