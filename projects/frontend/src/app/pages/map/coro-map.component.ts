@@ -222,7 +222,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     this.map.flyTo([latitude, longitude], LOCATION_DETAIL_ZOOM, { duration: 0.8 });
   }
 
-  protected openLocationPanoramas(location: FalconLocation): void {
+  protected async openLocationPanoramas(location: FalconLocation): Promise<void> {
     const requestToken = ++this.panoramaRequestToken;
 
     this.requestedPanoramaId = null;
@@ -236,21 +236,26 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     this.renderMarkers();
     this.invalidateMapAfterLayout();
 
-    void this.router
-      .navigate([], {
+    try {
+      await this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { panorama: null },
         queryParamsHandling: 'merge',
         replaceUrl: true,
-      })
-      .catch(() => {
-        if (requestToken !== this.panoramaRequestToken) {
-          return;
-        }
-
-        this.tourError.set('No se pudo actualizar el enlace de la visita.');
-        this.tourState.set('error');
       });
+    } catch {
+      if (requestToken !== this.panoramaRequestToken) {
+        return;
+      }
+
+      this.tourError.set('No se pudo actualizar el enlace de la visita.');
+      this.tourState.set('error');
+      return;
+    }
+
+    if (requestToken !== this.panoramaRequestToken) {
+      return;
+    }
 
     this.panoramasApi
       .list({ locationId: location.id, limit: 50 })
