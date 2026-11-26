@@ -21,9 +21,15 @@
 @if (stage() === 'success') {
   <section class="checkin-exito" aria-labelledby="checkin-exito-titulo">
     <div class="checkin-chivito" aria-label="Chivito celebra tu visita">
-      <span class="checkin-chivito__mascot" aria-hidden="true">🐐</span>
+      <img
+        class="checkin-chivito__mascot"
+        src="brand/chivito-avatar.png"
+        alt=""
+        width="72"
+        height="72"
+      />
       <div>
-        <h2 id="checkin-exito-titulo">¡Chivito celebra tu visita!</h2>
+        <h2 id="checkin-exito-titulo" tabindex="-1">¡Chivito celebra tu visita!</h2>
         <p>
           @if (locationTitle()) {
             Descubriste {{ locationTitle() }}. Tu visita quedó guardada.
@@ -40,9 +46,13 @@
         <ul class="checkin-logros__lista">
           @for (achievement of achievements(); track achievement.id) {
             <li class="checkin-logro">
-              <span class="checkin-logro__icono" aria-hidden="true">
-                {{ achievementIcon(achievement) }}
-              </span>
+              <img
+                class="checkin-logro__icono"
+                [src]="achievementBadgeImage(achievement)"
+                alt=""
+                width="48"
+                height="48"
+              />
               <span class="checkin-logro__texto">
                 <strong>{{ achievement.name }}</strong>
                 <span class="checkin-logro__tipo">
@@ -60,8 +70,8 @@
       </div>
     } @else {
       <p class="checkin-exito__nota">
-        La insignia de este lugar ya estaba en tu perfil o no hay una nueva que
-        otorgar. La visita sí quedó registrada.
+        La insignia de este lugar ya estaba en tu perfil o no hay una nueva que otorgar. La visita
+        sí quedó registrada.
       </p>
     }
 
@@ -90,8 +100,8 @@
             {{ photoError() }}
           </p>
           <p class="checkin-foto-gestion__nota">
-            El check-in y las insignias ya están guardados. La foto se puede reintentar
-            sin repetir la visita.
+            El check-in y las insignias ya están guardados. La foto se puede reintentar sin repetir
+            la visita.
           </p>
           <div class="checkin-foto-gestion__acciones">
             <button type="button" class="button button--primary" (click)="reintentarFoto()">
@@ -108,23 +118,28 @@
     <div class="checkin-exito__acciones">
       <a class="button button--primary" routerLink="/perfil">Ver mis insignias</a>
       @if (locationSlug(); as slug) {
-        <a
-          class="button button--ghost"
-          [routerLink]="['/lugares', slug]"
-        >
+        <a class="button button--ghost" [routerLink]="['/lugares', slug]">
           Volver a la historia del lugar
         </a>
       }
       <a class="button button--ghost" routerLink="/lugares">Explorar otros lugares</a>
     </div>
   </section>
+
+  @if (celebrationOpen() && celebrationAchievement(); as award) {
+    <app-achievement-celebration
+      [achievement]="award"
+      [locationTitle]="locationTitle()"
+      (closed)="cerrarCelebracion()"
+    />
+  }
 } @else {
   <form class="checkin-form" (ngSubmit)="realizarCheckIn()" novalidate>
     @if (hasToken()) {
       <div class="checkin__token">
         <p>
-          <strong>QR verificado.</strong> El token se guarda solo en memoria para este
-          lugar y no aparece en la dirección.
+          <strong>QR verificado.</strong> El token se guarda solo en memoria para este lugar y no
+          aparece en la dirección.
         </p>
         <button type="button" class="checkin__token-cambiar" (click)="escanearOtro()">
           Escanear otro QR
@@ -133,9 +148,7 @@
     } @else {
       <div class="checkin__token checkin__token--falta" role="status">
         <p>No hay un QR cargado para este lugar.</p>
-        <a class="button button--primary" routerLink="/checkin">
-          Escanear el QR del lugar
-        </a>
+        <a class="button button--primary" routerLink="/checkin"> Escanear el QR del lugar </a>
       </div>
     }
 
@@ -158,9 +171,8 @@
         (change)="onPhotoSelected($event)"
       />
       <p class="form-field__help">
-        JPEG, PNG o WebP de hasta 5 MB. La foto se guarda en tu perfil privado y solo tú
-        puedes verla. Se sube después del check-in, así que un fallo de imagen no anula
-        tu visita.
+        JPEG, PNG o WebP de hasta 5 MB. La foto se guarda en tu perfil privado y solo tú puedes
+        verla. Se sube después del check-in, así que un fallo de imagen no anula tu visita.
       </p>
 
       @if (photoError()) {
@@ -202,8 +214,8 @@
   </form>
 
   <p class="checkin__aviso">
-    Se requiere permiso de ubicación. Si el navegador lo bloquea, concede el permiso e
-    inténtalo de nuevo.
+    Se requiere permiso de ubicación. Si el navegador lo bloquea, concede el permiso e inténtalo de
+    nuevo.
   </p>
 
   <a class="button button--ghost" routerLink="/lugares">Volver a explorar lugares</a>

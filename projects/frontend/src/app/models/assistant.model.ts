@@ -1,6 +1,12 @@
 export type AssistantScope = 'tourist' | 'technical';
 export type AssistantAnswerType =
-  'extractive' | 'structured' | 'contextual' | 'mixed' | 'abstention' | 'clarification';
+  | 'extractive'
+  | 'structured'
+  | 'contextual'
+  | 'mixed'
+  | 'abstention'
+  | 'clarification'
+  | 'greeting';
 export type AssistantAbstentionReason =
   'NO_EVIDENCE' | 'OUT_OF_SCOPE' | 'NO_CURRENT_STATUS' | 'RIGHTS_RESTRICTED' | 'AMBIGUOUS_POI';
 export type AssistantClaimType =

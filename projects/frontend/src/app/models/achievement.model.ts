@@ -45,9 +45,36 @@ export function achievementIcon(achievement: UserAchievement): string {
   return CATEGORY_ICONS[achievement.category ?? ''] ?? '✧';
 }
 
-export function achievementCategoryLabel(
-  achievement: UserAchievement,
-): string {
+const CATEGORY_BADGES: Record<string, string> = {
+  architecture: 'images/badges/architecture.svg',
+  monument: 'images/badges/monument.svg',
+  nature: 'images/badges/nature.svg',
+  religious: 'images/badges/religious.svg',
+  urban: 'images/badges/urban.svg',
+  museum: 'images/badges/museum.svg',
+  viewpoint: 'images/badges/viewpoint.svg',
+  commerce: 'images/badges/commerce.svg',
+  service: 'images/badges/service.svg',
+};
+
+/**
+ * La insignia persistida puede no tener imagen (los registros anteriores a
+ * esta iteración guardan `null`). En ese caso se usa el medallón de la
+ * categoría real; nunca se inventa el nombre ni la descripción.
+ */
+export function achievementBadgeImage(achievement: UserAchievement): string {
+  if (achievement.image) {
+    return achievement.image;
+  }
+
+  if (achievement.type === 'adventure') {
+    return 'images/badges/adventure.svg';
+  }
+
+  return CATEGORY_BADGES[achievement.category ?? ''] ?? 'images/badges/default.svg';
+}
+
+export function achievementCategoryLabel(achievement: UserAchievement): string {
   if (achievement.type === 'adventure') {
     return 'Insignia anterior';
   }

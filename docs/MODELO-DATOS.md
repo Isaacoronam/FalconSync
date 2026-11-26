@@ -243,6 +243,8 @@ Reglas:
 | `capturedAt` | Date | Sí | No posterior a `now + 5 min`; se conserva la fecha declarada. |
 | `gps` | GeoJSON `Point` \| null | No | Índice `2dsphere` si existe. |
 | `accuracyMeters` | Number | No | 0–10000; se marca si supera 10 m. |
+| `sourceChannel` | Enum `REPORT_SOURCE_CHANNELS` | Sí | `web` por defecto; `telegram` para el bot. |
+| `sourceActionKey` | String(200) \| ausente | No | Idempotencia interna del canal; índice único sparse. No se expone en la API. |
 | `state` | Enum `REPORT_STATES` | Sí | Por defecto `received`; índice con `createdAt`. |
 | `triage.decision` | Enum `TRIAGE_DECISIONS` | Condicional | Obligatorio desde `triaged`. |
 | `triage.triagedBy` | ObjectId `User` | Condicional | Inspector que triaja. |
@@ -529,7 +531,7 @@ SourceChunkSchema.index({ poiSlugs: 1 });
 | `role` | Enum `MESSAGE_ROLES` | Sí | `user`, `assistant` o `system`. |
 | `content` | String | Sí | Texto mostrado. |
 | `citations` | Array<Citation> | No | Cada cita referencia un `chunkId` recuperado y conserva sus metadatos de afirmación. |
-| `answerType` | Enum \| null | No | `extractive`, `structured`, `contextual`, `mixed` o `abstention`; nulo para mensajes de usuario. |
+| `answerType` | Enum \| null | No | `extractive`, `structured`, `contextual`, `mixed`, `clarification`, `greeting` o `abstention`; nulo para mensajes de usuario. |
 | `abstained` | Boolean | Sí | Por defecto `false`. |
 | `abstentionReason` | Enum `ABSTENTION_REASONS` \| null | No | Obligatorio si `abstained=true`. |
 | `latencyMs` | Number | No | Latencia. |
@@ -620,7 +622,27 @@ derivan al serializar (`/api/panoramas/{id}/...` o `/api/admin/panoramas/{id}/..
 Índice único `actorId + key`. Si la misma clave llega con otro `requestHash`, se responde
 `409 IDEMPOTENCY_CONFLICT`.
 
-### 5.18 Ticket de tiempo real (no persistido)
+### 5.19 `ChannelLink`, `ChannelLinkCode` y `TelegramUpdate`
+
+| Colección | Campo | Tipo | Regla / índice |
+|---|---|---|---|
+| `ChannelLink` | `user` | ObjectId `User` | Único por `channel`; ref al dueño. |
+| `ChannelLink` | `channel` | Enum `CHANNEL_NAMES` | `telegram` en v1. |
+| `ChannelLink` | `externalId` | String(64) | ID de Telegram; único por canal. |
+| `ChannelLink` | `chatId` | String(64) | Chat privado para responder. |
+| `ChannelLink` | `lastSeenAt` | Date | Se actualiza al usar el bot. |
+| `ChannelLinkCode` | `user` | ObjectId `User` | Dueño del código. |
+| `ChannelLinkCode` | `codeHash` | String(64) | SHA-256; único. |
+| `ChannelLinkCode` | `expiresAt` | Date | TTL; 10 minutos por defecto. |
+| `ChannelLinkCode` | `usedAt` | Date \| null | Un solo uso. |
+| `TelegramUpdate` | `updateId` | Number | Único; deduplica reintentos. |
+| `TelegramUpdate` | `chatId` | String(64) | Chat de origen. |
+| `TelegramUpdate` | `expiresAt` | Date | TTL de 24 h. |
+
+Índices únicos: `ChannelLink(channel + externalId)` y `ChannelLink(user + channel)`.
+El código se guarda solo como hash; el valor en claro se muestra una vez en el perfil.
+
+### 5.20 Ticket de tiempo real (no persistido)
 
 El ticket es un JWT de 60 segundos con `sub`, `role`, `ver`, `scope=realtime`, `jti`, `iat` y
 `exp`. El `jti` se guarda en memoria (una instancia) o Redis (clúster) con TTL y se consume
@@ -632,6 +654,8 @@ una sola vez. No se persiste en MongoDB. El detalle está en
 | Relación | Cardinalidad | Regla |
 |---|---|---|
 | `User` → `Report` | 1:N | Un usuario crea muchos reportes; cada reporte tiene un dueño. |
+| `User` → `ChannelLink` | 1:0..1 por canal | Un vínculo activo por usuario y canal. |
+| `ChannelLink` → `Report` | 1:N | Los reportes de Telegram usan el `userId` vinculado. |
 | `User` → `Inspection` | 1:N | Inspector asignado; revisor distinto. |
 | `User` → `Intervention` | 1:N | Proponente, aprobador, ejecutor y verificador son referencias distintas según el caso. |
 | `User` → `Evidence` | 1:N | Autor de la carga. |

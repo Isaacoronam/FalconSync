@@ -4,6 +4,8 @@ export const ANSWER_TYPES = [
   'contextual',
   'mixed',
   'abstention',
+  'clarification',
+  'greeting',
 ];
 
 export const ABSTENTION_REASONS = [

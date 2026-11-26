@@ -80,6 +80,22 @@
 - **Nota:** `rag-golden-v2.json` no se modifica tras ejecutarlo; las expectativas nuevas viven
   en v3.
 
+## La evaluación v3 baja a 123/125 al eliminar falsos positivos léxicos
+
+- **Síntoma:** con el umbral léxico de POI en `0.6`, `rag-golden-v3.json` falla `p-20` y `p-30`
+  aunque `unmetTargets` sigue vacío.
+- **Causa confirmada:** ambas expectativas codificaban el comportamiento anterior:
+  `p-20` esperaba una aclaración entre «Paseo Independencia» (0.5 por «paseo») e «Iglesia de San
+  Francisco» (0.545 por «francisco»); `p-30` esperaba atribuir «un monumento» genérico a
+  «Monumento de las Madres» (0.5 exacto por «monumento»). Son la misma clase de falso positivo
+  que «ciudad de Coro» → «Ciudad Deportiva».
+- **Solución aplicada (2026-11-25):** se mantiene el umbral `0.6` y «Coro» deja de contar como
+  token distintivo del título. V3 queda congelado como referencia histórica; las expectativas
+  corregidas y los casos nuevos viven en `rag-golden-v4.json`. `p-30` se abstiene por
+  `OUT_OF_SCOPE` (reportar o denunciar daños es una gestión administrativa).
+- **Verificación:** v4 → 134/134, `unmetTargets` vacío (p95 54 ms); v3 → 123/125 con solo
+  `p-20`/`p-30` y `unmetTargets` vacío (p95 56 ms); v2 con `--sources` → 59/59 (p95 25 ms).
+
 ## El replica set de 27018 se pierde y la base de desarrollo queda vacía
 
 - **Síntoma:** tras un reinicio del entorno, `mongod` en `27018` no responde
@@ -105,3 +121,76 @@
 - **Nota:** el historiador con `_id` fijo `6aee4b03d9a54453e896062c` (declarado en
   `rightsVerifiedBy` de S-002, S-003 y S-020) debe existir en la base destino; el de 27017 ya
   lo tiene y se copió con el resto de usuarios.
+
+## grammY no expone `ReplyKeyboardRemove` como export nombrado en ESM
+
+- **Síntoma:** `node bin/telegramBot.js` falla al importar con
+  `SyntaxError: Named export 'ReplyKeyboardRemove' not found` porque grammY se publica como
+  CommonJS.
+- **Causa confirmada:** el analizador de exports nombrados de Node no reconoce todas las
+  propiedades del paquete CJS.
+- **Solución aplicada (2026-11-25):** importar el paquete por defecto y desestructurar:
+  `import grammy from 'grammy'; const { Bot, InlineKeyboard, Keyboard, ReplyKeyboardRemove } = grammy;`.
+  Se aplicó en `handlers.js`, `bot.js`, `bin/telegramBot.js` y `scripts/telegramWebhook.js`.
+- **Verificación:** el bot arrancó en polling como `@Falconsync_bot` y el E2E de `/perfil`
+  generó el código de vinculación.
+
+## El índice único sparse de `sourceActionKey` rechaza varios reportes web
+
+- **Síntoma:** al crear dos reportes web sin idempotencia, el segundo responde
+  `409 DUPLICATE_KEY`.
+- **Causa confirmada:** Mongoose escribía `sourceActionKey: null` por el `default: null`. Un
+  índice único sparse excluye documentos donde el campo no existe, pero no valores `null`
+  explícitos; todos los reportes web colisionaban.
+- **Solución aplicada (2026-11-25):** quitar el `default` y omitir el campo cuando no hay
+  clave. Los reportes de Telegram siguen escribiendo una clave única
+  `telegram:<externalId>:<idempotencyKey>`.
+- **Verificación:** `test/conservation.test.js` vuelve a crear varios reportes y
+  `test/telegramChannel.test.js` confirma que el reintento devuelve el mismo reporte.
+
+## OpenAPI falla al parsear una descripción con dos puntos y backticks
+
+- **Síntoma:** el validador YAML reporta `Nested mappings are not allowed in compact mappings`
+  en la descripción de `options`.
+- **Causa confirmada:** un escalar plano contenía `` `answerType: clarification` ``; los dos
+  puntos se interpretaban como otro mapeo.
+- **Solución aplicada (2026-11-25):** entrecomillar la descripción completa.
+- **Verificación:** `yaml.parse` cargó 47 rutas y 68 esquemas, con `/channels/telegram` y
+  `/channels/telegram/link-code` presentes.
+
+## `/cerca` falla después de pedir la ubicación con «ReplyKeyboardRemove is not a constructor»
+
+- **Síntoma:** el bot pide la ubicación, pero al compartirla responde
+  «No pude buscar lugares cercanos. Inténtalo de nuevo.».
+- **Causa confirmada:** `grammY` solo exporta `Keyboard` e `InlineKeyboard` en runtime;
+  `ReplyKeyboardRemove` es un tipo de `@grammyjs/types`, no una clase. `new
+  ReplyKeyboardRemove()` lanzaba `TypeError` después de calcular los lugares, ocultando
+  el resultado correcto. El mismo fallo afectaba al paso de ubicación de `/reportar`.
+- **Solución aplicada (2026-11-25):** usar el objeto `{ remove_keyboard: true }` en los
+  cinco puntos que retiraban el teclado y eliminar el import inexistente.
+- **Verificación:** prueba de `showNearby` con MCP falso y ejecución real contra el MCP
+  y la base de desarrollo: devolvió cinco POI (Catedral a 3 m, Plaza Bolívar a 52 m,
+  etc.) con `reply_markup.remove_keyboard=true`.
+
+## El RAG mezclaba «ciudad de Coro» con «Ciudad Deportiva» y respondía rutas con fragmentos tangenciales
+
+- **Síntoma:** «¿Qué es la ciudad?» incluía la ficha de Ciudad Deportiva; «¿Dónde estacionar?»
+  respondía con la ruta desde Caracas y «¿Hay visitas nocturnas?» con Paraguaná. Las preguntas
+  de tres partes se respondían en orden arbitrario y el horario de la Catedral contradecía el
+  aviso «horarios no verificados».
+- **Causa confirmada:** «ciudad» no era un token genérico de título; la vía semántica atribuía
+  el POI. `splitSubQueries` solo producía dos partes y no separaba comas. El aviso de ruta se
+  añadía solo con POI resuelto y no se comprobaba que la evidencia cubriera estacionamiento,
+  transporte, distancia o visitas nocturnas. `composeAnswer` retiraba el aviso genérico solo
+  con una cita histórica, no con una de estado actual.
+- **Solución aplicada (2026-11-26):** «ciudad» y «Coro» son tokens genéricos; se exige un
+  token distintivo para la vía semántica y se filtran fichas de POI en preguntas genéricas.
+  Las compuestas se dividen en hasta tres partes y cada una resuelve su POI, evidencia e
+  intención; las elípticas usan la selección completa. Las intenciones de acceso exigen
+  evidencia del aspecto y se abstienen con mensajes específicos. Se añadió la guarda de
+  sujeto de lugar no soportado («Casa del Tesoro»), el aviso de acceso registrado y los
+  mensajes de precio. S-022 V3 corrige el mapa y añade la Ruta del Casco Histórico.
+- **Verificación:** backend 187/187; evaluación v5 146/146, 0 fallos, `unmetTargets` vacío
+  (`sourceHit` 0.92, `citationValidity` 1, p95 110 ms); consultas reales: «¿Qué es la ciudad?»
+  ya no incluye Ciudad Deportiva y la triple responde Coro → Ciudad Deportiva → aviso de ruta
+  a la Catedral.

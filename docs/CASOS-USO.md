@@ -427,7 +427,7 @@ Flujo principal:
 4. Compone la respuesta solo con citas literales de máximo 25 palabras o hechos estructurados verificados. No hay generación libre.
 5. Valida cada cita contra un `chunkId` recuperado, su literalidad, página o sección y nivel; si una falla, se abstiene por completo.
 6. Si no hay evidencia suficiente, responde `abstained=true` con `abstentionReason` y explica qué falta.
-7. Devuelve fuentes, fecha, `corpusVersion` y etiqueta (`Oficial UNESCO`, `Oficial estatal`, `Oficial local`, `Histórico 2008`, `Académico`, `Referencia`, `Externo`, `No verificado`, `Tradición local`).
+7. Devuelve fuentes, fecha, `corpusVersion` y etiqueta (`Oficial UNESCO`, `Oficial estatal`, `Oficial local`, `Histórico 2008`, `Académico`, `Referencia`, `Externo`, `No verificado`, `Documentación del proyecto`, `Tradición local`).
 
 Alternativas:
 

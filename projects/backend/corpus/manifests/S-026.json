@@ -389,6 +389,29 @@
         "¿Qué beben en Coro?"
       ],
       "checksum": "4CFB7727EE9221A924DF465FE0BD2A34F5DA61EE2E0659793751A8C4F389FE8D"
+    },
+    {
+      "chunkKey": "S-026#introduccion",
+      "ordinal": 17,
+      "section": "Introducción",
+      "claimType": "historical",
+      "text": "Coro es una ciudad venezolana, capital del Estado Falcón y del Municipio Miranda, fundada el 26 de julio de 1527 por Juan de Ampiés.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Coro",
+        "visión general",
+        "fundación"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es Coro?",
+        "¿Qué es la ciudad de Coro?",
+        "¿Qué es Santa Ana de Coro?",
+        "¿Dónde queda Coro?",
+        "¿Cuándo fue fundada Coro?"
+      ]
     }
   ]
 }

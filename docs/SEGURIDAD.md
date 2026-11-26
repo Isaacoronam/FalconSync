@@ -75,6 +75,11 @@ Fronteras:
 | S-20 | Amenaza interna | Operador o admin | Abuso | Menor privilegio, separación de funciones, auditoría, break-glass | Revisión de accesos |
 | S-21 | Fuga de evidencia por URL pública | `/api/uploads` | Exposición | Evidencia fuera del prefijo público; endpoint autorizado o URL firmada | Pruebas de acceso |
 | S-22 | Borrado o alteración de historial | Update/delete | Pérdida de trazabilidad | Append-only, permisos, eventos, backups | Pruebas de inmutabilidad |
+| S-23 | Robo del token de Telegram | `.env`, logs, repositorio | Control total del bot | Token solo en entorno/secret manager, sin logs ni capturas, rotación con BotFather | Revisión de configuración y logs |
+| S-24 | Webhook falso o replay | Peticiones al endpoint | Reportes falsos, spam | `X-Telegram-Bot-Api-Secret-Token`, HTTPS, idempotencia por `update_id` | `telegramChannel.test.js` |
+| S-25 | Suplantación de cuenta | Vincular Telegram ajeno | Reportes a nombre de otro | Código de un solo uso con hash, TTL, índices únicos y auditoría | Pruebas de conflicto y expiración |
+| S-26 | Inyección de prompt en Telegram | Texto libre o foto | Herramientas no autorizadas | Flujos deterministas, herramientas de escritura con confirmación e idempotencia; sin acceso a secretos | Revisión de handlers y pruebas |
+| S-27 | Exceso de datos personales | Ubicación, chat, mensajes | Privacidad | Datos mínimos, sin historial, `/privacidad`, expiración de sesión y `/desvincular` | Revisión de modelos y retención |
 
 ## 4. Controles por dominio
 
@@ -142,7 +147,30 @@ operativa, la purga por retención y el flujo de bloqueo legal.
 - Retención: turismo anónimo sin persistencia; asistente técnico 90 días con TTL.
 - El registro de fuentes nunca expone `storageKey` ni texto completo de fuentes restringidas.
 
-### 4.7 Infraestructura y operación
+### 4.7 Canal de Telegram y MCP
+
+- El bot de Telegram es un proceso separado (`bin/telegramBot.js`); no se ejecuta
+  dentro de OpenCode ni de la SPA.
+- El servidor MCP usa stdio como proceso hijo: no abre puertos ni acepta conexiones de
+  red. El único secreto del bot es `TELEGRAM_BOT_TOKEN`, fuera del repositorio.
+- El bot solo responde en chats privados y no persiste el historial de mensajes.
+- La guía y los recorridos son de lectura anónima; crear incidencias exige un vínculo
+  con una cuenta activa y la capacidad `report.create`.
+- La vinculación usa un código de 8 caracteres, hash SHA-256, TTL de 10 minutos, un
+  solo uso e índices únicos por cuenta y por Telegram.
+- Los reportes de Telegram llevan `sourceChannel=telegram` y una
+  `sourceActionKey` interna para idempotencia; la clave no se expone por la API.
+- En modo webhook se exige HTTPS, puerto permitido por Telegram y el secreto
+  `X-Telegram-Bot-Api-Secret-Token`. En modo polling se elimina cualquier webhook
+  previo para evitar `getUpdates` en conflicto.
+- El deep link `?start=CODIGO` transporta un código de un solo uso con TTL de 10
+  minutos; no incluye datos de la cuenta y se invalida al canjearse.
+- Los avisos de estado se envían solo al `chatId` del vínculo activo y no revierten
+  la transición si Telegram falla. El texto no incluye notas internas de triaje.
+- Las fotos permanecen desactivadas en producción hasta que el antimalware y la
+  cuarentena de evidencia estén operativos.
+
+### 4.8 Infraestructura y operación
 
 - Secretos por entorno, fuera del repositorio y con rotación.
 - TLS, proxy inverso, cabeceras de seguridad y límites de cuerpo.

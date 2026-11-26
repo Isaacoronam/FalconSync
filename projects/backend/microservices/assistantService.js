@@ -24,8 +24,19 @@ const MAX_OPTIONS = 3;
 const CONVERSATION_RETENTION_DAYS = 90;
 const INDEX_TTL_MS = 30 * 1000;
 const POI_CACHE_TTL_MS = 60 * 1000;
-const POI_LEXICAL_MIN = 0.5;
+// Una coincidencia léxica parcial de un título no basta para atribuir la
+// pregunta a un lugar: «ciudad de Coro» compartía «ciudad» con «Ciudad
+// Deportiva» y resolvía el POI equivocado con 0.5 exacto.
+const POI_LEXICAL_MIN = 0.6;
 const POI_AMBIGUITY_MARGIN = 0.05;
+// Una cita secundaria solo acompaña a la primera si cubre una parte de una
+// pregunta compuesta, pertenece al lugar preguntado o está cerca de su
+// puntaje. Evita pegar evidencia tangencial (p. ej. tapial en «¿Qué es
+// FALCONSYNC?») sin perder la historia del lugar citado.
+const SECONDARY_CITATION_MAX_GAP = 0.15;
+// Las fuentes internas del proyecto no exponen una URL pública: se citan como
+// documentación del propio sistema y nunca como enlace al repositorio.
+const INTERNAL_SOURCE_INSTITUTIONS = new Set(['Proyecto FALCONSYNC']);
 // La ficha del lugar resuelto se acepta con umbral propio: pertenecer al lugar
 // identificado por nombre es una señal más fuerte que la similitud sola.
 const POI_FICHA_MIN_SIMILARITY = 0.4;
@@ -43,6 +54,157 @@ export const FALLBACK_MESSAGE =
 export const SCHEDULE_ABSTENTION_MESSAGE =
   'Sin horarios confirmados. No cuento con una fuente verificada de horarios, tarifas ni estado de apertura; confirma directamente con el lugar antes de tu visita.';
 const CLARIFICATION_MESSAGE = '¿A cuál de estos lugares te refieres?';
+export const GREETING_MESSAGE =
+  '¡Epa! Soy Chivito, tu guía turístico de FalconSync. Puedo contarte sobre Coro, sus lugares, su historia y su arquitectura. ¿Qué quieres descubrir hoy?';
+const GREETING_SUGGESTIONS = [
+  '¿Qué es Coro?',
+  '¿Qué lugares puedo visitar en Coro?',
+  '¿Cómo se construye un muro de tapial?',
+];
+// Saludos de mensaje completo: si la persona escribe «hola, ¿qué es Coro?» la
+// pregunta real manda y se responde con el corpus, no con la bienvenida.
+const GREETING_PHRASES = new Set([
+  'hola',
+  'hi',
+  'hello',
+  'hey',
+  'buenas',
+  'buen dia',
+  'buenos dias',
+  'buenas tardes',
+  'buenas noches',
+  'que tal',
+  'saludos',
+  'gracias',
+  'muchas gracias',
+  'adios',
+  'hasta luego',
+  'chao',
+  'hola buenos dias',
+  'hola buenas tardes',
+  'hola buenas noches',
+  'hola que tal',
+]);
+// La pregunta pide una ruta o indicaciones. Incluye «llego» y sus variantes:
+// «¿cómo llego a la Catedral?» es tan explícito como «¿cómo puedo llegar?».
+const ROUTE_QUESTION_PATTERN =
+  /\b(?:c[oó]mo\s+(?:(?:puedo|se\s+puede|se)\s+)?(?:lleg(?:ar|amos|an|as|o|a))|c[oó]mo\s+voy|rutas?|indicaciones?|recorridos?|itinerarios?)\b/iu;
+export const ROUTE_NOTICE =
+  'No tengo una ruta verificada en el corpus; te comparto los datos registrados del lugar.';
+// Cuando el corpus sí contiene un dato de acceso (bus, avenida, estacionamiento),
+// no se niega la existencia de una ruta: se etiqueta como dato registrado y se
+// pide confirmar antes de viajar.
+export const ACCESS_DATA_NOTICE =
+  'Datos de acceso registrados en el corpus; confirma horarios y disponibilidad antes de viajar.';
+export const ROUTE_ABSTENTION_MESSAGE =
+  'No tengo una ruta o unas indicaciones verificadas en el corpus para esa consulta.';
+export const PARKING_ABSTENTION_MESSAGE =
+  'No tengo evidencia verificada sobre estacionamiento en el corpus. Confirma las opciones con el lugar o con las autoridades locales.';
+export const NIGHT_TOUR_ABSTENTION_MESSAGE =
+  'No tengo evidencia verificada sobre visitas guiadas nocturnas o recorridos de leyendas en el corpus.';
+export const TRANSPORT_ABSTENTION_MESSAGE =
+  'No tengo evidencia verificada sobre transporte público o taxis para esa consulta en el corpus.';
+export const DISTANCE_ABSTENTION_MESSAGE =
+  'No puedo calcular distancias ni tiempos de viaje con el corpus actual. Consulta una aplicación de mapas para la ruta.';
+export const PRICE_ABSTENTION_MESSAGE =
+  'Sin precios confirmados. No cuento con una fuente verificada de tarifas ni condiciones de entrada; confirma directamente con el lugar antes de tu visita.';
+
+// Intenciones de orientación que no se responden con una ficha genérica. Si
+// la evidencia no cubre el aspecto preguntado, es preferible abstenerse a
+// pegar un fragmento tangencial (p. ej. la ruta a Caracas para «¿dónde
+// estaciono?»).
+const PARKING_INTENT_PATTERN =
+  /\b(?:estacion(?:ar|amiento|adero)|parking|aparcar)\b/iu;
+const NIGHT_TOUR_INTENT_PATTERN =
+  /\b(?:visitas?\s+guiadas?|recorridos?\s+(?:de\s+leyendas|nocturnos?)|nocturn[oa]s?|de\s+noche)\b/iu;
+const TRANSPORT_INTENT_PATTERN =
+  /\b(?:transporte|bus|buseta|taxi|carro\s+por\s+puesto|metro|autob[uú]s)\b/iu;
+const DISTANCE_INTENT_PATTERN =
+  /\b(?:distancia|cu[aá]nto\s+(?:tarda|se\s+tarda)|tiempo\s+(?:de\s+viaje|en\s+llegar)|minutos\s+(?:a\s+pie|caminando|en\s+carro))\b/iu;
+// Evidencia de acceso: dos señales distintas o una señal fuerte de recorrido.
+// Una descripción con «calles empedradas» no es una ruta.
+const ROUTE_EVIDENCE_PATTERNS = [
+  /\brutas?\b/iu,
+  /\brecorridos?\b/iu,
+  /\bitinerarios?\b/iu,
+  /\blleg(?:ar|amos|an|as|o|a)\b/iu,
+  /\bbus\b/iu,
+  /\bbusetas?\b/iu,
+  /\btaxis?\b/iu,
+  /\btransporte\b/iu,
+  /\bautob[uú]s(?:es)?\b/iu,
+  /\bestacion(?:ar|amiento|adero)\b/iu,
+  /\ba\s+pie\b/iu,
+  /\bcaminando\b/iu,
+  /\bdistancia\b/iu,
+  /\bminutos\b/iu,
+  /\bavenidas?\b/iu,
+  /\bcarreteras?\b/iu,
+  /\bautopistas?\b/iu,
+  /\bcalles?\b/iu,
+];
+const ROUTE_STRONG_EVIDENCE_PATTERN =
+  /\b(?:rutas?|recorridos?|itinerarios?|indicaciones?|lleg(?:ar|amos|an|as|o|a))\b/iu;
+const DISTANCE_EVIDENCE_PATTERN =
+  /\b(?:distancia|km|kil[oó]metros|minutos|a\s+pie|tiempo\s+de\s+viaje)\b/iu;
+
+function routeEvidenceMatches(text) {
+  const matches = ROUTE_EVIDENCE_PATTERNS.filter((pattern) => pattern.test(text)).length;
+
+  return matches >= 2 || ROUTE_STRONG_EVIDENCE_PATTERN.test(text);
+}
+
+function classifyAccessIntent(question) {
+  if (PARKING_INTENT_PATTERN.test(question)) {
+    return 'parking';
+  }
+  if (NIGHT_TOUR_INTENT_PATTERN.test(question)) {
+    return 'nightTour';
+  }
+  if (DISTANCE_INTENT_PATTERN.test(question)) {
+    return 'distance';
+  }
+  if (TRANSPORT_INTENT_PATTERN.test(question)) {
+    return 'transport';
+  }
+  if (ROUTE_QUESTION_PATTERN.test(question)) {
+    return 'route';
+  }
+
+  return null;
+}
+
+function accessEvidenceMatches(intent, text) {
+  switch (intent) {
+    case 'parking':
+      return PARKING_INTENT_PATTERN.test(text);
+    case 'nightTour':
+      return NIGHT_TOUR_INTENT_PATTERN.test(text);
+    case 'distance':
+      return DISTANCE_EVIDENCE_PATTERN.test(text);
+    case 'transport':
+      return TRANSPORT_INTENT_PATTERN.test(text);
+    case 'route':
+      return routeEvidenceMatches(text);
+    default:
+      return true;
+  }
+}
+
+function accessAbstentionMessage(intent) {
+  switch (intent) {
+    case 'parking':
+      return PARKING_ABSTENTION_MESSAGE;
+    case 'nightTour':
+      return NIGHT_TOUR_ABSTENTION_MESSAGE;
+    case 'distance':
+      return DISTANCE_ABSTENTION_MESSAGE;
+    case 'transport':
+      return TRANSPORT_ABSTENTION_MESSAGE;
+    default:
+      return ROUTE_ABSTENTION_MESSAGE;
+  }
+}
 
 // "estado" excluye "estado Falcón" (el nombre del estado): «la mejor época
 // para visitar Coro y el estado Falcón» no es una pregunta de estado actual.
@@ -56,11 +218,12 @@ const TIME_NOW_PATTERN = /\bqu[eé] hora (?:es|est[aá]|ser[aá])\b/iu;
 const PRICE_ASPECT_PATTERN =
   /\b(precios?|costos?|cuesta|cuestan|costar|tarifas?|entradas?|gratis|bol[ií]var(?:es)?|d[oó]lares?)\b/iu;
 // Motivos de rechazo del asistente turístico: consultas de diagnóstico o
-// intervención técnica (propio del apoyo técnico). Los términos materiales
-// (adobe, tapia, estructura) no están aquí a propósito: preguntar qué son o
-// cómo se construían es consulta cultural legítima de la guía.
+// intervención técnica (propio del apoyo técnico) y gestiones administrativas
+// como reportar o denunciar daños. Los términos materiales (adobe, tapia,
+// estructura) y el verbo construir no están aquí a propósito: preguntar qué
+// son o cómo se construían es consulta cultural legítima de la guía.
 const TOURIST_OUT_OF_SCOPE_PATTERN =
-  /\b(inspecci[oó]n|diagn[oó]stico|intervenci[oó]n|reforzar|fisura|cimentaci[oó]n|construir|ampliaci[oó]n)\b/iu;
+  /\b(inspecci[oó]n|diagn[oó]stico|intervenci[oó]n|reforzar|fisura|cimentaci[oó]n|ampliaci[oó]n|reportar|denunciar)\b/iu;
 const ADVERSARIAL_PATTERN =
   /\b(ignora tus reglas|copia el informe|asume que|afirma que)\b/iu;
 // La respuesta es extractiva: ante una petición de texto nuevo generado no hay
@@ -68,7 +231,7 @@ const ADVERSARIAL_PATTERN =
 const FREE_FORM_PATTERN =
   /\b(poema|poes[ií]a|verso|rima|escríbeme|hazme un|redacta un|inventa|improvisa)\b/iu;
 const FOLLOW_UP_PATTERN =
-  /\b(su|sus|ese|esa|eso|esos|esas|este|esta|esto|ahí|allí|allá|él|ella)\b/iu;
+  /\b(su|sus|ese|esa|eso|esos|esas|este|esta|esto|ahí|allí|allá|él|ella)\b|\bd[oó]nde (?:queda|est[aá])\b/iu;
 
 const STOPWORDS = new Set([
   'a',
@@ -133,6 +296,17 @@ function contentTokens(value) {
 
 function phraseOf(value) {
   return ` ${(normalizeText(value).match(/[\p{L}\p{N}]+/gu) ?? []).join(' ')} `;
+}
+
+// Forma canónica para comparar preguntas: sin acentos, mayúsculas ni
+// puntuación. Así «que es coro?», «¿Qué es Coro?» y «QUE ES CORO» son la
+// misma consulta.
+function comparableText(value) {
+  return (normalizeText(value).match(/[\p{L}\p{N}]+/gu) ?? []).join(' ');
+}
+
+export function isGreeting(value) {
+  return GREETING_PHRASES.has(comparableText(value));
 }
 
 function scopeRules(scope) {
@@ -298,60 +472,83 @@ async function unpublishedPois() {
 
 const MAX_SUB_QUERIES = 3;
 // Mínimo de palabras con contenido en cada parte para partir una pregunta
-// compuesta; partes demasiado elípticas no aportan recuperación propia.
-const MIN_COMPOUND_PART_TOKENS = 2;
+// compuesta. Una parte como «¿Qué es Coro?» aporta un solo token distintivo,
+// pero es una subconsulta completa; las partes vacías («y qué») siguen fuera.
+const MIN_COMPOUND_PART_TOKENS = 1;
 // Margen de cobertura para partes de una pregunta compuesta: un fragmento
 // partido es más corto que una consulta natural y su similitud tiende a
 // bajar; una parte con evidencia cercana cuenta como cubierta, mientras que
 // la selección de candidatos sigue exigiendo el umbral completo.
 const COVERAGE_SIMILARITY_MARGIN = 0.1;
-// Conector interrogativo: "y qué", "y dónde", "e cómo", "y quién"... La forma
-// singular acentuada ("quién") tiene que entrar: sin ella la pregunta no se
-// parte y la consulta única puede responder con una cita ajena.
-const COMPOUND_CONNECTOR_PATTERN =
-  /\s+(?:y|e)\s+(?=(?:cu[aá]l|cu[aá]les|qu[eé]|d[oó]nde|c[oó]mo|cu[aá]ndo|cu[aá]nt[oa]s?|qui[eé]n(?:es)?|por qu[eé]|para qu[eé]))/iu;
+// Conector interrogativo: "y qué", "y dónde", "e cómo", "y quién", o una coma
+// seguida de otra pregunta. La forma singular acentuada ("quién") tiene que
+// entrar: sin ella la pregunta no se parte y la consulta única puede responder
+// con una cita ajena.
+const COMPOUND_INTERROGATIVE =
+  '(?:cu[aá]l(?:es)?|qu[eé]|d[oó]nde|c[oó]mo|cu[aá]ndo|cu[aá]nt[oa]s?|qui[eé]n(?:es)?|por\\s+qu[eé]|para\\s+qu[eé])';
+const COMPOUND_BOUNDARY_PATTERN = new RegExp(
+  `(?:\\?|,|;|\\s+(?:y|e))\\s*(?=(?:¿\\s*)?${COMPOUND_INTERROGATIVE}(?![\\p{L}\\p{N}]))`,
+  'giu',
+);
 
 /**
  * Divide una pregunta compuesta en sus sub-consultas para recuperar la
- * evidencia de cada parte por separado. Devuelve [] cuando la pregunta es
- * simple, de modo que el comportamiento de una consulta única no cambia.
+ * evidencia de cada parte por separado. Admite dos o tres partes separadas
+ * por «?», comas o conectores («y qué», «y cómo»). Devuelve [] cuando la
+ * pregunta es simple, de modo que el comportamiento de una consulta única no
+ * cambia.
  */
+function isQuestionFragment(text) {
+  return /[?¿]|\b(?:qu[eé]|cu[aá]l|d[oó]nde|c[oó]mo|cu[aá]ndo|cu[aá]nt[oa]s?|qui[eé]n)/iu.test(
+    text,
+  );
+}
+
 export function splitSubQueries(question) {
   const trimmed = question.trim();
-  const byMarks = trimmed
-    .split(/\?(?=\s*¿)/u)
-    .map((part) => part.trim())
-    .filter(Boolean);
+  const boundaries = [...trimmed.matchAll(COMPOUND_BOUNDARY_PATTERN)];
+
+  if (!boundaries.length) {
+    return [];
+  }
+
+  const parts = [];
+  let start = 0;
+
+  for (const boundary of boundaries) {
+    const part = trimmed.slice(start, boundary.index).trim();
+
+    // «Voy a Coro este fin de semana, ¿qué lugares...?» no es una pregunta
+    // doble: la primera parte es un preámbulo, no una subconsulta. Solo se
+    // parte cuando lo que queda a la izquierda ya es una pregunta.
+    if (!isQuestionFragment(part)) {
+      continue;
+    }
+    if (part) {
+      parts.push(part);
+    }
+    start = boundary.index + boundary[0].length;
+  }
+
+  const tail = trimmed.slice(start).trim();
+  if (tail) {
+    parts.push(tail);
+  }
 
   if (
-    byMarks.length > 1 &&
-    byMarks.length <= MAX_SUB_QUERIES &&
-    byMarks.every((part) => contentTokens(part).length >= MIN_COMPOUND_PART_TOKENS)
+    parts.length < 2 ||
+    parts.length > MAX_SUB_QUERIES ||
+    !parts.every((part) => contentTokens(part).length >= MIN_COMPOUND_PART_TOKENS)
   ) {
-    return byMarks;
+    return [];
   }
 
-  const connector = COMPOUND_CONNECTOR_PATTERN.exec(trimmed);
-  if (connector) {
-    const left = trimmed.slice(0, connector.index).trim();
-    const right = trimmed.slice(connector.index + connector[0].length).trim();
-
-    if (
-      contentTokens(left).length >= MIN_COMPOUND_PART_TOKENS &&
-      contentTokens(right).length >= MIN_COMPOUND_PART_TOKENS
-    ) {
-      return [left, right];
-    }
-  }
-
-  return [];
+  return parts;
 }
 
 // Vector de la pregunta completa más uno por cada sub-consulta; la posición 0
 // es siempre la pregunta original.
-async function embedQueryVectors(question) {
-  const texts = [question, ...splitSubQueries(question)];
-
+async function embedQueryVectors(texts) {
   try {
     const vectors = await embedTexts(texts);
 
@@ -370,14 +567,24 @@ async function embedQueryVectors(question) {
   }
 }
 
-function bestSimilarity(item, queryVector) {
+function exactQuestionMatch(item, queryText) {
+  const asked = comparableText(queryText);
+
+  return Boolean(asked) && item.questions.some((text) => comparableText(text) === asked);
+}
+
+function bestSimilarity(item, queryVector, queryText = null) {
+  if (queryText && exactQuestionMatch(item, queryText)) {
+    return 1;
+  }
+
   return Math.max(
     cosineSimilarity(queryVector, item.textVector),
     ...item.questionVectors.map((vector) => cosineSimilarity(queryVector, vector)),
   );
 }
 
-function semanticPoiScores(index, queryVector) {
+function semanticPoiScores(index, queryVector, queryText = null) {
   const scores = new Map();
 
   for (const item of index.items) {
@@ -385,7 +592,7 @@ function semanticPoiScores(index, queryVector) {
       continue;
     }
 
-    const similarity = bestSimilarity(item, queryVector);
+    const similarity = bestSimilarity(item, queryVector, queryText);
     for (const slug of item.poiSlugs) {
       scores.set(slug, Math.max(scores.get(slug) ?? 0, similarity));
     }
@@ -397,7 +604,7 @@ function semanticPoiScores(index, queryVector) {
 // Mejor similitud de la evidencia que no pertenece a ningún lugar concreto:
 // sirve de referencia para decidir si la pregunta es sobre un lugar o sobre
 // Coro en general.
-function bestGeneralSimilarity(index, queryVector) {
+function bestGeneralSimilarity(index, queryVector, queryText = null) {
   let best = 0;
 
   for (const item of index.items) {
@@ -405,17 +612,24 @@ function bestGeneralSimilarity(index, queryVector) {
       continue;
     }
 
-    best = Math.max(best, bestSimilarity(item, queryVector));
+    best = Math.max(best, bestSimilarity(item, queryVector, queryText));
   }
 
   return best;
 }
 
+// «Coro» y «ciudad» aparecen en casi todos los títulos de POI o en preguntas
+// sobre la ciudad: no distinguen unos lugares de otros. «Ciudad Deportiva»
+// sigue necesitando «deportiva» y «la catedral» resuelve «Catedral de Coro».
+const POI_TITLE_STOPWORDS = new Set(['coro', 'ciudad']);
+
 function lexicalPoiScores(question, pois) {
   const queryTokens = new Set(contentTokens(question));
   const titles = pois.map((poi) => ({
     poi,
-    tokens: [...new Set(contentTokens(poi.title))],
+    tokens: [...new Set(contentTokens(poi.title))].filter(
+      (token) => !POI_TITLE_STOPWORDS.has(token),
+    ),
   }));
   const frequency = new Map();
 
@@ -457,8 +671,26 @@ function rankedPois(scores, pois, minimum) {
     .sort((left, right) => right.score - left.score);
 }
 
+// Una pregunta que solo aporta palabras genéricas («ciudad», «Coro») no debe
+// activar la vía semántica de un POI concreto. «¿Qué es la ciudad?» no es
+// «Ciudad Deportiva», aunque el modelo vea similitud por la palabra «ciudad».
+function hasDistinctivePoiToken(question) {
+  return contentTokens(question).some((token) => !POI_TITLE_STOPWORDS.has(token));
+}
+
 function isFollowUp(question) {
-  return FOLLOW_UP_PATTERN.test(question) || contentTokens(question).length <= 3;
+  // Una pregunta genérica como «¿Qué es la ciudad?» tiene un solo token, pero
+  // no es un seguimiento: no debe heredar el último POI. Solo se hereda con
+  // pronombres/posesivos («su fachada») o con un arranque explícito («¿Y el
+  // horario?»).
+  if (FOLLOW_UP_PATTERN.test(question)) {
+    return true;
+  }
+
+  return (
+    /^\s*(?:¿|\?)?\s*(?:y|e|entonces|ahora)\b/iu.test(question) &&
+    contentTokens(question).length <= 2
+  );
 }
 
 // Pregunta que pide identificar un lugar (no un atributo): "¿dónde...?",
@@ -484,6 +716,12 @@ function resolvePoi({ question, pois, semanticScores, generalScore, contextPoi }
   }
   if (contextPoi && isFollowUp(question)) {
     return { poi: contextPoi, ambiguous: [] };
+  }
+
+  // Sin un token distintivo no hay atribución semántica a un POI: una pregunta
+  // sobre «la ciudad» no puede terminar respondiendo por «Ciudad Deportiva».
+  if (!hasDistinctivePoiToken(question)) {
+    return { poi: null, ambiguous: [] };
   }
 
   const semantic = rankedPois(
@@ -531,12 +769,14 @@ function ambiguousOrFirst(ranked) {
   };
 }
 
-function scoreItems(index, queryVectors, resolvedPoi) {
+function scoreItems(index, queryVectors, queryTexts, resolvedPoi) {
   return index.items.map((item) => {
     // Similitud por cada consulta (la completa y cada sub-consulta): la
     // aceptación usa la mejor, pero se conserva la de cada parte para exigir
     // evidencia de todos los fragmentos de una pregunta compuesta.
-    const perQuery = queryVectors.map((vector) => bestSimilarity(item, vector));
+    const perQuery = queryVectors.map((vector, position) =>
+      bestSimilarity(item, vector, queryTexts[position]),
+    );
     const semantic = Math.max(...perQuery);
     const poiMatch = Boolean(
       resolvedPoi && item.poiSlugs.includes(resolvedPoi.slug),
@@ -669,7 +909,11 @@ function citationFor(item) {
     institution: item.source.institution,
     sourceLevel: item.source.level,
     sourceLabel: item.source.sourceLabel,
-    url: item.source.url,
+    // Una captura interna del proyecto puede tener una URL de repositorio en
+    // su manifiesto; la respuesta pública no la expone.
+    url: INTERNAL_SOURCE_INSTITUTIONS.has(item.source.institution)
+      ? null
+      : item.source.url,
     verifiedAt: item.source.verifiedAt,
     page: item.page,
     section: item.section,
@@ -683,51 +927,155 @@ function citationFor(item) {
   };
 }
 
+function isRelevantSecondaryCitation(
+  entry,
+  anchorScore,
+  resolvedPoi,
+  coverageIds,
+) {
+  if (coverageIds.has(entry.item.id)) {
+    return true;
+  }
+  if (
+    resolvedPoi &&
+    (entry.item.poiSlugs.includes(resolvedPoi.slug) ||
+      phraseOf(entry.item.text).includes(phraseOf(resolvedPoi.title)))
+  ) {
+    return true;
+  }
+
+  return anchorScore - entry.score <= SECONDARY_CITATION_MAX_GAP;
+}
+
 // Selecciona las citas del tope de candidatos: primero una por fuente para
 // que la respuesta cubra el lugar preguntado y el registro general, y después
 // completa el tope con la siguiente cita válida. En preguntas compuestas el
-// tope sube para que cada parte tenga su cita en un mismo texto.
-function pickCitations(selected, maxCitations = MAX_ANSWER_CITATIONS) {
+// tope sube para que cada parte tenga su cita en un mismo texto. Toda cita
+// posterior a la primera debe aportar cobertura, pertenecer al lugar
+// preguntado o estar cerca del puntaje principal.
+function pickCitations(
+  selected,
+  maxCitations = MAX_ANSWER_CITATIONS,
+  { resolvedPoi = null, coverageIds = new Set() } = {},
+) {
   const picked = [];
   const usedChunks = new Set();
   const usedSources = new Set();
+  const anchorScore = selected[0]?.score ?? 0;
+  const relevant = (entry) =>
+    picked.length === 0 ||
+    isRelevantSecondaryCitation(entry, anchorScore, resolvedPoi, coverageIds);
 
-  for (const { item } of selected) {
+  for (const entry of selected) {
     if (picked.length >= maxCitations) {
       break;
     }
-    if (usedSources.has(item.source.sourceId)) {
+    if (!relevant(entry)) {
+      continue;
+    }
+    if (usedSources.has(entry.item.source.sourceId)) {
       continue;
     }
 
-    const citation = citationFor(item);
+    const citation = citationFor(entry.item);
 
     if (!citation) {
       continue;
     }
 
     usedSources.add(citation.sourceId);
-    usedChunks.add(item.chunkKey);
+    usedChunks.add(entry.item.chunkKey);
     picked.push(citation);
   }
 
-  for (const { item } of selected) {
+  for (const entry of selected) {
     if (picked.length >= maxCitations) {
       break;
     }
-    if (usedChunks.has(item.chunkKey)) {
+    if (usedChunks.has(entry.item.chunkKey) || !relevant(entry)) {
       continue;
     }
 
-    const citation = citationFor(item);
+    const citation = citationFor(entry.item);
 
     if (citation) {
-      usedChunks.add(item.chunkKey);
+      usedChunks.add(entry.item.chunkKey);
       picked.push(citation);
     }
   }
 
   return picked;
+}
+
+const HISTORICAL_DISCLAIMER_PATTERN =
+  /^historia, horarios y estado actual no est[aá]n verificados en el corpus\.?$/iu;
+
+function sentenceTokens(sentence) {
+  return new Set(contentTokens(sentence));
+}
+
+// Una frase es redundante si su contenido está incluido en otra ya compuesta
+// (o al revés): cubre la repetición de dirección y datos entre la ficha del
+// POI y la captura del registro interno.
+function isRedundantSentence(tokens, seen) {
+  if (tokens.size < 4) {
+    return false;
+  }
+
+  return seen.some((existing) => {
+    const smaller = Math.min(tokens.size, existing.size);
+
+    if (smaller < 4) {
+      return false;
+    }
+
+    const overlap = [...tokens].filter((token) => existing.has(token)).length;
+
+    return overlap >= smaller;
+  });
+}
+
+// Compone la respuesta a partir de las citas: elimina frases repetidas,
+// capitaliza el inicio de cada frase y retira el aviso de datos no
+// verificados cuando otra cita sí aporta historia o un horario/estado actual.
+function composeAnswer(citations) {
+  const hasHistoricalCitation = citations.some(
+    ({ claimType }) => claimType === 'historical',
+  );
+  const hasCurrentStatusCitation = citations.some(
+    ({ claimType }) => claimType === 'current_status',
+  );
+  const seen = [];
+  const parts = [];
+
+  for (const citation of citations) {
+    for (const rawSentence of citation.quote.split(/(?<=[.!?])\s+/u)) {
+      const sentence = rawSentence.trim();
+
+      if (!sentence) {
+        continue;
+      }
+      if (
+        (hasHistoricalCitation || hasCurrentStatusCitation) &&
+        HISTORICAL_DISCLAIMER_PATTERN.test(sentence)
+      ) {
+        continue;
+      }
+
+      const tokens = sentenceTokens(sentence);
+
+      if (isRedundantSentence(tokens, seen)) {
+        continue;
+      }
+
+      seen.push(tokens);
+      parts.push(
+        sentence.replace(/^([a-záéíóúüñ])/u, (letter) => letter.toUpperCase()),
+      );
+    }
+  }
+
+  return parts.join(' ');
 }
 
 function answerTypeFor(citations) {
@@ -796,13 +1144,12 @@ function publicPoi(poi) {
   return poi ? { id: poi.id, slug: poi.slug, title: poi.title } : null;
 }
 
-function abstentionResponse({ reason, suggestions, poi, corpusVersion }) {
+function abstentionResponse({ reason, suggestions, poi, corpusVersion, message = null }) {
   return {
     answerType: 'abstention',
     answer:
-      reason === 'NO_CURRENT_STATUS'
-        ? SCHEDULE_ABSTENTION_MESSAGE
-        : FALLBACK_MESSAGE,
+      message ??
+      (reason === 'NO_CURRENT_STATUS' ? SCHEDULE_ABSTENTION_MESSAGE : FALLBACK_MESSAGE),
     citations: [],
     sources: [],
     confidenceLabel: null,
@@ -833,6 +1180,373 @@ function clarificationResponse(pois, corpusVersion) {
   };
 }
 
+function greetingResponse(corpusVersion) {
+  return {
+    answerType: 'greeting',
+    answer: GREETING_MESSAGE,
+    citations: [],
+    sources: [],
+    confidenceLabel: null,
+    abstained: false,
+    abstentionReason: null,
+    suggestions: [...GREETING_SUGGESTIONS],
+    options: [],
+    poi: null,
+    corpusVersion,
+    retrieval: { chunkIds: [], scores: [], topK: 0 },
+  };
+}
+
+function statusAbstentionFor({ selected, askedPoi, question }) {
+  if (!CURRENT_STATUS_PATTERN.test(question)) {
+    return null;
+  }
+
+  // Un horario o estado publicado solo responde por el lugar preguntado:
+  // si la pregunta resuelve un POI, la evidencia debe pertenecerle (por la
+  // etiqueta del fragmento o por mencionar su título en el texto).
+  const statusEvidence = selected.filter(({ item }) => {
+    if (item.claimType !== 'current_status') {
+      return false;
+    }
+    if (!askedPoi) {
+      return true;
+    }
+
+    return (
+      item.poiSlugs.includes(askedPoi.slug) ||
+      phraseOf(item.text).includes(phraseOf(askedPoi.title))
+    );
+  });
+  const asksPrice = PRICE_ASPECT_PATTERN.test(question);
+  const covered =
+    statusEvidence.length > 0 &&
+    (!asksPrice ||
+      statusEvidence.some(({ item }) => PRICE_ASPECT_PATTERN.test(item.text)));
+
+  if (covered) {
+    return null;
+  }
+
+  return {
+    reason: 'NO_CURRENT_STATUS',
+    message: asksPrice ? PRICE_ABSTENTION_MESSAGE : SCHEDULE_ABSTENTION_MESSAGE,
+  };
+}
+
+function hasUnsupportedYear(question, selected) {
+  const explicitYears = [
+    ...new Set(question.match(/\b(?:1[0-9]{3}|20[0-9]{2})\b/gu) ?? []),
+  ];
+
+  if (!explicitYears.length) {
+    return false;
+  }
+
+  return !selected.some(({ item }) =>
+    explicitYears.some((year) => item.text.includes(year)),
+  );
+}
+
+function allowPoiChunksFor(question, resolvedPoi) {
+  return Boolean(resolvedPoi) || hasDistinctivePoiToken(question);
+}
+
+// Una pregunta «¿Qué es la Casa X?» sobre un lugar que no resuelve un POI y
+// cuya palabra distintiva no aparece en la evidencia seleccionada no debe
+// responderse con otra ficha parecida. Es el caso de «Casa del Tesoro», que
+// no existe en el corpus y no puede convertirse en «Casa del Sol».
+const PLACE_SUBJECT_PATTERN =
+  /^\s*¿?\s*(?:qué|que)\s+(?:es|son)\s+(?:el|la|los|las)?\s*(casa|museo|iglesia|catedral|plaza|monumento|teatro|parque|arco|mirador|paseo|edificio|palacio|convento|capilla|hotel|posada|mercado|puente|torre|castillo|fuerte)\b/iu;
+const PLACE_TYPE_TOKENS = new Set([
+  'casa',
+  'museo',
+  'iglesia',
+  'catedral',
+  'plaza',
+  'monumento',
+  'teatro',
+  'parque',
+  'arco',
+  'mirador',
+  'paseo',
+  'edificio',
+  'palacio',
+  'convento',
+  'capilla',
+  'hotel',
+  'posada',
+  'mercado',
+  'puente',
+  'torre',
+  'castillo',
+  'fuerte',
+]);
+
+function hasUnsupportedPlaceSubject(question, selected, resolvedPoi) {
+  if (resolvedPoi || !PLACE_SUBJECT_PATTERN.test(question.trim())) {
+    return false;
+  }
+
+  const subject = question.trim().replace(/^\s*¿?\s*(?:qué|que)\s+(?:es|son)\s+/iu, '');
+  const distinctive = contentTokens(subject).filter(
+    (token) => !PLACE_TYPE_TOKENS.has(token),
+  );
+
+  if (!distinctive.length) {
+    return false;
+  }
+
+  const tokenSets = selected.map(
+    ({ item }) => new Set(contentTokens(item.text)),
+  );
+
+  return !distinctive.every((token) =>
+    tokenSets.some((tokens) => tokens.has(token)),
+  );
+}
+
+/**
+ * Resuelve cada parte de una pregunta doble o triple por separado: recupera
+ * su evidencia, decide su propia intención y compone su propio texto. Así
+ * «¿Qué es Coro y qué es la Ciudad Deportiva?» no mezcla la ficha del POI con
+ * la definición de la ciudad ni responde en un orden arbitrario.
+ */
+async function answerCompoundQuestion({
+  question,
+  scope,
+  contextPoi,
+  queryTexts,
+  queryVectors,
+  index,
+  pois,
+  corpusVersion,
+  abstain,
+  fallbackSelected = [],
+  fallbackPoi = null,
+}) {
+  const parts = queryTexts.slice(1);
+  const partAnswers = [];
+  const allCitations = [];
+  const chunkIds = [];
+  const scores = [];
+  const resolvedPois = [];
+  const usedSources = new Set();
+  let previousPoi = contextPoi ?? fallbackPoi;
+
+  for (let position = 0; position < parts.length; position += 1) {
+    const text = parts[position];
+    const vector = queryVectors[position + 1];
+
+    if (scope === 'tourist' && !exactPoiMatches(text, pois).length) {
+      const unpublished = exactPoiMatches(text, await unpublishedPois());
+
+      if (unpublished.length) {
+        return abstain('NO_EVIDENCE', null, null, vector, text);
+      }
+    }
+
+    const generalScore = bestGeneralSimilarity(index, vector, text);
+    const resolution =
+      scope === 'tourist'
+        ? resolvePoi({
+            question: text,
+            pois,
+            semanticScores: semanticPoiScores(index, vector, text),
+            generalScore,
+            contextPoi: previousPoi,
+          })
+        : { poi: null, ambiguous: [] };
+
+    if (resolution.ambiguous.length) {
+      return clarificationResponse(resolution.ambiguous, corpusVersion);
+    }
+
+    const poiContext = resolution.poi ?? previousPoi ?? fallbackPoi;
+
+    if (scope === 'tourist' && TOURIST_OUT_OF_SCOPE_PATTERN.test(text)) {
+      return abstain('OUT_OF_SCOPE', poiContext, null, vector, text);
+    }
+    if (ADVERSARIAL_PATTERN.test(text)) {
+      return abstain(
+        /\bcopia el informe\b/iu.test(text) ? 'RIGHTS_RESTRICTED' : 'NO_EVIDENCE',
+        poiContext,
+        null,
+        vector,
+        text,
+      );
+    }
+    if (FREE_FORM_PATTERN.test(text)) {
+      return abstain('NO_EVIDENCE', poiContext, null, vector, text);
+    }
+
+    const allowPoiChunks = allowPoiChunksFor(text, resolution.poi);
+    const scored = scoreItems(index, [vector], [text], resolution.poi).filter(
+      ({ item }) => allowPoiChunks || item.poiSlugs.length === 0,
+    );
+    const statusQuestion =
+      scope === 'tourist' && CURRENT_STATUS_PATTERN.test(text);
+    const selected = selectCandidates(scored, statusQuestion, new Set());
+    const elliptical = isFollowUp(text) || contentTokens(text).length <= 1;
+    let effectiveSelected = selected;
+    let statusAbstention = statusAbstentionFor({
+      selected: effectiveSelected,
+      askedPoi: poiContext,
+      question: text,
+    });
+    const initialCitations = pickCitations(effectiveSelected, 2, {
+      resolvedPoi: poiContext,
+    });
+
+    // Una parte elíptica («cómo se obtienen», «su horario») no recupera por sí
+    // sola el sujeto de la parte anterior. Si no encuentra evidencia o el
+    // aspecto de estado no está cubierto, se apoya en la selección de la
+    // pregunta completa, que sí contiene el sujeto.
+    if (elliptical && (!initialCitations.length || statusAbstention)) {
+      effectiveSelected = fallbackSelected;
+      statusAbstention = statusAbstentionFor({
+        selected: effectiveSelected,
+        askedPoi: poiContext,
+        question: text,
+      });
+    }
+
+    if (hasUnsupportedPlaceSubject(text, effectiveSelected, resolution.poi)) {
+      return abstain('NO_EVIDENCE', poiContext, null, vector, text);
+    }
+
+    if (statusAbstention) {
+      return abstain(
+        statusAbstention.reason,
+        poiContext,
+        statusAbstention.message,
+        vector,
+        text,
+      );
+    }
+
+    if (hasUnsupportedYear(text, effectiveSelected)) {
+      return abstain('NO_EVIDENCE', poiContext, null, vector, text);
+    }
+
+    // Para una parte compuesta se prefieren dos fuentes distintas si ambas
+    // son relevantes: «adobe y tapia» debe citar S-024 y S-025, no dos veces
+    // S-024. Luego se elige una cita por parte, priorizando una fuente que no
+    // se haya usado ya en otra parte.
+    const topSourceId = effectiveSelected[0]?.item.source.sourceId ?? null;
+    const alternate = effectiveSelected.find(
+      ({ item, accepted }) =>
+        accepted && item.source.sourceId !== topSourceId,
+    );
+    const coverageIds = alternate ? new Set([alternate.item.id]) : new Set();
+    const partCitations = pickCitations(effectiveSelected, 2, {
+      resolvedPoi: poiContext,
+      coverageIds,
+    });
+
+    if (!partCitations.length) {
+      return abstain('NO_EVIDENCE', poiContext, null, vector, text);
+    }
+
+    const primaryCitation = partCitations[0];
+    const diverseCitation = partCitations.find(
+      (citation) => !usedSources.has(citation.sourceId),
+    );
+    const chosenCitation = diverseCitation ?? primaryCitation;
+
+    const accessIntent = scope === 'tourist' ? classifyAccessIntent(text) : null;
+    const accessEvidence = accessIntent
+      ? effectiveSelected.some(({ item }) =>
+          accessEvidenceMatches(accessIntent, item.text),
+        )
+      : false;
+
+    if (accessIntent && !accessEvidence) {
+      if (!(accessIntent === 'route' && poiContext)) {
+        return abstain(
+          'NO_EVIDENCE',
+          poiContext,
+          accessAbstentionMessage(accessIntent),
+          vector,
+          text,
+        );
+      }
+    }
+
+    const composed = composeAnswer([chosenCitation]);
+    let partAnswer = composed;
+
+    if (accessIntent === 'route' && !accessEvidence && poiContext) {
+      partAnswer = `${ROUTE_NOTICE} ${composed}`;
+    } else if (
+      (accessIntent === 'route' || accessIntent === 'transport') &&
+      accessEvidence
+    ) {
+      partAnswer = `${ACCESS_DATA_NOTICE} ${composed}`;
+    }
+
+    if (!partAnswer.trim()) {
+      continue;
+    }
+
+    partAnswers.push(partAnswer.trim());
+    allCitations.push(chosenCitation);
+    usedSources.add(chosenCitation.sourceId);
+
+    for (const entry of effectiveSelected) {
+      chunkIds.push(entry.item.id);
+      scores.push(entry.score);
+    }
+
+    if (resolution.poi) {
+      resolvedPois.push(resolution.poi);
+      previousPoi = resolution.poi;
+    }
+  }
+
+  const citations = [
+    ...new Map(
+      allCitations.map((citation) => [citation.chunkId, citation]),
+    ).values(),
+  ];
+
+  if (!citations.length) {
+    return abstain('NO_EVIDENCE', fallbackPoi);
+  }
+
+  const uniquePois = [
+    ...new Map(resolvedPois.map((poi) => [poi.slug, poi])).values(),
+  ];
+  const sources = sourcesFor(citations);
+
+  return {
+    answerType: answerTypeFor(citations),
+    answer: partAnswers.join('\n\n'),
+    citations,
+    sources,
+    confidenceLabel: sources[0]?.label ?? null,
+    abstained: false,
+    abstentionReason: null,
+    suggestions: [],
+    options: [],
+    // Con varios POI distintos en una misma pregunta no se elige uno solo:
+    // un seguimiento posterior no debe heredar el lugar equivocado. Si ninguna
+    // parte resolvió un POI, se conserva el de la pregunta completa.
+    poi:
+      uniquePois.length === 1
+        ? publicPoi(uniquePois[0])
+        : uniquePois.length === 0 && fallbackPoi
+          ? publicPoi(fallbackPoi)
+          : null,
+    corpusVersion,
+    retrieval: {
+      chunkIds: [...new Set(chunkIds)],
+      scores,
+      topK: citations.length,
+    },
+  };
+}
+
 export async function answerAssistantQuestion({
   question,
   scope,
@@ -840,20 +1554,34 @@ export async function answerAssistantQuestion({
   statuses = ['active'],
 }) {
   const corpusVersion = config.assistant.corpusVersion;
+  // Un saludo de mensaje completo no consulta el corpus: responde con la
+  // bienvenida y tres preguntas sugeridas.
+  if (scope === 'tourist' && isGreeting(question)) {
+    return greetingResponse(corpusVersion);
+  }
+
   // Vector de la pregunta completa (posición 0) más uno por cada sub-consulta
   // de una pregunta compuesta, para recuperar la evidencia de cada parte.
-  const queryVectors = await embedQueryVectors(question);
+  const queryTexts = [question, ...splitSubQueries(question)];
+  const queryVectors = await embedQueryVectors(queryTexts);
   const [queryVector] = queryVectors;
   const index = await loadIndex(scope, { statuses });
   const pois = scope === 'tourist' ? await publishedPois() : [];
-  const generalScore = bestGeneralSimilarity(index, queryVector);
+  const generalScore = bestGeneralSimilarity(index, queryVector, question);
 
-  const abstain = (reason, resolvedPoi = null) =>
+  const abstain = (
+    reason,
+    resolvedPoi = null,
+    message = null,
+    vector = queryVector,
+    text = question,
+  ) =>
     abstentionResponse({
       reason,
-      suggestions: nearestQuestions(index, queryVector, question),
+      suggestions: nearestQuestions(index, vector, text),
       poi: publicPoi(resolvedPoi),
       corpusVersion,
+      message,
     });
 
   // La hora exacta del momento no está en el corpus: se abstiene con el
@@ -877,14 +1605,16 @@ export async function answerAssistantQuestion({
       ? resolvePoi({
           question,
           pois,
-          semanticScores: semanticPoiScores(index, queryVector),
+          semanticScores: semanticPoiScores(index, queryVector, question),
           generalScore,
           contextPoi,
         })
       : { poi: null, ambiguous: [] };
   const poi = publicPoi(resolution.poi);
 
-  if (resolution.ambiguous.length) {
+  // Una pregunta triple no debe resolverse con la ambigüedad del texto
+  // completo: cada parte se resuelve y se responde por separado.
+  if (resolution.ambiguous.length && queryVectors.length === 1) {
     return clarificationResponse(resolution.ambiguous, corpusVersion);
   }
 
@@ -907,112 +1637,88 @@ export async function answerAssistantQuestion({
 
   const statusQuestion =
     scope === 'tourist' && CURRENT_STATUS_PATTERN.test(question);
-  const scored = scoreItems(index, queryVectors, resolution.poi);
-  // En una pregunta compuesta, el mejor candidato de cada sub-consulta entra
-  // en la selección para que ninguna parte quede sin responder.
-  const coverageIds = new Set();
-
-  for (let position = 1; position < queryVectors.length; position += 1) {
-    let best = null;
-
-    for (const entry of scored) {
-      if (entry.perQuery[position] < entry.minimum) {
-        continue;
-      }
-      if (!best || entry.perQuery[position] > best.perQuery[position]) {
-        best = entry;
-      }
-    }
-
-    if (best) {
-      coverageIds.add(best.item.id);
-    }
-  }
-
-  const selected = selectCandidates(scored, statusQuestion, coverageIds);
-
-  if (statusQuestion) {
-    // Un horario o estado publicado solo responde por el lugar preguntado:
-    // si la pregunta resuelve un POI, la evidencia debe pertenecerle (por la
-    // etiqueta del fragmento o por mencionar su título en el texto). El
-    // horario de otro sitio no responde «¿Cuál es el horario del Museo
-    // Diocesano?»: sin evidencia propia corresponde «Sin horarios confirmados…».
-    const askedPoi = resolution.poi;
-    const statusEvidence = selected.filter(({ item }) => {
-      if (item.claimType !== 'current_status') {
-        return false;
-      }
-      if (!askedPoi) {
-        return true;
-      }
-
-      return (
-        item.poiSlugs.includes(askedPoi.slug) ||
-        phraseOf(item.text).includes(phraseOf(askedPoi.title))
-      );
-    });
-    const asksPrice = PRICE_ASPECT_PATTERN.test(question);
-    // Un horario publicado no responde una pregunta de precio: si la pregunta
-    // pide tarifas, la evidencia de estado debe contener datos de precio.
-    const covered =
-      statusEvidence.length > 0 &&
-      (!asksPrice ||
-        statusEvidence.some(({ item }) =>
-          PRICE_ASPECT_PATTERN.test(item.text),
-        ));
-
-    if (!covered) {
-      return abstain('NO_CURRENT_STATUS', resolution.poi);
-    }
-  }
-
-  // Si alguna parte de una pregunta compuesta no tiene evidencia propia, la
-  // respuesta completa se abstiene: no se responde a medias. El piso usa el
-  // umbral con margen (fragmentos cortos); ver COVERAGE_SIMILARITY_MARGIN.
-  const coverageFloor =
-    config.assistant.minSimilarity - COVERAGE_SIMILARITY_MARGIN;
-  const uncoveredPart =
-    queryVectors.length > 1 &&
-    Array.from(
-      { length: queryVectors.length - 1 },
-      (_, offset) => offset + 1,
-    ).some((position) =>
-      scored.every((entry) => entry.perQuery[position] < coverageFloor),
-    );
-
-  if (uncoveredPart) {
-    return abstain('NO_EVIDENCE', resolution.poi);
-  }
-
-  // Si la pregunta nombra un año concreto y ningún fragmento seleccionado lo
-  // contiene, no hay evidencia sobre ese hecho (p. ej. un terremoto de 1812).
-  const explicitYears = [
-    ...new Set(question.match(/\b(?:1[0-9]{3}|20[0-9]{2})\b/gu) ?? []),
-  ];
-
-  if (
-    explicitYears.length &&
-    !selected.some(({ item }) =>
-      explicitYears.some((year) => item.text.includes(year)),
-    )
-  ) {
-    return abstain('NO_EVIDENCE', resolution.poi);
-  }
-
-  const citations = pickCitations(
-    selected,
-    queryVectors.length > 1 ? MAX_ANSWER_CITATIONS_COMPOUND : MAX_ANSWER_CITATIONS,
+  const allowPoiChunks = allowPoiChunksFor(question, resolution.poi);
+  const scored = scoreItems(index, [queryVector], [question], resolution.poi).filter(
+    ({ item }) => allowPoiChunks || item.poiSlugs.length === 0,
   );
+  const selected = selectCandidates(scored, statusQuestion, new Set());
+
+  if (queryVectors.length > 1) {
+    return answerCompoundQuestion({
+      question,
+      scope,
+      contextPoi,
+      queryTexts,
+      queryVectors,
+      index,
+      pois,
+      corpusVersion,
+      abstain,
+      fallbackSelected: selected,
+      fallbackPoi: resolution.poi,
+    });
+  }
+
+  if (hasUnsupportedPlaceSubject(question, selected, resolution.poi)) {
+    return abstain('NO_EVIDENCE', resolution.poi);
+  }
+
+  const statusAbstention = statusAbstentionFor({
+    selected,
+    askedPoi: resolution.poi,
+    question,
+  });
+  if (statusAbstention) {
+    return abstain(statusAbstention.reason, resolution.poi, statusAbstention.message);
+  }
+
+  if (hasUnsupportedYear(question, selected)) {
+    return abstain('NO_EVIDENCE', resolution.poi);
+  }
+
+  const citations = pickCitations(selected, MAX_ANSWER_CITATIONS, {
+    resolvedPoi: resolution.poi,
+  });
 
   if (!citations.length) {
     return abstain('NO_EVIDENCE', resolution.poi);
   }
 
   const sources = sourcesFor(citations);
+  const composed = composeAnswer(citations);
+  const accessIntent = scope === 'tourist' ? classifyAccessIntent(question) : null;
+  const accessEvidence = accessIntent
+    ? selected.some(({ item }) => accessEvidenceMatches(accessIntent, item.text))
+    : false;
+
+  if (accessIntent && !accessEvidence) {
+    // En una pregunta de ruta con un lugar resuelto sí se comparte la ficha,
+    // pero con el aviso de que no hay ruta verificada. Para estacionamiento,
+    // transporte, distancia o visitas nocturnas, una ficha genérica no
+    // responde la pregunta y se prefiere la abstención específica.
+    if (!(accessIntent === 'route' && resolution.poi)) {
+      return abstain(
+        'NO_EVIDENCE',
+        resolution.poi,
+        accessAbstentionMessage(accessIntent),
+      );
+    }
+  }
+
+  let answer = composed;
+
+  if (accessIntent === 'route' && !accessEvidence && resolution.poi) {
+    answer = `${ROUTE_NOTICE} ${composed}`;
+  } else if (
+    (accessIntent === 'route' || accessIntent === 'transport') &&
+    accessEvidence
+  ) {
+    answer = `${ACCESS_DATA_NOTICE} ${composed}`;
+  }
 
   return {
     answerType: answerTypeFor(citations),
-    answer: citations.map(({ quote }) => quote).join(' '),
+    answer,
     citations,
     sources,
     confidenceLabel: sources[0]?.label ?? null,
@@ -1034,7 +1740,10 @@ export function validateAssistantInput(body, scope) {
   const question =
     typeof body?.question === 'string' ? body.question.trim() : '';
 
-  if (question.length < 3 || question.length > 2000) {
+  if (
+    (question.length < 3 && !(scope === 'tourist' && isGreeting(question))) ||
+    question.length > 2000
+  ) {
     throw new HttpError(
       400,
       'INVALID_QUESTION',

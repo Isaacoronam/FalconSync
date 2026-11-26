@@ -66,3 +66,9 @@ export const uploadLimiter = createLimiter({
   limit: 30,
   message: 'Demasiadas cargas de imágenes. Espera unos minutos.',
 });
+
+export const channelLinkLimiter = createLimiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  message: 'Demasiados intentos de vinculación. Espera una hora.',
+});

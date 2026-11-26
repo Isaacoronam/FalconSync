@@ -25,8 +25,9 @@ flowchart LR
 
 ## Funcionalidades principales
 
+- Identidad visual Chivito: logo circular, fondo de Médanos y guía conversacional
 - Catálogo público de lugares y puntos de interés (POI)
-- Mapa interactivo con geolocalización y filtro regional
+- Mapa interactivo con filtro por categoría
 - Autenticación con JWT y cookies de refresco
 - Roles de usuario, historiador, inspector y administrador (`moderator` legacy en migración)
 - Gestión administrativa de POI, estados y validaciones
@@ -34,10 +35,12 @@ flowchart LR
 - Evidencia privada con hash, autorización por recurso y acceso auditado
 - Visitas 360° con visor WebGL propio, hotspots, fallback y curaduría editorial
 - Check-in por lugar con QR y geocerca
+- Celebración de check-in con Chivito y medallones de insignia por categoría
 - Perfil privado con avatar y galería de fotos
 - Insignias por visita y métricas de actividad
 - Auditoría de cambios y soporte para imágenes locales
-- Guía patrimonial con respuestas citadas (RAG semántico local), abstención honesta y sugerencias; apoyo técnico reservado y deshabilitado hasta aprobar su corpus
+- Chivito, guía turístico con respuestas citadas (RAG semántico local), abstención honesta y sugerencias; apoyo técnico reservado y deshabilitado hasta aprobar su corpus
+- Canal de Telegram vía MCP: acceso desde el chat de `/guia`, guía y recorridos públicos; reportes de conservación con cuenta vinculada por código o deep link y avisos de cambio de estado
 - Suite E2E con Playwright para validación continua
 
 ## Stack tecnológico
@@ -217,6 +220,7 @@ La documentación del sistema se encuentra organizada en:
 - [docs/POI.md](docs/POI.md) — catálogo, editorial, publicaciones y fuentes
 - [docs/AVENTURAS.md](docs/AVENTURAS.md) — compatibilidad heredada y recorridos
 - [docs/PERFIL.md](docs/PERFIL.md) — perfil privado, avatar y galería
+- [docs/INTEGRACION-TELEGRAM.md](docs/INTEGRACION-TELEGRAM.md) — bot de Telegram, MCP, vinculación y reportes
 - [CONTRIBUTING.md](CONTRIBUTING.md) — normas de contribución y flujo de trabajo
 
 ## Contribución

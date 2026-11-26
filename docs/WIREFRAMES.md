@@ -410,27 +410,30 @@ Estados de conexión:
 | Sesión revocada | “Tu sesión cambió. Inicia sesión de nuevo.” | Redirigir a `/login`. |
 | Sin permiso | “No tienes acceso a este recurso.” | Volver a la bandeja. |
 
-### W-10 — Guía turística
+### W-10 — Guía Chivito
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│ Guía turística de Coro                          [Nueva charla]│
+│ (avatar) Chivito · Guía turístico de FalconSync              │
+│          Chivito disponible · corpus 2026.11.20-1             │
 ├──────────────────────────────────────────────────────────────┤
+│ (avatar) Chivito                                             │
 │ Tú: ¿Qué puedo visitar cerca de la Catedral?                 │
 │                                                              │
-│ Guía: La Catedral de Coro se encuentra en el Casco Histórico.│
-│       Puedes continuar hacia la Plaza Bolívar y el Museo…    │
+│ Chivito: La Catedral de Coro se encuentra en el Casco        │
+│          Histórico. Puedes continuar hacia la Plaza Bolívar  │
+│          y el Museo…                                         │
 │                                                              │
-│       Fuentes:                                               │
-│       [1] Oficial local · Fundación… · ver cita             │
-│       [2] Referencia · …                                     │
-│       Etiqueta: Oficial local                                │
+│          Fuentes:                                            │
+│          [1] Oficial local · Fundación… · ver cita           │
+│          [2] Referencia · …                                  │
+│          Etiqueta: Oficial local                             │
 │                                                              │
 │ Tú: ¿Cuál es el estado de conservación actual?               │
 │                                                              │
-│ Guía: No consta una inspección verificada para este lugar.   │
-│       Puedo mostrarte la información histórica disponible,   │
-│       pero no un diagnóstico.                                │
+│ Chivito: No consta una inspección verificada para este       │
+│          lugar. Puedo mostrarte la información histórica     │
+│          disponible, pero no un diagnóstico.                 │
 ├──────────────────────────────────────────────────────────────┤
 │ [Escribe tu pregunta…]                            [Enviar]   │
 │ Las respuestas se basan en fuentes citadas. No son un        │
@@ -440,11 +443,15 @@ Estados de conexión:
 
 Reglas:
 
+- Chivito es el nombre y el avatar del guía turístico; no es el asistente técnico.
 - Cada respuesta muestra citas y etiqueta de confianza.
 - Si no hay evidencia suficiente, `abstained=true` y se explica qué falta.
 - No se muestra una respuesta sin citas validadas.
-- El asistente turístico puede usar fuentes externas etiquetadas para POI no UNESCO;
-  nunca las presenta como estado oficial de conservación.
+- El chat usa HTTP/RAG; no hay WebSocket ni LLM generativo externo en esta iteración.
+- El historial tiene altura máxima y barra de desplazamiento propia; el compositor y la franja
+  de Telegram permanecen estables aunque aumenten los mensajes.
+- El historial baja al último mensaje al enviar una pregunta, pero no arrastra la vista si la
+  persona está leyendo mensajes anteriores. Es enfocable con teclado y tiene nombre accesible.
 - El asistente técnico es una pantalla separada, solo para inspector/historiador.
 
 ### W-11 — Visor 360°
@@ -561,6 +568,36 @@ Reglas:
 - El enlace con un POI es opcional; un POI sin activo sigue siendo turístico.
 - El admin gestiona el inventario, pero no inspecciona por su rol.
 
+### W-16 — Celebración de check-in
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│                    (fondo oscuro translúcido)                │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │              [Chivito con brazos levantados]           │  │
+│  │      Chivito · Guía turístico de FalconSync            │  │
+│  │           ¡Felicidades! ¡Lo lograste!                  │  │
+│  │      ¡Un lugar más descubierto en nuestro Falcón!      │  │
+│  │  ┌──────────────────────────────────────────────────┐  │  │
+│  │  │ [insignia]  NUEVA INSIGNIA                       │  │  │
+│  │  │             Catedral de Coro                     │  │  │
+│  │  │             Religioso                           │  │  │
+│  │  └──────────────────────────────────────────────────┘  │  │
+│  │      Lugar visitado: Catedral de Coro                  │  │
+│  │      [Ver mis insignias] [Seguir explorando]           │  │
+│  └────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Reglas:
+
+- Solo se abre con `201` y al menos una insignia nueva.
+- El nombre, la categoría y la descripción salen de la respuesta del backend.
+- El botón «Seguir explorando» recibe el foco inicial; Escape y el fondo cierran.
+- Al cerrar, el foco vuelve a la confirmación inline del check-in.
+- No se abre en errores, duplicados, QR inválido o fuera de geocerca.
+- `prefers-reduced-motion` desactiva la entrada y el confeti.
+
 ## 5. Estados obligatorios por pantalla
 
 | Pantalla | Carga | Vacío | Error | Sin permiso | Sin conexión |
@@ -574,7 +611,8 @@ Reglas:
 | Revisión | Esqueleto | No aplica | Errores de regla de cierre | 403 | No permitir cierre sin conexión |
 | Evidencia | Esqueleto | No aplica | Integridad/cuarentena | 404 | No cachear |
 | Notificaciones | Esqueleto | “No tienes notificaciones” | “No se pudieron cargar” | No aplica | “Sin conexión”; reintentar |
-| Asistente | “Pensando…” | “Haz una pregunta para empezar” | “El asistente no está disponible” | No aplica | “Sin conexión”; no enviar |
+| Chivito | “Chivito está pensando…” | “Haz una pregunta para empezar” | “Chivito no está disponible” | No aplica | “Sin conexión”; no enviar |
+| Celebración | No aplica | No aplica | No se abre | No aplica | No se abre |
 | 360 | Esqueleto | “Aún no hay visitas 360 publicadas” | Fallback estático | No aplica | Fallback estático |
 | Fuentes RAG | Filas esqueleto | “No hay fuentes registradas” | “No se pudo cargar el registro” | “Solo administración” | Última lista si existe |
 | Activos | Filas esqueleto | “No hay activos registrados” | “No se pudo cargar el inventario” | “No tienes `asset.read`” | Última lista si existe |
@@ -652,6 +690,7 @@ No se usan mensajes que culpen al usuario ni términos como “error fatal”, �
 | W-13 | UC-16 | RF-67 a RF-70 |
 | W-14 | Fase 2 | RF-08 a RF-15 |
 | W-15 | UC-19 | RF-11, RF-12 |
+| W-16 | Check-in válido | RF-95, RF-96, HU-28 |
 
 ## 10. Decisiones pendientes
 

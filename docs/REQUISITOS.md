@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.0 |
-| Fecha | 2026-11-13 |
-| Estado | Línea base de Fase 0; pendiente de aprobación de D-09 a D-23 y del alcance condicional |
+| Versión | 1.1 |
+| Fecha | 2026-11-25 |
+| Estado | Línea base de Fase 0; identidad Chivito y celebración incorporadas; D-09 a D-23 y alcance condicional siguen pendientes |
 | Autoridad | [`docs/PLAN-IMPLEMENTACION.md`](./PLAN-IMPLEMENTACION.md) y decisiones del responsable del proyecto |
 | Documentos relacionados | [`RBAC.md`](./RBAC.md), [`FUENTES-RAG.md`](./FUENTES-RAG.md), [`SEGURIDAD.md`](./SEGURIDAD.md), [`OPERACION.md`](./OPERACION.md), [`MODELO-DATOS.md`](./MODELO-DATOS.md), [`CASOS-USO.md`](./CASOS-USO.md), [`openapi.yaml`](./openapi.yaml), [`WIREFRAMES.md`](./WIREFRAMES.md), [`360.md`](./360.md), [`ADR/README.md`](./ADR/README.md) |
 
@@ -110,6 +110,12 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | RN-23 | Las reglas de publicación de POI se mantienen: no se publica un POI provisional ni sin fecha de verificación de coordenadas. |
 | RN-24 | Los estados se comunican con texto, icono o patrón; nunca solo con color. |
 | RN-25 | La marca pública es FALCONSYNC. |
+| RN-27 | Chivito es la única voz del guía turístico; no se presenta como inspector, autoridad ni asistente técnico. |
+| RN-28 | Los recursos oficiales de marca y Chivito se usan sin sustituirlos, deformarlos ni reinterpretarlos. |
+| RN-29 | La celebración de check-in solo aparece tras un `201` con insignia nueva; nunca en error, duplicado, QR inválido o fuera de geocerca. |
+| RN-30 | Nombre, descripción, categoría e imagen de la insignia provienen del backend o de su categoría real; la UI no inventa datos. |
+| RN-31 | La identidad y el fondo no reducen el contraste ni bloquean la interacción; respetan `prefers-reduced-motion`. |
+| RN-32 | La personalidad de Chivito no altera hechos, citas ni abstención del RAG. |
 
 ## 5. Historias de usuario
 
@@ -140,6 +146,10 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | HU-23 | Historiador | validar la identidad, el nivel, los derechos y la vigencia de las fuentes RAG, y proponer altas, versiones y retiros | mantener un corpus trazable y autorizado | Alta | Cada propuesta identifica documento, página, sección y checksum; la mutación la ejecuta administración con `source.manage`; una versión nueva no borra la anterior. |
 | HU-24 | Operador | desplegar, monitorear, respaldar y revertir | operar el servicio | Alta | Existe restauración probada, monitoreo, alertas y rollback documentado. |
 | HU-25 | Soporte | diagnosticar un incidente | reducir el tiempo de reparación | Media | Los logs tienen `correlationId` y no exponen secretos ni datos personales innecesarios. |
+| HU-26 | Visitante | reconocer FalconSync por su nueva identidad visual | sentir una plataforma turística propia de Falcón | Alta | Logo en header/auth/admin, favicon válido, fondo legible en 390/768/1440, sin scroll horizontal y contraste AA. |
+| HU-27 | Visitante | conversar con Chivito, mi guía turístico | descubrir Coro y los POI con respuestas citadas | Alta | Chivito tiene nombre, rol y avatar; los mensajes se distinguen; hay saludo, indicador de espera, error/reintento y citas; el modo técnico no usa Chivito; no se afirma IA generativa. |
+| HU-28 | Turista | que Chivito celebre mi check-in y me muestre la insignia ganada | sentir la recompensa y continuar explorando | Alta | El modal solo aparece con `201` e insignia nueva; muestra badge y POI reales; cierra con botón, Escape o fondo; enlaza al perfil; no aparece en error/duplicado/sin insignia; el doble envío se bloquea. |
+| HU-29 | Usuario con diversidad funcional | usar la identidad, el chat y la celebración con teclado, lector y movimiento reducido | participar sin barreras | Alta | Foco visible y atrapado en el modal; etiquetas; contraste; estados no cromáticos; responsive; `prefers-reduced-motion`. |
 
 ## 6. Requisitos funcionales
 
@@ -265,6 +275,15 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | RF-81 | Mostrar citas, fuentes y abstención en el asistente. | Alta | HU-21, HU-22 |
 | RF-88 | Presentar orientación técnica sobre arquitectura colonial y tapia/adobe como preliminar, diferenciando normas, hechos e hipótesis; no prescribir intervenciones específicas ni sustituir una inspección profesional. | Alta | HU-21 |
 | RF-89 | Sugerir recorridos solo entre POI registrados y no afirmar condiciones actuales de acceso, horario, seguridad o accesibilidad sin una fuente vigente. | Media | HU-22 |
+| RF-90 | Integrar logo oficial, variantes y favicon en header, autenticación, administración y metadatos. | Alta | HU-26 |
+| RF-91 | Aplicar tokens de color, tipografía y espaciado, y el fondo de Médanos con capas de legibilidad responsive. | Alta | HU-26, HU-29 |
+| RF-92 | Generar los recursos derivados de forma reproducible desde los maestros con `npm run brand:assets`. | Alta | HU-26 |
+| RF-93 | Presentar el chat como Chivito, con avatar, rol, saludo, estados y citas, reutilizando `/api/assistant/tourist/query`. | Alta | HU-27 |
+| RF-94 | Mantener el modo técnico separado; Chivito no aparece como asistente técnico. | Alta | HU-27 |
+| RF-95 | Mostrar un diálogo de celebración accesible con la insignia y el POI reales tras un check-in válido. | Alta | HU-28 |
+| RF-96 | No abrir la celebración en errores, duplicados, QR inválido, fuera de geocerca o cuando no hay insignia nueva. | Alta | HU-28 |
+| RF-97 | Actualizar pruebas unitarias, E2E, documentación y contratos afectados. | Alta | Todas |
+| RF-98 | Proporcionar medallones de categoría para insignias con `image: null`, derivados de la categoría real. | Media | HU-28 |
 
 ### 6.9 Operación y administración
 
@@ -305,6 +324,10 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | RNF-22 | Integridad | Eventos append-only y concurrencia optimista en transiciones críticas | Pruebas de concurrencia |
 | RNF-23 | Coste RAG | Cuota, caché y coste por consulta medidos | Panel de coste |
 | RNF-24 | Marca | FALCONSYNC en interfaz, documentación y metadatos | Revisión visual |
+| RNF-25 | Accesibilidad visual | WCAG 2.2 AA: contraste 4.5:1, foco, teclado y estados no cromáticos | Revisión manual + pruebas E2E |
+| RNF-26 | Rendimiento de recursos | Fondo WebP ≤ 350 KB; logo ≤ 350 KB; avatares ≤ 120 KB; sin dependencias nuevas | Revisión de tamaños en build |
+| RNF-27 | Movimiento | Respetar `prefers-reduced-motion`; sin animaciones permanentes | Revisión CSS + captura |
+| RNF-28 | Reproducibilidad | `npm run brand:assets` regenera logo, favicons, avatar, poses y fondo | Ejecución del script |
 
 ## 8. Trazabilidad RN → HU → RF/RNF
 
@@ -325,6 +348,12 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 | RN-23 | HU-01 | RF-01, reglas de POI vigentes |
 | RN-24 | Todas | RF-76, RF-77 |
 | RN-25 | Todas | RNF-24 |
+| RN-27 | HU-27 | RF-93, RF-94 |
+| RN-28 | HU-26 | RF-90, RF-92, RNF-28 |
+| RN-29 | HU-28 | RF-95, RF-96 |
+| RN-30 | HU-28 | RF-95, RF-98 |
+| RN-31 | HU-26, HU-29 | RF-91, RNF-25, RNF-27 |
+| RN-32 | HU-27 | RF-93, RF-94; RF-57, RF-58, RF-81 |
 
 ## 9. Criterios de aceptación por fase
 

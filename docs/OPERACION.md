@@ -20,6 +20,7 @@
 | Evidencia | Crítica | Inspectores, auditores |
 | Notificaciones Socket.IO | Alta | Usuarios, inspectores |
 | Asistentes RAG | Media | Turistas, inspectores |
+| Bot de Telegram y MCP | Media | Turistas y usuarios vinculados |
 | Visita 360° | Media | Turistas |
 | Administración de cuentas | Alta | Administradores |
 
@@ -206,9 +207,33 @@ Rollback:
 3. Activar caché o degradar a abstención.
 4. Reconstruir el índice si está corrupto o desactualizado.
 5. Registrar latencia y motivo de abstención.
-6. Antes de dar por cerrado un cambio de recuperación, ejecutar `npm run rag:evaluate` (conjunto dorado v3 sobre `falconsync_rag_eval`; para regresión aislada de código, el v2 con `--sources S-002,S-003,S-020,S-021,S-022`); la meta es `unmetTargets` vacío.
+6. Antes de dar por cerrado un cambio de recuperación, ejecutar `npm run rag:evaluate -- --dataset corpus/evaluation/rag-golden-v5.json --report corpus/evaluation/rag-golden-v5-report.json` sobre `falconsync_rag_eval`; para regresión aislada de código, el v2 con `--sources S-002,S-003,S-020,S-021,S-022`. El v3 se conserva congelado y sus dos fallos conocidos (p-20 y p-30) son expectativas obsoletas de falsos positivos léxicos, corregidas en v4. V4 se conserva congelado; v5 corrige sus expectativas de rutas/estacionamiento y añade compuestas. La meta es `unmetTargets` vacío.
 
-### 7.5 Restauración
+### 7.5 Bot de Telegram o servidor MCP no responde
+
+1. Confirmar `TELEGRAM_ENABLED=true`, que `TELEGRAM_BOT_TOKEN` está en el entorno y que
+   `TELEGRAM_WEB_URL` apunta a la SPA pública (HTTPS en producción).
+2. Revisar el log del proceso: `npm run telegram:start` debe mostrar el `@usuario` del bot.
+   Con PM2: `pm2 status`, `pm2 logs falconsync-telegram` y `logs/telegram-error.log`.
+3. Si el error es `409 Conflict`, hay otra instancia en polling o un webhook activo.
+   Ejecutar `npm run telegram:webhook:delete` y dejar una sola instancia.
+4. Si falla la guía, probar primero la API y el corpus; el MCP reutiliza
+   `queryAssistant` y responde `ASSISTANT_UNAVAILABLE` si el corpus no está listo.
+5. Si falla la creación de incidencias, revisar que el usuario esté vinculado, que el
+   POI siga publicado y que MongoDB sea replica set (el reporte usa transacciones).
+6. Para desactivar el canal sin tumbar la API: detener el proceso del bot y poner
+   `TELEGRAM_ENABLED=false`. No hace falta borrar el vínculo de las cuentas.
+7. Para rotar el token: revocarlo en `@BotFather`, actualizar el entorno y reiniciar el
+   bot. Las sesiones de reporte en memoria se pierden; los vínculos se conservan.
+8. Si se usa webhook, verificar HTTPS, el secreto y
+   `npm run telegram:webhook:set`; luego `npm run telegram:webhook:delete` para volver
+   a polling.
+9. Si no llegan los avisos de cambio de estado, revisar que el autor tenga un
+   `ChannelLink` activo, que el reporte sea `sourceChannel=telegram` y que el log no
+   muestre un fallo de `notifyReportState`. El aviso es best-effort: la transición de
+   conservación ya quedó confirmada.
+
+### 7.6 Restauración
 
 1. Declarar incidente y ventana.
 2. Aislar escritura si hay corrupción.

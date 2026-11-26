@@ -36,6 +36,9 @@ const { hashPassword } = await import('../microservices/authService.js');
 const {
   clearAssistantCaches,
   FALLBACK_MESSAGE,
+  GREETING_MESSAGE,
+  PRICE_ABSTENTION_MESSAGE,
+  ROUTE_NOTICE,
   SCHEDULE_ABSTENTION_MESSAGE,
   splitSubQueries,
 } = await import('../microservices/assistantService.js');
@@ -106,21 +109,25 @@ async function createSource({
   status = 'active',
   usagePolicy = 'final',
   indexingPolicy = 'short_quotes_only',
+  institution = 'UNESCO',
+  url = 'https://whc.unesco.org/',
+  sourceLabel = null,
 } = {}) {
   return SourceDocument.create({
     sourceId,
     title: 'Ficha oficial de Coro',
-    institution: 'UNESCO',
+    institution,
     version: '2026',
     sourceLabel:
-      level === 'A'
+      sourceLabel ??
+      (level === 'A'
         ? 'Oficial UNESCO'
         : level === 'B'
           ? 'Académico'
-          : 'Externo',
+          : 'Externo'),
     retrievedAt: new Date('2026-11-20T00:00:00.000Z'),
     verifiedAt: status === 'active' ? new Date() : null,
-    url: 'https://whc.unesco.org/',
+    url,
     level,
     usagePolicy,
     indexingPolicy,
@@ -184,6 +191,15 @@ async function createPoi({ title, slug, category = 'religious', status = 'publis
     isProvisional: false,
     isCatalogVisible: true,
   });
+}
+
+function askTourist(question, contextLocationId) {
+  const payload = { question };
+  if (contextLocationId) {
+    payload.contextLocationId = contextLocationId;
+  }
+
+  return request(app).post('/api/assistant/tourist/query').send(payload);
 }
 
 async function createFinalCorpus() {
@@ -652,6 +668,49 @@ describe('Asistentes RAG', () => {
     assert.equal(response.body.data.poi.slug, 'casa-del-sol');
   });
 
+  it('no hereda el lugar anterior en una pregunta corta con tema propio', async () => {
+    const poi = await createPoi({
+      title: 'Monumento de las Madres',
+      slug: 'monumento-de-las-madres',
+    });
+    await createFinalCorpus();
+    const ficha = await createSource({
+      sourceId: 'S-021',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(ficha, {
+      chunkKey: 'S-021#poi.monumento-de-las-madres',
+      text: 'Monumento de las Madres es un monumento registrado en FALCONSYNC.',
+      poiSlugs: ['monumento-de-las-madres'],
+      questions: ['¿Qué es el Monumento de las Madres?'],
+    });
+    const tapial = await createSource({
+      sourceId: 'S-025',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(tapial, {
+      chunkKey: 'S-025#generalidades.tapial',
+      text: 'La técnica del tapial consiste en rellenar un encofrado con capas de tierra.',
+      questions: ['¿Cómo construir con tapia?'],
+    });
+
+    const response = await request(app)
+      .post('/api/assistant/tourist/query')
+      .send({
+        question: 'como construir con tapia',
+        contextLocationId: poi._id.toString(),
+      });
+
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.abstained, false);
+    assert.equal(response.body.data.poi, null);
+    assert.equal(response.body.data.citations[0].sourceId, 'S-025');
+  });
+
   it('rechaza un contextLocationId con formato inválido e ignora un lugar no publicado', async () => {
     await createFinalCorpus();
     const source = await createSource({
@@ -937,7 +996,7 @@ describe('Asistentes RAG', () => {
     assert.equal(price.status, 200, JSON.stringify(price.body));
     assert.equal(price.body.data.abstained, true);
     assert.equal(price.body.data.abstentionReason, 'NO_CURRENT_STATUS');
-    assert.equal(price.body.data.answer, SCHEDULE_ABSTENTION_MESSAGE);
+    assert.equal(price.body.data.answer, PRICE_ABSTENTION_MESSAGE);
     assert.equal(price.body.data.suggestions.length, 3);
 
     // La hora exacta del momento no se confunde con un horario de apertura.
@@ -1048,5 +1107,431 @@ describe('Asistentes RAG', () => {
     assert.equal(response.body.data.abstained, true);
     assert.equal(response.body.data.abstentionReason, 'AMBIGUOUS_POI');
     assert.equal(response.body.data.options.length, 2);
+  });
+
+  it('responde a saludos de mensaje completo sin consultar el corpus', async () => {
+    const source = await createSource();
+    await createChunk(source);
+
+    for (const question of ['hola', 'hello', 'hi', 'buenas tardes']) {
+      const response = await request(app)
+        .post('/api/assistant/tourist/query')
+        .send({ question });
+
+      assert.equal(response.status, 200, JSON.stringify(response.body));
+      assert.equal(response.body.data.answerType, 'greeting', question);
+      assert.equal(response.body.data.answer, GREETING_MESSAGE, question);
+      assert.equal(response.body.data.abstained, false, question);
+      assert.deepEqual(response.body.data.citations, [], question);
+      assert.equal(response.body.data.suggestions.length, 3, question);
+    }
+
+    // Un saludo al inicio no se come la pregunta que viene después.
+    const mixed = await request(app)
+      .post('/api/assistant/tourist/query')
+      .send({ question: 'hola, ¿qué es Coro?' });
+
+    assert.equal(mixed.status, 200, JSON.stringify(mixed.body));
+    assert.notEqual(mixed.body.data.answerType, 'greeting');
+  });
+
+  it('normaliza la pregunta curada y no confunde «ciudad de Coro» con un POI', async () => {
+    await createPoi({ title: 'Ciudad Deportiva', slug: 'ciudad-deportiva' });
+    await createPoi({ title: 'Catedral de Coro', slug: 'catedral-de-coro' });
+    const source = await createSource();
+    await createChunk(source, {
+      text: 'la ciudad de Coro es el único ejemplo subsistente de una fusión de técnicas y estilos.',
+      questions: ['¿Qué es la ciudad de Coro?'],
+    });
+
+    const response = await request(app)
+      .post('/api/assistant/tourist/query')
+      .send({ question: 'que es la ciudad de coro' });
+
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.abstained, false);
+    assert.equal(response.body.data.poi, null);
+    assert.equal(response.body.data.citations[0].sourceId, 'S-002');
+    assert.equal(
+      response.body.data.citations[0].url,
+      'https://whc.unesco.org/',
+    );
+    // La composición capitaliza el inicio de la cita.
+    assert.match(response.body.data.answer, /^La ciudad de Coro/);
+  });
+
+  it('no expone URLs internas ni adjunta citas tangenciales', async () => {
+    await createFinalCorpus();
+    const internal = await createSource({
+      sourceId: 'S-022',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+      institution: 'Proyecto FALCONSYNC',
+      sourceLabel: 'Documentación del proyecto',
+      url: 'https://github.com/ejemplo/repositorio/blob/main/seed.js',
+    });
+    await createChunk(internal, {
+      chunkKey: 'S-022#faq.que-es',
+      text: 'FALCONSYNC es una plataforma digital para el patrimonio turístico de Coro.',
+      questions: ['¿Qué es FALCONSYNC?'],
+    });
+    const tangential = await createSource({
+      sourceId: 'S-025',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(tangential, {
+      chunkKey: 'S-025#generalidades.tapial',
+      text: 'FALCONSYNC registra el tapial como técnica constructiva de tierra.',
+      questions: ['¿Qué es el tapial?'],
+    });
+
+    const response = await request(app)
+      .post('/api/assistant/tourist/query')
+      .send({ question: '¿Qué es FALCONSYNC?' });
+
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.abstained, false);
+    assert.equal(response.body.data.citations.length, 1);
+    assert.equal(response.body.data.citations[0].sourceId, 'S-022');
+    assert.equal(response.body.data.citations[0].url, null);
+    assert.equal(response.body.data.confidenceLabel, 'Documentación del proyecto');
+  });
+
+  it('avisa que no hay ruta verificada y deduplica la ficha del lugar', async () => {
+    await createFinalCorpus();
+    await createPoi({
+      title: 'Monumento de las Madres',
+      slug: 'monumento-de-las-madres',
+    });
+    const ficha = await createSource({
+      sourceId: 'S-021',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(ficha, {
+      chunkKey: 'S-021#poi.monumento-de-las-madres',
+      text: 'Monumento de las Madres es un monumento registrado en FALCONSYNC. Dirección registrada: Paseo Monseñor Iturriza, Coro. Historia, horarios y estado actual no están verificados en el corpus.',
+      poiSlugs: ['monumento-de-las-madres'],
+      questions: ['¿Cómo se puede llegar al Monumento de las Madres?'],
+    });
+    const registro = await createSource({
+      sourceId: 'S-020',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(registro, {
+      chunkKey: 'S-020#poi.monumento-de-las-madres',
+      text: 'FALCONSYNC registra el Monumento de las Madres como POI publicado. La dirección registrada para el Monumento de las Madres es Paseo Monseñor Iturriza, Coro.',
+      poiSlugs: ['monumento-de-las-madres'],
+      questions: ['¿Dónde queda el Monumento de las Madres?'],
+    });
+
+    const response = await askTourist('¿Cómo se puede llegar al Monumento de las Madres?');
+
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.abstained, false);
+    assert.equal(response.body.data.poi.slug, 'monumento-de-las-madres');
+    assert.ok(
+      response.body.data.answer.startsWith(ROUTE_NOTICE),
+      response.body.data.answer,
+    );
+    assert.equal(
+      (response.body.data.answer.match(/Paseo Monseñor Iturriza/g) ?? []).length,
+      1,
+      response.body.data.answer,
+    );
+  });
+
+  it('separa la ciudad de Coro de Ciudad Deportiva aunque compartan «ciudad»', async () => {
+    const deportiva = await createPoi({
+      title: 'Ciudad Deportiva',
+      slug: 'ciudad-deportiva',
+    });
+    const city = await createSource();
+    await createChunk(city, {
+      chunkKey: 'S-002#ciudad-coro',
+      text: 'La ciudad de Coro es el único ejemplo subsistente de una fusión de técnicas y estilos arquitectónicos.',
+      questions: ['¿Qué es la ciudad de Coro?', '¿Qué es la ciudad?', '¿Qué es Coro?'],
+    });
+    const ficha = await createSource({
+      sourceId: 'S-021',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(ficha, {
+      chunkKey: 'S-021#poi.ciudad-deportiva',
+      text: 'Ciudad Deportiva es un lugar de servicios registrado en FALCONSYNC. Dirección registrada: Ciudad Deportiva Universitaria, Coro.',
+      poiSlugs: ['ciudad-deportiva'],
+      questions: ['¿Qué es la Ciudad Deportiva?'],
+    });
+
+    for (const question of [
+      '¿Qué es la ciudad de Coro?',
+      '¿Qué es la ciudad?',
+      '¿Qué es Coro?',
+    ]) {
+      const response = await askTourist(question);
+      assert.equal(response.status, 200, JSON.stringify(response.body));
+      assert.equal(response.body.data.poi, null, question);
+      assert.match(response.body.data.answer, /fusión de técnicas/i, question);
+      assert.doesNotMatch(response.body.data.answer, /Ciudad Deportiva/i, question);
+      assert.ok(
+        response.body.data.citations.every(({ sourceId }) => sourceId === 'S-002'),
+        question,
+      );
+    }
+
+    const contextual = await askTourist('¿Qué es la ciudad?', deportiva._id.toString());
+    assert.equal(contextual.body.data.poi, null);
+    assert.doesNotMatch(contextual.body.data.answer, /Ciudad Deportiva/i);
+
+    const poiResponse = await askTourist('¿Qué es la Ciudad Deportiva?');
+    assert.equal(poiResponse.body.data.poi.slug, 'ciudad-deportiva');
+    assert.match(poiResponse.body.data.answer, /Ciudad Deportiva/);
+  });
+
+  it('responde una pregunta doble en el orden de la pregunta y sin mezclar conceptos', async () => {
+    const city = await createSource();
+    await createChunk(city, {
+      chunkKey: 'S-002#ciudad-coro',
+      text: 'La ciudad de Coro es el único ejemplo subsistente de una fusión de técnicas y estilos arquitectónicos.',
+      questions: ['¿Qué es la ciudad de Coro?'],
+    });
+    const ficha = await createSource({
+      sourceId: 'S-021',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(ficha, {
+      chunkKey: 'S-021#poi.ciudad-deportiva',
+      text: 'Ciudad Deportiva es un lugar de servicios registrado en FALCONSYNC.',
+      poiSlugs: ['ciudad-deportiva'],
+      questions: ['¿Qué es la Ciudad Deportiva?'],
+    });
+    await createPoi({ title: 'Ciudad Deportiva', slug: 'ciudad-deportiva' });
+
+    const response = await askTourist(
+      '¿Qué es la ciudad de Coro y qué es la Ciudad Deportiva?',
+    );
+
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.abstained, false);
+    const answer = response.body.data.answer;
+    assert.ok(answer.indexOf('fusión de técnicas') >= 0, answer);
+    assert.ok(
+      answer.indexOf('Ciudad Deportiva') > answer.indexOf('fusión de técnicas'),
+      answer,
+    );
+    assert.deepEqual(
+      response.body.data.citations.map(({ sourceId }) => sourceId),
+      ['S-002', 'S-021'],
+    );
+  });
+
+  it('responde una pregunta triple con cada parte, en orden y con su aviso de ruta', async () => {
+    const city = await createSource();
+    await createChunk(city, {
+      chunkKey: 'S-002#ciudad-coro',
+      text: 'La ciudad de Coro es el único ejemplo subsistente de una fusión de técnicas y estilos arquitectónicos.',
+      questions: ['¿Qué es Coro?'],
+    });
+    const ficha = await createSource({
+      sourceId: 'S-021',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(ficha, {
+      chunkKey: 'S-021#poi.ciudad-deportiva',
+      text: 'Ciudad Deportiva es un lugar de servicios registrado en FALCONSYNC.',
+      poiSlugs: ['ciudad-deportiva'],
+      questions: ['¿Qué es la Ciudad Deportiva?'],
+    });
+    await createChunk(ficha, {
+      chunkKey: 'S-021#poi.catedral-de-coro',
+      ordinal: 1,
+      text: 'Catedral de Coro es un lugar religioso registrado en FALCONSYNC. Dirección registrada: Frente a la Plaza Bolívar.',
+      poiSlugs: ['catedral-de-coro'],
+      questions: ['¿Cómo llego a la Catedral?'],
+    });
+    await createPoi({ title: 'Ciudad Deportiva', slug: 'ciudad-deportiva' });
+    await createPoi({ title: 'Catedral de Coro', slug: 'catedral-de-coro' });
+
+    const response = await askTourist(
+      '¿Qué es Coro, qué es la Ciudad Deportiva y cómo llego a la Catedral?',
+    );
+
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.abstained, false);
+    const answer = response.body.data.answer;
+    const cityIndex = answer.indexOf('fusión de técnicas');
+    const deportivaIndex = answer.indexOf('Ciudad Deportiva');
+    const routeIndex = answer.indexOf(ROUTE_NOTICE);
+    assert.ok(cityIndex >= 0, answer);
+    assert.ok(deportivaIndex > cityIndex, answer);
+    assert.ok(routeIndex > deportivaIndex, answer);
+    assert.ok(answer.indexOf('Catedral de Coro') > routeIndex, answer);
+    assert.equal(response.body.data.poi, null);
+    assert.equal(response.body.data.citations.length, 3);
+  });
+
+  it('parte preguntas triples separadas por comas y conectores', () => {
+    const parts = splitSubQueries(
+      '¿Qué es Coro, qué es la Ciudad Deportiva y cómo llego a la Catedral?',
+    );
+
+    assert.equal(parts.length, 3);
+    assert.match(parts[0], /Coro/);
+    assert.match(parts[1], /Ciudad Deportiva/);
+    assert.match(parts[2], /Catedral/);
+  });
+
+  it('no responde con una descripción del casco histórico cuando piden una ruta', async () => {
+    const source = await createSource({
+      sourceId: 'S-026',
+      level: 'D',
+      usagePolicy: 'final',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(source, {
+      chunkKey: 'S-026#casco',
+      text: 'El casco colonial de Coro conserva un paisaje urbano con calles empedradas y edificios históricos.',
+      questions: ['¿Qué ruta debo seguir para recorrer el casco histórico?'],
+    });
+
+    const response = await askTourist('¿Qué ruta debo seguir para recorrer el casco histórico?');
+
+    assert.equal(response.body.data.abstained, true);
+    assert.equal(response.body.data.abstentionReason, 'NO_EVIDENCE');
+    assert.doesNotMatch(response.body.data.answer, /calles empedradas|paisaje urbano/i);
+    assert.match(response.body.data.answer, /ruta|indicaciones/i);
+  });
+
+  it('no responde con una ruta regional cuando preguntan por estacionamiento', async () => {
+    const source = await createSource({
+      sourceId: 'S-028',
+      level: 'D',
+      usagePolicy: 'final',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(source, {
+      chunkKey: 'S-028#caracas',
+      text: 'Para llegar en carro desde Caracas hay autopista de cuatro carriles por Valencia y Morón.',
+      questions: [
+        '¿Dónde estacionar el carro de forma segura si voy a caminar por la zona colonial de Coro?',
+      ],
+    });
+
+    const response = await askTourist(
+      '¿Dónde estacionar el carro de forma segura si voy a caminar por la zona colonial de Coro?',
+    );
+
+    assert.equal(response.body.data.abstained, true);
+    assert.doesNotMatch(response.body.data.answer, /Caracas|autopista/i);
+    assert.match(response.body.data.answer, /estacion/i);
+  });
+
+  it('no responde con Paraguaná cuando preguntan por visitas guiadas nocturnas', async () => {
+    const source = await createSource({
+      sourceId: 'S-028',
+      level: 'D',
+      usagePolicy: 'final',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(source, {
+      chunkKey: 'S-028#paraguana',
+      text: 'La Península de Paraguaná es otro destino cercano a Coro, con playas.',
+      questions: [
+        '¿Hay visitas guiadas nocturnas o recorridos de leyendas en el casco histórico de Coro?',
+      ],
+    });
+
+    const response = await askTourist(
+      '¿Hay visitas guiadas nocturnas o recorridos de leyendas en el casco histórico de Coro?',
+    );
+
+    assert.equal(response.body.data.abstained, true);
+    assert.doesNotMatch(response.body.data.answer, /Paraguaná/i);
+    assert.match(response.body.data.answer, /nocturn|visitas guiadas/i);
+  });
+
+  it('mantiene la ruta registrada cuando la evidencia sí contiene acceso', async () => {
+    await createPoi({ title: 'Médanos de Coro', slug: 'medanos-de-coro' });
+    const source = await createSource({
+      sourceId: 'S-028',
+      level: 'D',
+      usagePolicy: 'final',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(source, {
+      chunkKey: 'S-028#medanos-autobus',
+      text: 'Para los Médanos, tome el bus Carabobo en la esquina de las avenidas Falcón y Manaure; el parque queda a cinco minutos a pie.',
+      questions: ['¿Cómo llego en bus a los Médanos de Coro?'],
+    });
+
+    const response = await askTourist('¿Cómo llego en bus a los Médanos de Coro?');
+
+    assert.equal(response.body.data.abstained, false);
+    assert.match(response.body.data.answer, /bus Carabobo/i);
+    assert.doesNotMatch(response.body.data.answer, /^No tengo una ruta verificada/i);
+    assert.match(response.body.data.answer, /Datos de acceso registrados/i);
+  });
+
+  it('no contradice un horario publicado con el aviso genérico de datos no verificados', async () => {
+    await createFinalCorpus();
+    await createPoi({ title: 'Catedral de Coro', slug: 'catedral-de-coro' });
+    const source = await createSource({
+      sourceId: 'S-031',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(source, {
+      chunkKey: 'S-031#catedral-horario',
+      text: 'Horario de misas publicado para la Catedral de Coro: lunes a sábado a las 6 p.m. y domingo a las 7:30 a.m. y 6:00 p.m. Historia, horarios y estado actual no están verificados en el corpus.',
+      claimType: 'current_status',
+      poiSlugs: ['catedral-de-coro'],
+      questions: ['¿Cuál es el horario de misas de la Catedral de Coro?'],
+    });
+
+    const response = await askTourist('¿Cuál es el horario de misas de la Catedral de Coro?');
+
+    assert.equal(response.body.data.abstained, false);
+    assert.match(response.body.data.answer, /6 p\.m\./);
+    assert.doesNotMatch(
+      response.body.data.answer,
+      /Historia, horarios y estado actual no están verificados/i,
+    );
+  });
+
+  it('responde «construir con tapia» sin tratarlo como orientación técnica', async () => {
+    await createFinalCorpus();
+    const source = await createSource({
+      sourceId: 'S-025',
+      level: 'C',
+      usagePolicy: 'context',
+      indexingPolicy: 'full_text',
+    });
+    await createChunk(source, {
+      chunkKey: 'S-025#generalidades.tapial',
+      text: 'La técnica del tapial consiste en rellenar un encofrado con capas de tierra compactada.',
+      questions: ['¿Cómo construir con tapia?'],
+    });
+
+    const response = await request(app)
+      .post('/api/assistant/tourist/query')
+      .send({ question: 'como construir con tapia' });
+
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.data.abstained, false);
+    assert.notEqual(response.body.data.abstentionReason, 'OUT_OF_SCOPE');
+    assert.match(response.body.data.answer, /encofrado/i);
   });
 });

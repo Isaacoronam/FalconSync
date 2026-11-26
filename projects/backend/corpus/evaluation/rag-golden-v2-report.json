@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "dataset": "corpus/evaluation/rag-golden-v2.json",
   "datasetName": "Conjunto dorado RAG v2 (guía turística con búsqueda semántica)",
-  "executedAt": "2026-11-25T03:26:35.864Z",
+  "executedAt": "2026-11-25T17:04:18.643Z",
   "corpusVersion": "2026-11-22.1",
   "embeddingModel": "Xenova/paraphrase-multilingual-MiniLM-L12-v2@q8",
   "minSimilarity": 0.6,
@@ -11,7 +11,7 @@
     "active",
     "draft"
   ],
-  "warmupMs": 123,
+  "warmupMs": 65,
   "sampleSize": 59,
   "corpus": {
     "ingested": [
@@ -94,8 +94,8 @@
     "fallbackExact": 1,
     "suggestionsComplete": 1,
     "invalidCitations": 0,
-    "latencyP50Ms": 28,
-    "latencyP95Ms": 41
+    "latencyP50Ms": 15,
+    "latencyP95Ms": 25
   },
   "unmetTargets": [],
   "categoryBreakdown": {

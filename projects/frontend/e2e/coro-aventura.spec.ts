@@ -28,9 +28,7 @@ type LocationApi = {
 test.use({ permissions: ['geolocation'] });
 
 async function crearUsuario(request: APIRequestContext): Promise<UsuarioE2E> {
-  const email = `explorador-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}@e2e.local`;
+  const email = `explorador-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@e2e.local`;
 
   const registro = await request.post(`${BACKEND_URL}/api/auth/register`, {
     data: { name: 'Explorador E2E', email, password: EXPLORER_PASSWORD },
@@ -40,11 +38,7 @@ async function crearUsuario(request: APIRequestContext): Promise<UsuarioE2E> {
   return { email, password: EXPLORER_PASSWORD };
 }
 
-async function login(
-  page: Page,
-  email: string,
-  password: string,
-): Promise<void> {
+async function login(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/login');
   await page.locator('#login-email').fill(email);
   await page.locator('#login-password').fill(password);
@@ -52,10 +46,7 @@ async function login(
   await expect(page).toHaveURL(/\/$/);
 }
 
-async function abrirCheckIn(
-  page: Page,
-  ubicacion: Ubicacion,
-): Promise<void> {
+async function abrirCheckIn(page: Page, ubicacion: Ubicacion): Promise<void> {
   await page.context().setGeolocation({
     latitude: ubicacion.latitude,
     longitude: ubicacion.longitude,
@@ -73,24 +64,17 @@ async function abrirCheckIn(
   );
   await page.getByRole('button', { name: 'Abrir check-in' }).click();
 
-  await expect(page).toHaveURL(
-    new RegExp(`/checkin/${ubicacion.locationId}$`),
-  );
+  await expect(page).toHaveURL(new RegExp(`/checkin/${ubicacion.locationId}$`));
   await expect(page.locator('.checkin__token')).toContainText('QR verificado');
 }
 
 async function registrarCheckIn(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Registrar check-in' }).click();
   await expect(page.locator('.checkin-exito')).toBeVisible();
-  await expect(page.locator('.form-message--success').first()).toContainText(
-    'Visita confirmada',
-  );
+  await expect(page.locator('.form-message--success').first()).toContainText('Visita confirmada');
 }
 
-async function visitarLugar(
-  page: Page,
-  ubicacion: Ubicacion,
-): Promise<void> {
+async function visitarLugar(page: Page, ubicacion: Ubicacion): Promise<void> {
   await abrirCheckIn(page, ubicacion);
   await registrarCheckIn(page);
 }
@@ -107,9 +91,8 @@ async function configurarEntorno(request: APIRequestContext): Promise<{
   const token = (await loginAdmin.json()).data.accessToken;
   const headers = { Authorization: `Bearer ${token}` };
 
-  const locations = (
-    await (await request.get(`${BACKEND_URL}/api/locations`)).json()
-  ).data as LocationApi[];
+  const locations = (await (await request.get(`${BACKEND_URL}/api/locations`)).json())
+    .data as LocationApi[];
   const porSlug = (nom: string) => locations.find((l) => l.slug === nom);
 
   const catedralLoc = porSlug('catedral-de-coro');
@@ -141,10 +124,7 @@ async function configurarEntorno(request: APIRequestContext): Promise<{
   };
 }
 
-test('el escáner manual abre login sin exponer el token en la URL', async ({
-  page,
-  request,
-}) => {
+test('el escáner manual abre login sin exponer el token en la URL', async ({ page, request }) => {
   const { cathedral } = await configurarEntorno(request);
   const usuario = await crearUsuario(request);
 
@@ -161,9 +141,7 @@ test('el escáner manual abre login sin exponer el token en la URL', async ({
 
   await expect(page).toHaveURL(/\/login/);
   const loginUrl = new URL(page.url());
-  expect(loginUrl.searchParams.get('returnUrl')).toBe(
-    `/checkin/${cathedral.locationId}`,
-  );
+  expect(loginUrl.searchParams.get('returnUrl')).toBe(`/checkin/${cathedral.locationId}`);
   expect(page.url()).not.toContain(cathedral.token);
   await expect(page.locator('#login-title')).toContainText('Inicia sesión');
 
@@ -171,9 +149,7 @@ test('el escáner manual abre login sin exponer el token en la URL', async ({
   await page.locator('#login-password').fill(usuario.password);
   await page.getByRole('button', { name: 'Entrar' }).click();
 
-  await expect(page).toHaveURL(
-    new RegExp(`/checkin/${cathedral.locationId}$`),
-  );
+  await expect(page).toHaveURL(new RegExp(`/checkin/${cathedral.locationId}$`));
   await expect(page.locator('.checkin__token')).toContainText('QR verificado');
 });
 
@@ -184,31 +160,22 @@ test('un enlace heredado con token se limpia y conserva el acceso tras el login'
   const { cathedral } = await configurarEntorno(request);
   const usuario = await crearUsuario(request);
 
-  await page.goto(
-    `/checkin/${cathedral.locationId}?token=${encodeURIComponent(cathedral.token)}`,
-  );
+  await page.goto(`/checkin/${cathedral.locationId}?token=${encodeURIComponent(cathedral.token)}`);
   await expect(page).toHaveURL(/\/login/);
 
   const loginUrl = new URL(page.url());
-  expect(loginUrl.searchParams.get('returnUrl')).toBe(
-    `/checkin/${cathedral.locationId}`,
-  );
+  expect(loginUrl.searchParams.get('returnUrl')).toBe(`/checkin/${cathedral.locationId}`);
   expect(page.url()).not.toContain(cathedral.token);
 
   await page.locator('#login-email').fill(usuario.email);
   await page.locator('#login-password').fill(usuario.password);
   await page.getByRole('button', { name: 'Entrar' }).click();
 
-  await expect(page).toHaveURL(
-    new RegExp(`/checkin/${cathedral.locationId}$`),
-  );
+  await expect(page).toHaveURL(new RegExp(`/checkin/${cathedral.locationId}$`));
   await expect(page.locator('.checkin__token')).toContainText('QR verificado');
 });
 
-test('login vuelve al check-in con el token conservado en memoria', async ({
-  page,
-  request,
-}) => {
+test('login vuelve al check-in con el token conservado en memoria', async ({ page, request }) => {
   const { cathedral } = await configurarEntorno(request);
   const usuario = await crearUsuario(request);
 
@@ -229,6 +196,13 @@ test('check-in válido felicita, otorga insignia y enlaza la ficha del lugar', a
 
   await login(page, usuario.email, usuario.password);
   await visitarLugar(page, cathedral);
+  const celebration = page.getByRole('dialog', { name: /Felicidades/i });
+  await expect(celebration).toBeVisible();
+  await expect(celebration).toContainText('Catedral de Coro');
+  await expect(celebration.locator('.celebration__badge-image')).toBeVisible();
+  await page.screenshot({ path: 'test-results/checkin-celebration.png', fullPage: false });
+  await page.getByRole('button', { name: 'Seguir explorando' }).click();
+  await expect(celebration).toBeHidden();
   await expect(
     page.locator('.checkin-logro').filter({ hasText: 'Catedral de Coro' }),
   ).toBeVisible();
@@ -238,10 +212,7 @@ test('check-in válido felicita, otorga insignia y enlaza la ficha del lugar', a
   await expect(page.locator('h1')).toContainText('Catedral de Coro');
 });
 
-test('check-in duplicado y fuera de radio rechazados', async ({
-  page,
-  request,
-}) => {
+test('check-in duplicado y fuera de radio rechazados', async ({ page, request }) => {
   const { cathedral, ventanas } = await configurarEntorno(request);
   const usuario = await crearUsuario(request);
 
@@ -253,6 +224,7 @@ test('check-in duplicado y fuera de radio rechazados', async ({
   await expect(page.locator('.form-message--error')).toContainText(
     'Ya registraste un check-in en este punto de interés.',
   );
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await abrirCheckIn(page, ventanas);
   await page.context().setGeolocation({
@@ -271,9 +243,7 @@ test('catálogo muestra lugares y las URL heredadas de rutas vuelven al catálog
 }) => {
   await page.goto('/lugares');
   await expect(page.locator('h1')).toContainText('Explora los lugares de Coro');
-  await expect(
-    page.getByRole('heading', { name: 'Catedral de Coro', exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Catedral de Coro', exact: true })).toBeVisible();
 
   await page.goto('/aventuras/una-ruta-antigua/progreso');
   await expect(page).toHaveURL(/\/lugares$/);

@@ -51,6 +51,10 @@
 
           <p class="conservation-meta">
             <span><strong>Reportado por:</strong> {{ shortId(item.reporterId) }}</span>
+            <span>
+              <strong>Canal:</strong>
+              {{ item.sourceChannel === 'telegram' ? 'Telegram' : 'Web' }}
+            </span>
             <span><strong>Creado:</strong> {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
             <span><strong>Versión:</strong> {{ item.version }}</span>
             @if (item.gps) {

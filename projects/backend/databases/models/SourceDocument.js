@@ -18,6 +18,7 @@ export const SOURCE_LABELS = [
   'Referencia',
   'Externo',
   'No verificado',
+  'Documentación del proyecto',
   'Tradición local',
 ];
 

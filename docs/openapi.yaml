@@ -50,7 +50,7 @@ tags:
   - name: Realtime
     description: Ticket de corta duración para Socket.IO.
   - name: Assistant
-    description: Guía turística y asistente técnico con citas.
+    description: Chivito, guía turístico, y asistente técnico con citas.
   - name: Sources
     description: Registro de fuentes RAG en solo lectura.
   - name: Panoramas
@@ -1111,7 +1111,7 @@ paths:
   /assistant/tourist/query:
     post:
       tags: [Assistant]
-      summary: Consultar la guía turística
+      summary: Consultar a Chivito, guía turístico
       description: |
         Público con rate limit. Usa fuentes curadas A–D según su política; las fuentes E
         no sustentan afirmaciones. Responde con citas validadas o `abstained=true`. No ejecuta
@@ -1205,6 +1205,63 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /channels/telegram:
+    get:
+      tags: [Channels]
+      summary: Consultar el vínculo de Telegram
+      description: Devuelve si la cuenta autenticada tiene un vínculo activo, sin exponer el ID de Telegram.
+      operationId: getTelegramLink
+      x-falconsync-status: implemented
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estado del vínculo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramLinkStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags: [Channels]
+      summary: Revocar el vínculo de Telegram
+      description: Elimina el vínculo activo. La auditoría conserva el evento.
+      operationId: unlinkTelegram
+      x-falconsync-status: implemented
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Vínculo revocado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramLinkStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /channels/telegram/link-code:
+    post:
+      tags: [Channels]
+      summary: Generar un código de vinculación de Telegram
+      description: |
+        Genera un código de un solo uso, válido 10 minutos por defecto. Solo se guarda su
+        hash. El código se muestra una vez y se envía al bot con `/vincular CODIGO`.
+      operationId: createTelegramLinkCode
+      x-falconsync-status: implemented
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Código generado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramLinkCodeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /panoramas:
     get:
       tags: [Panoramas]
@@ -2483,6 +2540,11 @@ components:
         inspectionId:
           type: string
           nullable: true
+        sourceChannel:
+          type: string
+          enum: [web, telegram]
+          default: web
+          description: Canal por el que se creó el reporte. `sourceActionKey` nunca se expone.
         version:
           type: integer
           minimum: 0
@@ -3229,10 +3291,10 @@ components:
       properties:
         answerType:
           type: string
-          enum: [extractive, structured, contextual, mixed, clarification, abstention]
+          enum: [extractive, structured, contextual, mixed, clarification, greeting, abstention]
         answer:
           type: string
-          description: Respuesta extractiva de 3–5 frases, mensaje de aclaración o mensaje único de abstención.
+          description: Respuesta extractiva de 3–5 frases, saludo de bienvenida, mensaje de aclaración o mensaje único de abstención.
         abstained:
           type: boolean
         abstentionReason:
@@ -3252,7 +3314,7 @@ components:
             type: string
         options:
           type: array
-          description: Lugares posibles cuando la pregunta es ambigua (`answerType: clarification`).
+          description: 'Lugares posibles cuando la pregunta es ambigua (`answerType: clarification`).'
           items:
             type: object
             required: [id, title]
@@ -3295,6 +3357,7 @@ components:
             - Referencia
             - Externo
             - No verificado
+            - Documentación del proyecto
             - Tradición local
         conversationId:
           type: string
@@ -3367,6 +3430,7 @@ components:
             - Referencia
             - Externo
             - No verificado
+            - Documentación del proyecto
             - Tradición local
         url:
           type: string
@@ -3925,7 +3989,7 @@ components:
           enum: [A, B, C, D, E]
         sourceLabel:
           type: string
-          enum: [Oficial UNESCO, Oficial estatal, Oficial local, Histórico 2008, Académico, Referencia, Externo, No verificado, Tradición local]
+          enum: [Oficial UNESCO, Oficial estatal, Oficial local, Histórico 2008, Académico, Referencia, Externo, No verificado, Documentación del proyecto, Tradición local]
         usagePolicy:
           type: string
           enum: [final, pointer, context]
@@ -4022,3 +4086,47 @@ components:
             sessionsRevoked:
               type: boolean
               example: true
+    TelegramLinkStatus:
+      type: object
+      required: [linked, channel]
+      properties:
+        linked:
+          type: boolean
+        channel:
+          type: string
+          enum: [telegram]
+        linkedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+    TelegramLinkStatusResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/TelegramLinkStatus'
+    TelegramLinkCode:
+      type: object
+      required: [code, expiresAt, ttlMinutes]
+      properties:
+        code:
+          type: string
+          pattern: '^[A-HJ-NP-Z2-9]{8}$'
+          example: ABCD2345
+        expiresAt:
+          type: string
+          format: date-time
+        ttlMinutes:
+          type: integer
+          minimum: 1
+          example: 10
+    TelegramLinkCodeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/TelegramLinkCode'

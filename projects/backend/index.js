@@ -11,6 +11,7 @@ import adventureRoutes from './api/adventures/adventureRoutes.js';
 import assistantRoutes from './api/assistant/assistantRoutes.js';
 import authRoutes from './api/auth/authRoutes.js';
 import checkInRoutes from './api/check-ins/checkInRoutes.js';
+import channelRoutes from './api/channels/telegramRoutes.js';
 import conservationRoutes from './api/conservation/conservationRoutes.js';
 import evidenceRoutes from './api/evidence/evidenceRoutes.js';
 import locationRoutes from './api/locations/locationRoutes.js';
@@ -55,6 +56,7 @@ export function createApp() {
   app.use('/api/adventures', adventureRoutes);
   app.use('/api/assistant', assistantRoutes);
   app.use('/api/check-ins', checkInRoutes);
+  app.use('/api/channels', channelRoutes);
   app.use('/api', conservationRoutes);
   app.use('/api/evidence', evidenceRoutes);
   app.use('/api/locations', locationRoutes);

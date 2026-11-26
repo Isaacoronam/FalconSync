@@ -1,7 +1,7 @@
 import { expect, test, Page } from '@playwright/test';
 
 /**
- * E2E de la guía patrimonial (/guia) conversando con el corpus RAG real.
+ * E2E de Chivito (/guia) conversando con el corpus RAG real.
  *
  * Dos modos, decididos por la disponibilidad que declara el propio backend:
  * - Por defecto (sin RAG_TOURIST_ENABLED/RAG_CORPUS_VERSION del entorno que
@@ -19,6 +19,8 @@ const FALLBACK_MESSAGE =
   'No cuento con evidencia suficiente para responder, prueba con una pregunta sobre el patrimonio de Coro';
 const SCHEDULE_ABSTENTION_MESSAGE =
   'Sin horarios confirmados. No cuento con una fuente verificada de horarios, tarifas ni estado de apertura; confirma directamente con el lugar antes de tu visita.';
+const PRICE_ABSTENTION_MESSAGE =
+  'Sin precios confirmados. No cuento con una fuente verificada de tarifas ni condiciones de entrada; confirma directamente con el lugar antes de tu visita.';
 
 type CitaApi = {
   sourceId: string;
@@ -72,7 +74,7 @@ async function crearPerfilPorUi(page: Page): Promise<{ nombre: string; email: st
 async function estadoGuia(page: Page): Promise<string> {
   await page.goto('/guia');
   await expect(page.locator('.chat__availability')).toHaveText(
-    /(Guía disponible|Guía en preparación|No se pudo verificar el estado)/,
+    /(Chivito disponible|Chivito en preparación|No se pudo verificar el estado)/,
     { timeout: 20_000 },
   );
 
@@ -179,7 +181,7 @@ test('Caso A — crea un perfil por la UI y lo conserva al entrar a la guía', a
 
   await page.goto('/guia');
   await expect(page.locator('.site-nav__user')).toContainText(nombre);
-  await expect(page.locator('#guide-title')).toContainText('Conoce Coro y FALCONSYNC');
+  await expect(page.locator('#guide-title')).toContainText('Conoce Coro con Chivito');
 });
 
 test('Caso D — sin corpus disponible la guía queda en preparación y bloquea la consulta', async ({
@@ -187,14 +189,14 @@ test('Caso D — sin corpus disponible la guía queda en preparación y bloquea 
 }) => {
   const etiqueta = await estadoGuia(page);
 
-  if (etiqueta.startsWith('Guía disponible')) {
+  if (etiqueta.startsWith('Chivito disponible')) {
     test.skip(
       true,
       'Corpus RAG habilitado en este entorno: la rama bloqueada corresponde al modo por defecto.',
     );
   }
 
-  await expect(page.locator('.chat__availability')).toHaveText('Guía en preparación');
+  await expect(page.locator('.chat__availability')).toHaveText('Chivito en preparación');
   await expect(page.locator('#chat-question')).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Enviar pregunta' })).toBeDisabled();
   await expect(page.getByRole('button', { name: '¿Qué es Coro?' })).toBeDisabled();
@@ -211,7 +213,7 @@ test('Caso D — sin corpus disponible la guía queda en preparación y bloquea 
 async function prepararGuiaConPerfil(page: Page): Promise<() => Promise<DatosRespuesta | null>> {
   const etiqueta = await estadoGuia(page);
 
-  if (!etiqueta.startsWith('Guía disponible')) {
+  if (!etiqueta.startsWith('Chivito disponible')) {
     test.skip(
       true,
       'La guía no está disponible sin corpus RAG: la batería solo aplica con RAG_TOURIST_ENABLED y RAG_CORPUS_VERSION.',
@@ -290,6 +292,98 @@ test('Caso B7 — un horario sin fuente publicada para el lugar preguntado se ab
   ).toBe(true);
 });
 
+test('Caso E — saludos, identidad de Coro y producto sin enlaces internos', async ({ page }) => {
+  const consultar = await prepararGuiaConPerfil(page);
+
+  // E1/E2 — saludo de mensaje completo, incluida la forma de dos letras «hi».
+  for (const saludo of ['hola', 'hi']) {
+    const respuesta = await hacerPregunta(page, consultar, saludo);
+    expect(respuesta.errorUi).toBeNull();
+    const datos = datosDe(respuesta);
+    expect(datos.answerType).toBe('greeting');
+    expect(datos.abstained).toBe(false);
+    expect(datos.citations).toHaveLength(0);
+    expect(datos.suggestions).toHaveLength(3);
+    expect(respuesta.respuestaUi).toContain('Chivito');
+    await expect(page.locator('.chat-message--assistant').last().getByRole('button')).toHaveCount(
+      3,
+    );
+  }
+
+  // E3 — identidad de la ciudad: descripción general, sin posadas ni Médanos.
+  const ciudad = await hacerPregunta(page, consultar, 'que es coro?');
+  expect(ciudad.errorUi).toBeNull();
+  const ciudadDatos = datosDe(ciudad);
+  expect(ciudadDatos.abstained).toBe(false);
+  expect(ciudadDatos.poi).toBeNull();
+  expect(fuentesDe(ciudad)).toContain('S-002');
+  expect(ciudad.respuestaUi).toMatch(/ciudad/i);
+  expect(ciudad.respuestaUi).not.toMatch(/posadas|Médanos/i);
+
+  // E4 — la variante «ciudad de Coro» tampoco se atribuye a Ciudad Deportiva.
+  const ciudadVariante = await hacerPregunta(page, consultar, 'que es la ciudad de coro?');
+  expect(ciudadVariante.errorUi).toBeNull();
+  expect(datosDe(ciudadVariante).poi).toBeNull();
+  expect(fuentesDe(ciudadVariante)).toContain('S-002');
+
+  // E8 — «la ciudad» sin «de Coro» no debe activar la ficha de Ciudad Deportiva.
+  const ciudadGenerica = await hacerPregunta(page, consultar, '¿Qué es la ciudad?');
+  expect(ciudadGenerica.errorUi).toBeNull();
+  expect(datosDe(ciudadGenerica).poi).toBeNull();
+  expect(ciudadGenerica.respuestaUi).not.toMatch(/Ciudad Deportiva/i);
+
+  // E9 — triple: cada parte en orden y aviso de ruta solo para la Catedral.
+  const triple = await hacerPregunta(
+    page,
+    consultar,
+    '¿Qué es Coro, qué es la Ciudad Deportiva y cómo llego a la Catedral?',
+  );
+  expect(triple.errorUi).toBeNull();
+  expect(datosDe(triple).abstained).toBe(false);
+  expect(triple.respuestaUi).toMatch(/Coro/);
+  expect(triple.respuestaUi).toMatch(/Ciudad Deportiva/);
+  expect(triple.respuestaUi).toContain('No tengo una ruta verificada');
+  expect(triple.respuestaUi).toMatch(/Catedral de Coro/);
+
+  // E5 — producto: responde desde la documentación interna, sin cita tangencial
+  // ni enlace al repositorio.
+  const producto = await hacerPregunta(page, consultar, 'que es falconsync');
+  expect(producto.errorUi).toBeNull();
+  const productoDatos = datosDe(producto);
+  expect(productoDatos.abstained).toBe(false);
+  expect(productoDatos.poi).toBeNull();
+  expect(fuentesDe(producto)).toEqual(['S-022']);
+  expect(productoDatos.citations).toHaveLength(1);
+  expect(productoDatos.citations[0].sourceId).toBe('S-022');
+  expect(producto.respuestaUi).toContain('plataforma digital');
+  await expect(
+    page.locator('.chat-message--assistant').last().locator('.chat-citations a'),
+  ).toHaveCount(0);
+
+  const enlaces = await page
+    .locator('.chat-citations a')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''));
+  expect(enlaces.some((href) => href.includes('github.com'))).toBe(false);
+
+  // E6 — ruta: avisa que no hay ruta verificada y mantiene la ficha.
+  const ruta = await hacerPregunta(
+    page,
+    consultar,
+    'como se puede llegar al monumento de las madres?',
+  );
+  expect(ruta.errorUi).toBeNull();
+  expect(datosDe(ruta).poi?.slug).toBe('monumento-de-las-madres');
+  expect(ruta.respuestaUi).toContain('No tengo una ruta verificada');
+  expect(ruta.respuestaUi).toContain('Paseo Monseñor Iturriza');
+
+  // E7 — construir con tapia ya no se rechaza como orientación técnica.
+  const tapia = await hacerPregunta(page, consultar, 'como construir con tapia');
+  expect(tapia.errorUi).toBeNull();
+  expect(datosDe(tapia).abstained).toBe(false);
+  expect(fuentesDe(tapia)).toContain('S-025');
+  expect(tapia.respuestaUi).toMatch(/encofrado/i);
+});
+
 test('Caso C — preguntas compuestas: una sola respuesta y abstención completa ante partes sin evidencia', async ({
   page,
 }) => {
@@ -305,7 +399,8 @@ test('Caso C — preguntas compuestas: una sola respuesta y abstención completa
   expect(c1.citasUi).toBeGreaterThanOrEqual(2);
 
   // C2 — mezcla conocida + precio sin fuente: el comportamiento real es una
-  // abstención completa (una sola respuesta, sin responder a medias).
+  // abstención completa (una sola respuesta, sin responder a medias), con el
+  // mensaje específico de precios.
   const c2 = await hacerPregunta(
     page,
     consultar,
@@ -314,9 +409,11 @@ test('Caso C — preguntas compuestas: una sola respuesta y abstención completa
   expect(c2.errorUi).toBeNull();
   expect(datosDe(c2).abstained).toBe(true);
   expect(c2.citasUi).toBe(0);
-  const abstencionC2 = [FALLBACK_MESSAGE, SCHEDULE_ABSTENTION_MESSAGE].some((mensaje) =>
-    c2.respuestaUi.startsWith(mensaje),
-  );
+  const abstencionC2 = [
+    FALLBACK_MESSAGE,
+    SCHEDULE_ABSTENTION_MESSAGE,
+    PRICE_ABSTENTION_MESSAGE,
+  ].some((mensaje) => c2.respuestaUi.startsWith(mensaje));
   expect(abstencionC2, `Respuesta observada en C2: «${c2.respuestaUi}»`).toBe(true);
 
   // C3 — mezcla conocida + desconocida que sí se divide en sub-consultas (la

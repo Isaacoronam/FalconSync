@@ -2,9 +2,9 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.8 |
-| Fecha | 2026-11-24 |
-| Estado | Guía turística V3: expansión del corpus a 14 fuentes y 131 fragmentos (S-024 a S-032), preguntas compuestas respondidas en un mismo texto con cita por parte, horarios solo donde hay fuente publicada. Evaluación v3 completa (125/125, todas las metas cumplidas) y regresión v2 (59/59) en `falconsync_rag_eval`; desarrollo 27018 aplicado y verificado. S-021 y S-022 aprobadas y activas. El asistente técnico permanece cerrado. Ver [`CORPUS-POI.md`](./CORPUS-POI.md) |
+| Versión | 1.10 |
+| Fecha | 2026-11-26 |
+| Estado | Guía turística V5: separación ciudad/POI, preguntas dobles y triples por subconsulta, intenciones de ruta/acceso y horarios sin contradicciones. S-022 corregida y ampliada con la Ruta del Casco Histórico. Corpus 14 fuentes/133 fragmentos; el asistente técnico permanece cerrado. Ver [`CORPUS-POI.md`](./CORPUS-POI.md) |
 | Decisiones | D-03 (revisada), D-04 (diferida), D-12, D-21 (retirada), D-24 a D-29 (aceptadas el 2026-11-20) |
 | Documentos relacionados | [`REQUISITOS.md`](./REQUISITOS.md), [`PLAN-IMPLEMENTACION.md`](./PLAN-IMPLEMENTACION.md), [`ADR/ADR-005-rag-fuentes.md`](./ADR/ADR-005-rag-fuentes.md), [`SEGURIDAD.md`](./SEGURIDAD.md), [`OPERACION.md`](./OPERACION.md) |
 
@@ -13,7 +13,39 @@
 
 ## 0. Cambios recientes
 
-### 0.1 Versión 1.8 (2026-11-24)
+### 0.0 Versión 1.10 (2026-11-26)
+
+- **Separación de conceptos:** «ciudad» y «Coro» dejan de ser señales suficientes para
+  atribuir un POI. «¿Qué es la ciudad?» y «¿Qué es la ciudad de Coro?» responden sobre la
+  ciudad; «¿Qué es la Ciudad Deportiva?» sigue resolviendo su ficha.
+- **Preguntas dobles y triples:** se dividen hasta en tres subconsultas por «?», comas o
+  conectores interrogativos. Cada parte resuelve su POI, recupera su evidencia y compone su
+  texto en el orden de la pregunta; una parte sin evidencia abstiene el conjunto.
+- **Intenciones de acceso:** ruta, estacionamiento, transporte, distancia y visitas
+  nocturnas exigen evidencia del aspecto preguntado. Si no la hay, se abstienen con un
+  mensaje específico en lugar de reutilizar un fragmento tangencial.
+- **Avisos de ruta:** la ficha de un POI solo se acompaña de «No tengo una ruta verificada»
+  cuando no hay dato de acceso; si el corpus sí tiene un bus, una avenida o una indicación,
+  se etiqueta como dato registrado y se pide confirmar antes de viajar.
+- **Horarios:** el aviso genérico «Historia, horarios y estado actual no están verificados»
+  se retira cuando la propia respuesta aporta un horario o estado actual. Las preguntas de
+  precio sin fuente usan un mensaje de precios, no de horarios.
+- **S-022:** se corrige la descripción del mapa (filtro por categoría; geolocalización en el
+  check-in) y se añade la Ruta del Casco Histórico como recomendación, no como navegación.
+
+### 0.1 Versión 1.9 (2026-11-25)
+
+- **Intención de saludo:** `hola`, `hi`, `hello`, `buenos días`, `buenas tardes`, `gracias` o `adiós` (mensaje completo) responden con `answerType: greeting`, el mensaje canónico de bienvenida y 3 preguntas sugeridas, sin citas. La validación admite 2 caracteres solo cuando la frase completa es un saludo.
+- **Coincidencia exacta normalizada:** las preguntas curadas se comparan sin acentos, mayúsculas ni puntuación, de modo que «que es coro?» y «¿Qué es Coro?» recuperan la misma evidencia. El umbral léxico de POI sube a `0.6` y «Coro» deja de contar como token distintivo de un título; así «ciudad de Coro» no resuelve «Ciudad Deportiva» y «un monumento» genérico no resuelve «Monumento de las Madres».
+- **Citas relevantes:** la segunda cita solo se conserva si cubre una parte de una pregunta compuesta, pertenece al POI resuelto o queda a ≤0.15 del puntaje principal. Las fuentes internas del proyecto no exponen URL pública: S-020 deja de enlazar GitHub y S-022 se etiqueta `Documentación del proyecto`.
+- **Identidad de Coro:** S-026 incorpora `S-026#introduccion`, resumen propio de 24 palabras con la definición de la ciudad y su fundación (Wikipedia, nivel D). Se añaden preguntas curadas en S-002, S-022, S-024 y S-025 para «ciudad de Coro», «turismo», «tapia» y «construir con tapia».
+- **Composición:** deduplicación de frases repetidas, capitalización del inicio, retiro del aviso «Historia, horarios y estado actual no están verificados» cuando otra cita aporta historia y aviso explícito cuando se pide una ruta que el corpus no tiene.
+- **Evaluación v4 (2026-11-25):** `rag-golden-v4.json` con 134 casos (los 125 de v3, con p-20 y p-30 corregidos, más 9 casos de saludo, ciudad, producto, turismo, tapia, ruta y ficha con historia) → **134/134 y todas las metas cumplidas** (p95 54 ms). Regresión v2 con `--sources`: **59/59**. El v3 queda congelado: 123/125, con p-20 y p-30 como expectativas obsoletas de falsos positivos léxicos; `unmetTargets` sigue vacío. Informes en `corpus/evaluation/rag-golden-v4-report.json` y `rag-golden-v3-2026-11-25-report.json`.
+- **Evaluación v5 (2026-11-26):** `rag-golden-v5.json` con 146 casos. Corrige p-18 (Casa del Tesoro), p-45 (visitas nocturnas), p-48 (estacionamiento) y oos-07 (ruta del casco) y añade 12 casos de ciudad/POI, dobles/triples, Ruta del Casco Histórico, bus a los Médanos, distancia, horario y precio. Resultado: **146/146, 0 fallos, `unmetTargets` vacío**; `sourceHit` 0.92, `citationValidity` 1, `fallbackExact` 1, p95 110 ms. Resumen: [`evaluacion-rag/rag-v5-2026-11-26.json`](./evaluacion-rag/rag-v5-2026-11-26.json); informe: `corpus/evaluation/rag-golden-v5-report.json`.
+- Corpus de desarrollo 27018 reingerido y verificado: 14 fuentes, 132 fragmentos, sin problemas.
+- **Verificación integral (2026-11-25):** `npm run verify` en verde: 164/164 backend, 89/89 frontend, build correcto y 23 E2E aprobadas + 5 omitidas por diseño (guía apagada). El E2E con RAG habilitado aprobó 6 casos y omitió 1 (el caso D del modo sin corpus). La iteración posterior de identidad Chivito, el mismo día, dejó 164/164 backend, 94/94 frontend, build correcto y 29/29 E2E aprobadas + 5 omitidas; no cambió el corpus ni la recuperación.
+
+### 0.2 Versión 1.8 (2026-11-24)
 
 - **Aprobación de S-021 y S-022:** pasan a `active` por revisión del responsable del proyecto (2026-11-23, instrucción del usuario), con `rightsVerified` y verificación de derechos por el historiador; la guía responde con las fichas de los 23 POI publicados y con el FAQ del producto.
 - **Expansión del corpus (S-024 a S-032):** nueve fuentes nuevas aplicadas en desarrollo y en la evaluación. S-024 (blog «Arquitectura con barro», Arq. Gonzalo Vélez) y S-025 (ficha técnica adobe/tapial, ASFE/ASIAPRODI) son nivel C con citas ≤25 palabras por instrucción del responsable; S-026 a S-029 y S-032 son resúmenes propios ≤25 palabras de Wikipedia/Wikivoyage (nivel D, CC BY-SA 4.0 con enlace); S-030 (cuenta oficial del MUCOR, nivel A `Oficial estatal`) y S-031 (horario de misas referido, nivel C) aportan horarios publicados. Todas con derechos verificados por el historiador.
@@ -22,7 +54,7 @@
 - **Evaluación v3 (2026-11-24):** `rag-golden-v3.json` con 125 casos (los 59 de v2, las 50 preguntas del dataset turístico, 10 paráfrasis y 6 compuestas) → **125/125 y todas las metas cumplidas** (p95 45 ms). Regresión v2 con `--sources` sobre las cinco fuentes originales: **59/59** (p95 41 ms). Resumen en [`evaluacion-rag/rag-v3-2026-11-24.json`](./evaluacion-rag/rag-v3-2026-11-24.json).
 - `npm run verify` completo en verde: backend 156/156, frontend 89/89, build y E2E 21/21.
 
-### 0.2 Versión 1.7 (2026-11-23)
+### 0.3 Versión 1.7 (2026-11-23)
 
 - La guía turística pasa a V2: recuperación semántica con embeddings multilingües locales (`paraphrase-multilingual-MiniLM-L12-v2`, umbral `RAG_MIN_SIMILARITY=0.6`), resolución del POI desde el texto de la pregunta (exacta → léxica → seguimiento → semántica) y respuesta solo con tarjetas aprobadas (`usagePolicy=final`; `context` como apoyo).
 - Se añaden `questions` (hasta 5 variantes curadas, ≤200 caracteres) a los fragmentos de S-002 y S-003 para que las preguntas habituales del conjunto dorado encuentren su ficha por similitud de preguntas y no solo por similitud de texto.
@@ -32,34 +64,34 @@
 - Evaluación v2 ejecutada con modelo real sobre `falconsync_rag_eval` (59 casos, `rag-golden-v2.json`): **todas las metas cumplidas** (`poiAccuracy`, `abstentionAccuracy`, `sourceHit`, `fallbackExact`, `suggestionsComplete` y `citationValidity` en 1.0; latencia p95 42 ms). Informe en `projects/backend/corpus/evaluation/rag-golden-v2-report.json`.
 - Se reconstruye la base de desarrollo 27018 (quedó vacía tras el reinicio del entorno): 24 POI sembrados, usuarios restaurados y S-002, S-003 y S-020 reingeridas con embeddings; `--verify` reporta 3 fuentes y 26 fragmentos sin problemas.
 
-### 0.3 Versión 1.6 (2026-11-21)
+### 0.4 Versión 1.6 (2026-11-21)
 
 - Se alinea el contrato v1 con `answerType`, tipos de abstención, citas `quote`/`fact`/`context`, localizador de página textual y metadatos de afirmación (`claimType`, `factKey`, `factValue`, `contradictionGroup`, `validAsOf`).
 - Se implementan `GET /api/assistant/status` y `GET /api/sources`; este último exige `source.read` y devuelve solo metadatos paginados, nunca fragmentos ni `storageKey`.
 - El listado oculta las fuentes `restricted` a roles distintos de admin. El endpoint `/api/admin/sources` queda fuera del contrato v1.
 - Las fuentes siguen sin aplicar; la instancia de desarrollo 27018 no estaba levantada al inspeccionarla y no se modificó MongoDB 27017.
 
-### 0.4 Versión 1.5 (2026-11-21)
+### 0.5 Versión 1.5 (2026-11-21)
 
 - Se prepara S-020 con los 23 POI publicados en el seed actual: nombres, categorías, circuitos y direcciones registradas.
 - S-020 es una instantánea del contenido del proyecto, no una verificación independiente; no confirma horarios, accesos, disponibilidad, estado patrimonial ni hechos históricos.
 - S-020 permanece en `draft`, con `usagePolicy=context` y derechos del texto pendientes. No habilita consultas ni sustituye la evaluación editorial.
 - La consulta oficial de la ficha 658 confirma que la descripción breve española está bajo CC BY-SA IGO 3.0; S-002 continúa en `draft` hasta la revisión y aplicación requeridas por el flujo del proyecto.
 
-### 0.5 Versión 1.4 (2026-11-21)
+### 0.6 Versión 1.4 (2026-11-21)
 
 - Se incorpora `projects/backend/corpus/manifests/S-002.json` como borrador curado de la ficha oficial 658, con dos extractos breves y atribución de origen.
 - El manifiesto conserva `status=draft`, `usagePolicy=context` y `rightsVerified=false`; no habilita respuestas ni declara una aprobación humana.
 - Se confirmó que la API responde, pero la base local no contiene fuentes ni fragmentos RAG. Los endpoints siguen devolviendo `503` y ambos flags permanecen cerrados.
 - No se activa S-002 hasta revisión de derechos por historiador, aplicación autorizada por admin y evaluación del conjunto dorado mínimo de 60 preguntas.
 
-### 0.6 Versión 1.3 (2026-11-20)
+### 0.7 Versión 1.3 (2026-11-20)
 
 - Se precisan los ámbitos del asistente técnico y turístico: normativa, historia, POI, arquitectura colonial, tapia/adobe y rutas sugeridas.
 - El asistente técnico ofrece orientación preliminar basada en fuentes; no emite diagnósticos definitivos ni prescribe intervenciones.
 - Las rutas son sugerencias sobre POI del sistema; horarios, accesos y condiciones actuales requieren fuentes vigentes.
 
-### 0.7 Versión 1.2 (2026-11-20)
+### 0.8 Versión 1.2 (2026-11-20)
 
 - Se aprueba D-24 con `patrimonialStatus` y valor por defecto `sin_clasificar`; el asistente se abstiene ante pertenencia no verificada.
 - Se añaden `usagePolicy` (`final`, `pointer`, `context`) e `indexingPolicy` (`full_text`, `short_quotes_only`) como campos obligatorios del registro.
@@ -70,7 +102,7 @@
 - La búsqueda externa en vivo y RF-60 quedan diferidos a v1.1 (D-28).
 - El asistente solo se abre con cobertura oficial verificada (D-29).
 
-### 0.8 Versión 1.1 (2026-11-17)
+### 0.9 Versión 1.1 (2026-11-17)
 
 - Se retira la gestión de proveedor de IA y de presupuesto: no es necesaria para este proyecto. En v1 la respuesta se compone con fragmentos citados, sin generación libre (§8).
 - No se solicita autorización a UNESCO como vía de la v1. Los materiales de UNESCO sin licencia abierta no se indexan en texto completo; se usan por curación con citas breves y enlace (§3).
@@ -228,11 +260,11 @@ Fecha de consulta: 17/11/2026, salvo indicación.
 | S-019 | Getty Conservation Institute, [*Earthen Architecture Initiative Seismic Retrofitting Project: A Bibliography*](https://www.getty.edu/publications-reports/item/2K7M1B) (2014) | B, bibliografía técnica | No verificados | Página bibliográfica en inglés; no es un manual de restauración ni sustenta instrucciones de obra. `draft`: usar solo para localizar y verificar manuales primarios en español |
 | S-020 | Proyecto FALCONSYNC, captura de 23 POI publicados en `seedLocations.js` | C, dato interno del sistema | Titularidad del texto no verificada | `draft`: snapshot de nombres, categorías, circuitos y direcciones registradas; no acredita actualidad ni hechos externos |
 | S-021 | Proyecto FALCONSYNC, fichas de los 23 POI publicados (generado desde `seedLocations.js`) | C, dato interno del sistema | Contenido interno; atribución al propio sistema | `active` desde 2026-11-23 (revisión del responsable, derechos verificados por el historiador); acredita lo publicado, no historia, horarios ni estado actual |
-| S-022 | Proyecto FALCONSYNC, preguntas frecuentes y alcance de la guía | C, dato interno del sistema | Contenido interno; atribución al propio sistema | `active` desde 2026-11-23 (revisión del responsable); no es fuente independiente |
+| S-022 | Proyecto FALCONSYNC, preguntas frecuentes y alcance de la guía | C, dato interno del sistema | Contenido interno; atribución al propio sistema | `active` desde 2026-11-23 (revisión del responsable); etiqueta `Documentación del proyecto`; no es fuente independiente |
 | S-023 | Proyecto FALCONSYNC, ficha del POI `cataratas-de-hueque` | C, dato interno del sistema | Contenido interno | `draft`: su manifiesto exige que el POI esté publicado y sigue en borrador |
 | S-024 | Apuntes, Revista Digital de Arquitectura, «Arquitectura con barro» (Arq. Gonzalo Vélez J., 18/08/2010) | C | Sin licencia abierta; cita ≤25 palabras con atribución y enlace | `active` (2026-11-23, instrucción del responsable); contexto cultural de adobe/tapia/bahareque; nunca estado de conservación ni prescripción de obra |
 | S-025 | ASFE/ASIAPRODI (Proyecto OXLAJUJ TZ'IKIN), *Ficha técnica: sistema constructivo adobe/tapial* | C | Sin licencia abierta; cita ≤25 palabras con atribución | `active` (2026-11-23, instrucción del responsable); referencia técnica con bibliografía citada; no es norma de obra ni diagnóstico |
-| S-026 | Wikipedia (es), *Coro (Venezuela)* — resúmenes propios (transporte, casco, arquitectura, fiestas, gastronomía, bandera) | D | CC BY-SA 4.0 | `active` (2026-11-23); resúmenes ≤25 palabras con atribución y enlace; nunca única autoridad de un hecho normativo o de estado actual |
+| S-026 | Wikipedia (es), *Coro (Venezuela)* — resúmenes propios (introducción, transporte, casco, arquitectura, fiestas, gastronomía, bandera) | D | CC BY-SA 4.0 | `active` (2026-11-23); resúmenes ≤25 palabras con atribución y enlace; nunca única autoridad de un hecho normativo o de estado actual |
 | S-027 | Wikipedia (es), *La Vela de Coro* — resúmenes propios (Los Locos, Marcha de la Fe, UNESCO 1993, Miranda 1806) | D | CC BY-SA 4.0 | `active` (2026-11-23); resúmenes ≤25 palabras con atribución y enlace |
 | S-028 | Wikivoyage (es), *Santa Ana de Coro* — resúmenes propios (llegada, Médanos en bus, rutas cercanas, posadas) | D | CC BY-SA 4.0 | `active` (2026-11-23); resúmenes ≤25 palabras con atribución y enlace; no sustenta precios ni horarios de restaurantes |
 | S-029 | Wikipedia (es), *Museo Diocesano de Coro Lucas Guillermo Castillo* — resúmenes propios (fundación 1946 y salas) | D | CC BY-SA 4.0 | `active` (2026-11-23); resúmenes ≤25 palabras con atribución y enlace |
@@ -269,7 +301,7 @@ Matriz de política y estado documental propuesto:
 | S-023 | C, datos internos del sistema | `context` | `full_text` | `draft`: el POI `cataratas-de-hueque` sigue sin publicar |
 | S-024 | C | `context` | `short_quotes_only` | `active`: blog de arquitectura con autoría; citas ≤25 palabras con atribución |
 | S-025 | C | `context` | `short_quotes_only` | `active`: ficha técnica con bibliografía; citas ≤25 palabras con atribución |
-| S-026 | D | `context` | `short_quotes_only` | `active`: resúmenes propios ≤25 palabras con enlace a Wikipedia |
+| S-026 | D | `context` | `short_quotes_only` | `active`: resúmenes propios ≤25 palabras con enlace a Wikipedia; incluye `S-026#introduccion` para la identidad de Coro |
 | S-027 | D | `context` | `short_quotes_only` | `active`: resúmenes propios ≤25 palabras con enlace a Wikipedia |
 | S-028 | D | `context` | `short_quotes_only` | `active`: resúmenes propios ≤25 palabras con enlace a Wikivoyage; no precios ni horarios |
 | S-029 | D | `context` | `short_quotes_only` | `active`: resúmenes propios ≤25 palabras con enlace a Wikipedia |
@@ -277,7 +309,7 @@ Matriz de política y estado documental propuesto:
 | S-031 | C | `context` | `short_quotes_only` | `active`: horario de misas referido, sin fecha de publicación; confirmar con la parroquia |
 | S-032 | D | `context` | `short_quotes_only` | `active`: resúmenes propios ≤25 palabras con enlace a Wikipedia; sin horarios |
 
-Los estados de esta matriz son propuestas editoriales, no prueba de que los registros estén en la base de datos. A 2026-11-24 la base de desarrollo 27018 contiene 14 fuentes y 131 fragmentos aplicados con embeddings y verificados (`rag:ingest --verify` sin problemas). `active` significa elegible, no que todas sus afirmaciones estén verificadas. Un fragmento solo se recupera si su documento está `active` y su `usagePolicy` permite el uso solicitado. S-002 y S-003 se proponen con extractos breves y hechos estructurados, no con texto completo.
+Los estados de esta matriz son propuestas editoriales, no prueba de que los registros estén en la base de datos. A 2026-11-25 la base de desarrollo 27018 contiene 14 fuentes y 132 fragmentos aplicados con embeddings y verificados (`rag:ingest --verify` sin problemas). `active` significa elegible, no que todas sus afirmaciones estén verificadas. Un fragmento solo se recupera si su documento está `active` y su `usagePolicy` permite el uso solicitado. S-002 y S-003 se proponen con extractos breves y hechos estructurados, no con texto completo.
 
 ### 5.2 Uso del informe de 2008 (S-001)
 
@@ -368,7 +400,7 @@ Para las fuentes con derechos sin resolver (S-001 y S-005), no se guarda el text
 | `verifiedAt` | Sí para `active` | Fecha de la última verificación del contenido; nula en `draft`. |
 | `url` | No | Enlace oficial o de referencia. |
 | `level` | Sí | A, B, C, D o E, según §2.1. |
-| `sourceLabel` | Sí | Etiqueta visible de credibilidad (p. ej., `Oficial UNESCO`, `Académico`, `Externo`). |
+| `sourceLabel` | Sí | Etiqueta visible de credibilidad (p. ej., `Oficial UNESCO`, `Académico`, `Externo`, `Documentación del proyecto`). |
 | `usagePolicy` | Sí | `final`, `pointer` o `context`, según §2.3. |
 | `indexingPolicy` | Sí | `full_text` o `short_quotes_only`, según §2.3. |
 | `credibilityNotes` | Sí | Motivo del nivel y advertencias. |
@@ -430,7 +462,7 @@ Compensación: sin generación libre la redacción es menos fluida, pero cada af
 
 ### 8.4 Contrato y validación de citas
 
-Cada respuesta incluye `answerType`: `extractive`, `structured`, `contextual`, `mixed`, `clarification` o `abstention`. `abstentionReason` usa los códigos definidos en §8.1. Cada cita conserva `kind` (`quote`, `fact` o `context`), `claimType`, `page` como localizador textual, `factKey`/`factValue`, `contradictionGroup` y `validAsOf` cuando correspondan. Una cita `context` se presenta etiquetada y no puede sustentar una afirmación factual.
+Cada respuesta incluye `answerType`: `extractive`, `structured`, `contextual`, `mixed`, `clarification`, `greeting` o `abstention`. `abstentionReason` usa los códigos definidos en §8.1. Cada cita conserva `kind` (`quote`, `fact` o `context`), `claimType`, `page` como localizador textual, `factKey`/`factValue`, `contradictionGroup` y `validAsOf` cuando correspondan. Una cita `context` se presenta etiquetada y no puede sustentar una afirmación factual. Las citas de fuentes internas del proyecto (`Proyecto FALCONSYNC`) se muestran sin URL pública, aunque el manifiesto conserve una referencia de repositorio.
 
 | Regla | Verificación |
 |---|---|
@@ -454,6 +486,10 @@ Mínimo: **60 preguntas**: 20 respondibles con una fuente, 20 multi-fuente o con
 El conjunto dorado V2 (`projects/backend/corpus/evaluation/rag-golden-v2.json`) fija **59 casos** antes de ejecutar la evaluación y sus metas no se modifican tras ver resultados: `poiAccuracy ≥ 0.9`, `clarificationAccuracy ≥ 0.5`, `abstentionAccuracy ≥ 0.9`, `sourceHit ≥ 0.9`, `citationValidity = 1`, `fallbackExact = 1`, `suggestionsComplete = 1` y latencia p95 ≤ 1500 ms. Se ejecutó con el modelo real sobre la base temporal `falconsync_rag_eval` el 2026-11-23: **59/59 casos y todas las metas cumplidas** (métricas en 1.0 salvo `clarificationAccuracy` que también alcanza 1.0; p95 42 ms). El informe queda en `projects/backend/corpus/evaluation/rag-golden-v2-report.json`. La evaluación incluye de forma explícita las fuentes en borrador S-021 y S-022 (`EVAL_STATUSES=['active','draft']`) y declara la exclusión de S-005 y S-023. Tras la aprobación de S-021 y S-022 ya no hay borradores entre las incluidas.
 
 El conjunto dorado V3 (`projects/backend/corpus/evaluation/rag-golden-v3.json`) fija **125 casos** antes de ejecutar: los 59 de V2, las 50 preguntas del dataset turístico (categorías `dataset_*`), 10 paráfrasis desde otros puntos de vista (`paraphrase`) y 6 preguntas compuestas (`compound`). Se ejecutó el 2026-11-24 con el corpus completo (14 fuentes): **125/125 y todas las metas cumplidas** (p95 45 ms). Resumen: [`evaluacion-rag/rag-v3-2026-11-24.json`](./evaluacion-rag/rag-v3-2026-11-24.json); informe: `projects/backend/corpus/evaluation/rag-golden-v3-report.json`. La regresión de V2 se ejecuta con `--sources S-002,S-003,S-020,S-021,S-022` para aislar los cambios de código de los del corpus (59/59, p95 41 ms); sin esa restricción, `oos-07` responde con las rutas de S-028 y ese caso quedó ajustado en V3, documentado en las notas del conjunto. El mínimo editorial de 60 casos queda cubierto.
+
+El conjunto dorado V4 (`projects/backend/corpus/evaluation/rag-golden-v4.json`) parte de los 125 casos de V3 y **mantiene los 125 congelados**: corrige p-20 y p-30, que codificaban falsos positivos léxicos eliminados por el umbral 0.6 (`paseo`/`francisco` y `monumento` genérico), y añade 9 casos conversacionales de saludo, identidad de Coro, producto, turismo, tapia, ruta y ficha con historia. Ejecutado el 2026-11-25 sobre 14 fuentes y 132 fragmentos: **134/134 y todas las metas cumplidas** (`poiAccuracy`, `clarificationAccuracy`, `abstentionAccuracy`, `citationValidity`, `fallbackExact` y `suggestionsComplete` en 1.0; `sourceHit` 0.94; p95 54 ms). Resumen: [`evaluacion-rag/rag-v4-2026-11-25.json`](./evaluacion-rag/rag-v4-2026-11-25.json); informe: `projects/backend/corpus/evaluation/rag-golden-v4-report.json`. V3 se conserva como referencia histórica y, con el código actual, produce 123/125 con `unmetTargets` vacío: sus dos fallos son exactamente esas expectativas obsoletas (`rag-golden-v3-2026-11-25-report.json`).
+
+El conjunto dorado V5 (`projects/backend/corpus/evaluation/rag-golden-v5.json`) parte de los 134 casos de V4 y corrige cuatro expectativas que premiaban respuestas tangenciales: p-18 («Casa del Tesoro» sin evidencia), p-45 (visitas nocturnas), p-48 (estacionamiento) y oos-07 (ruta del casco, ahora cubierta por S-022). Añade 12 casos de separación ciudad/POI, preguntas dobles y triples, Ruta del Casco Histórico, bus a los Médanos, distancia, horario y precio. Ejecutado el 2026-11-26 sobre 14 fuentes y 133 fragmentos: **146/146, 0 fallos y `unmetTargets` vacío** (`poiAccuracy`, `clarificationAccuracy`, `abstentionAccuracy`, `citationValidity`, `fallbackExact` y `suggestionsComplete` en 1.0; `sourceHit` 0.92; p95 110 ms). Resumen: [`evaluacion-rag/rag-v5-2026-11-26.json`](./evaluacion-rag/rag-v5-2026-11-26.json); informe: `projects/backend/corpus/evaluation/rag-golden-v5-report.json`. V4 se conserva congelado; con el código actual falla solo p-45 y p-48 porque sus expectativas antiguas premiaban respuestas no sustentadas.
 
 | # | Pregunta | Resultado esperado |
 |---|---|---|

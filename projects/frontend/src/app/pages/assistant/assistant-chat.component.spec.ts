@@ -1,7 +1,7 @@
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AssistantAnswer, AssistantStatus } from '../../models/assistant.model';
 import { AssistantApiService } from '../../services/assistant-api.service';
 import { AuthService } from '../../services/auth.service';
@@ -152,10 +152,13 @@ describe('AssistantChatComponent', () => {
     }).compileComponents();
   });
 
-  it('muestra la guía turística sin ofrecer apoyo técnico a perfiles no autorizados', async () => {
+  it('muestra a Chivito como guía turística sin ofrecer apoyo técnico a perfiles no autorizados', async () => {
     const { page } = await createPage();
 
     expect(page.textContent).toContain('¿Qué te gustaría descubrir de Coro?');
+    expect(page.textContent).toContain('Chivito');
+    expect(page.textContent).toContain('Guía turístico de FalconSync');
+    expect(page.querySelector('.chat__avatar')).not.toBeNull();
     expect(page.textContent).not.toContain('Apoyo técnico');
     expect(page.querySelector('#chat-question')).not.toBeNull();
   });
@@ -164,7 +167,7 @@ describe('AssistantChatComponent', () => {
     const { page } = await createPage();
 
     expect(api.getStatus).toHaveBeenCalledTimes(1);
-    expect(page.textContent).toContain('Guía disponible · corpus 2026.11.20-1');
+    expect(page.textContent).toContain('Chivito disponible · corpus 2026.11.20-1');
     expect(textareaOf(page).disabled).toBe(false);
   });
 
@@ -172,7 +175,7 @@ describe('AssistantChatComponent', () => {
     api.getStatus.mockReturnValue(of({ ...status, tourist: { enabled: true, available: false } }));
     const { page } = await createPage();
 
-    expect(page.textContent).toContain('Guía en preparación');
+    expect(page.textContent).toContain('Chivito en preparación');
     expect(textareaOf(page).disabled).toBe(true);
     expect(buttonByText(page, 'Enviar pregunta').disabled).toBe(true);
     expect(buttonByText(page, '¿Qué es Coro?').disabled).toBe(true);
@@ -188,7 +191,7 @@ describe('AssistantChatComponent', () => {
     clickButton(fixture, page, 'Reintentar');
 
     expect(api.getStatus).toHaveBeenCalledTimes(2);
-    expect(page.textContent).toContain('Guía disponible');
+    expect(page.textContent).toContain('Chivito disponible');
     expect(textareaOf(page).disabled).toBe(false);
   });
 
@@ -203,6 +206,8 @@ describe('AssistantChatComponent', () => {
     });
     expect(page.textContent).toContain('Coro fue inscrito en 1993.');
     expect(page.textContent).toContain('Ficha de Coro');
+    expect(page.querySelectorAll('.chat-message__avatar')).toHaveLength(1);
+    expect(page.querySelector('.chat-message--assistant')?.textContent).toContain('Chivito');
   });
 
   it.each(['ASSISTANT_UNAVAILABLE', 'ASSISTANT_MODEL_UNAVAILABLE'])(
@@ -217,7 +222,7 @@ describe('AssistantChatComponent', () => {
 
       expect(api.getStatus).toHaveBeenCalledTimes(2);
       expect(page.textContent).toContain(
-        'La guía no está disponible en este momento. Inténtalo más tarde.',
+        'Chivito no está disponible en este momento. Inténtalo más tarde.',
       );
       expect(page.textContent).not.toContain('Detalle interno del servidor');
     },
@@ -372,7 +377,7 @@ describe('AssistantChatComponent', () => {
   it('muestra el alcance actualizado de la guía y sus preguntas de inicio', async () => {
     const { page } = await createPage();
 
-    expect(page.querySelector('h1')?.textContent).toContain('Conoce Coro y FALCONSYNC');
+    expect(page.querySelector('h1')?.textContent).toContain('Conoce Coro con Chivito');
     expect(page.textContent).toContain('Cada respuesta muestra sus fuentes.');
     expect(page.textContent).toContain('¿Qué es FALCONSYNC?');
     expect(page.textContent).not.toContain('Respuestas con citas');
@@ -397,6 +402,28 @@ describe('AssistantChatComponent', () => {
     clickButton(fixture, page, 'Apoyo técnico (en preparación)');
 
     expect(page.textContent).not.toContain('El apoyo técnico es preliminar.');
+  });
+
+  it('ofrece abrir el bot de Telegram desde la guía turística', async () => {
+    const { page } = await createPage();
+
+    const link = page.querySelector('.chat-telegram__action') as HTMLAnchorElement | null;
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute('href')).toBe('https://t.me/Falconsync_bot');
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toContain('noopener');
+    expect(link?.textContent).toContain('@Falconsync_bot');
+  });
+
+  it('oculta el acceso a Telegram en el apoyo técnico', async () => {
+    auth.hasAnyRole.mockReturnValue(true);
+    api.getStatus.mockReturnValue(of({ ...status, technical: { enabled: true, available: true } }));
+    const { fixture, page } = await createPage();
+
+    expect(page.querySelector('.chat-telegram')).not.toBeNull();
+    clickButton(fixture, page, 'Apoyo técnico preliminar');
+
+    expect(page.querySelector('.chat-telegram')).toBeNull();
   });
 
   it('no reutiliza el lugar de seguimiento en apoyo técnico ni al volver a turismo', async () => {
@@ -425,5 +452,59 @@ describe('AssistantChatComponent', () => {
       question: '¿Qué es Coro?',
       locale: 'es',
     });
+  });
+
+  it('baja el historial al último mensaje cuando llega una respuesta', async () => {
+    const { fixture, page } = await createPage();
+    const history = page.querySelector('.chat__messages') as HTMLElement;
+    const scrollTo = vi.fn();
+    Object.defineProperty(history, 'scrollTo', { configurable: true, value: scrollTo });
+
+    askQuestion(fixture, page, '¿Qué es Coro?');
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(history.getAttribute('aria-label')).toBe('Historial de la conversación');
+    expect(history.tabIndex).toBe(0);
+    expect(scrollTo).toHaveBeenCalled();
+    const options = scrollTo.mock.calls.at(-1)?.[0] as ScrollToOptions | undefined;
+    expect(options?.top).toBe(history.scrollHeight);
+    expect(['smooth', 'auto']).toContain(options?.behavior);
+  });
+
+  it('no arrastra la vista si la persona está leyendo mensajes anteriores', async () => {
+    const response = new Subject<{ data: AssistantAnswer }>();
+    api.query.mockReturnValue(response.asObservable());
+    const { fixture, page } = await createPage();
+    const history = page.querySelector('.chat__messages') as HTMLElement;
+    const scrollTo = vi.fn();
+    let scrollTop = 0;
+    Object.defineProperties(history, {
+      scrollTo: { configurable: true, value: scrollTo },
+      scrollHeight: { configurable: true, value: 1000 },
+      clientHeight: { configurable: true, value: 400 },
+      scrollTop: {
+        configurable: true,
+        get: () => scrollTop,
+        set: (value: number) => {
+          scrollTop = value;
+        },
+      },
+    });
+
+    askQuestion(fixture, page, '¿Qué es Coro?');
+    fixture.detectChanges();
+    scrollTo.mockClear();
+
+    scrollTop = 500;
+    history.dispatchEvent(new Event('scroll'));
+    scrollTop = 300;
+    history.dispatchEvent(new Event('scroll'));
+
+    response.next({ data: answer });
+    response.complete();
+    fixture.detectChanges();
+
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });

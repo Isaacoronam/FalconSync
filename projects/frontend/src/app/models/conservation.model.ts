@@ -142,6 +142,7 @@ export interface Report {
     coordinates: [number, number];
   } | null;
   accuracyMeters?: number | null;
+  sourceChannel?: 'web' | 'telegram';
   state: ReportState;
   triage?: ReportTriage;
   rejectionReason?: string;

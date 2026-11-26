@@ -70,7 +70,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
   private readonly markers = new Map<string, L.Marker>();
   private popupCloseTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly hoverAwarePopups = new WeakSet<HTMLElement>();
-  private popupOpen = false;
+  protected readonly popupOpen = signal(false);
   private renderingMarkers = false;
   private requestedPanoramaId: string | null = null;
   private panoramaRequestToken = 0;
@@ -92,24 +92,44 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
   protected readonly hasLocations = computed(() => this.locations().length > 0);
 
   private readonly handleMapMove = (): void => {
-    if (!this.popupOpen) {
+    if (!this.popupOpen()) {
       this.renderMarkers();
     }
   };
 
-  private readonly handlePopupOpen = (): void => {
-    this.popupOpen = true;
+  private readonly handlePopupOpen = (event: L.PopupEvent): void => {
+    this.popupOpen.set(true);
+    this.decoratePopup(event.popup);
+
+    const popupElement = event.popup.getElement();
+    const activeElement = document.activeElement;
+
+    if (
+      popupElement &&
+      activeElement instanceof HTMLElement &&
+      activeElement.classList.contains('heritage-marker') &&
+      activeElement.matches(':focus-visible')
+    ) {
+      popupElement.setAttribute('tabindex', '-1');
+      popupElement.focus({ preventScroll: true });
+    }
   };
 
   private readonly handlePopupClose = (): void => {
-    this.popupOpen = false;
+    const focusWasInsidePopup = Boolean(document.activeElement?.closest('.leaflet-popup'));
+
+    this.popupOpen.set(false);
+
+    if (focusWasInsidePopup) {
+      this.map?.getContainer().focus({ preventScroll: true });
+    }
 
     if (this.renderingMarkers) {
       return;
     }
 
     queueMicrotask(() => {
-      if (!this.popupOpen) {
+      if (!this.popupOpen()) {
         this.renderMarkers();
       }
     });
@@ -510,17 +530,22 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       keyboard: true,
       zIndexOffset: selected ? 1000 : 0,
     }).bindPopup(this.createPopup(location), {
-      maxWidth: 340,
-      minWidth: 260,
-      maxHeight: Math.max(160, (this.map?.getSize().y ?? 0) * 0.6 - 40),
-      autoPanPadding: [20, 20],
+      maxWidth: 360,
+      minWidth: 248,
+      maxHeight: this.popupMaxHeight(),
+      autoPanPaddingTopLeft: [16, 56],
+      autoPanPaddingBottomRight: [16, 24],
+      className: 'heritage-popup-shell',
     });
 
-    marker.on('mouseover', () => {
-      this.clearPopupCloseTimeout();
-      marker.openPopup();
-    });
-    marker.on('mouseout', () => this.schedulePopupClose(marker));
+    if (this.supportsHover()) {
+      marker.on('mouseover', () => {
+        this.clearPopupCloseTimeout();
+        marker.openPopup();
+      });
+      marker.on('mouseout', () => this.schedulePopupClose(marker));
+    }
+
     marker.on('popupopen', () => this.bindPopupHoverEvents(marker));
 
     marker.addTo(this.markerLayer);
@@ -528,20 +553,97 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private bindPopupHoverEvents(marker: L.Marker): void {
-    const popupElement = marker.getPopup()?.getElement();
+    const popup = marker.getPopup();
+    const popupElement = popup?.getElement();
 
-    if (!popupElement || this.hoverAwarePopups.has(popupElement)) {
+    if (!popup || !popupElement) {
+      return;
+    }
+
+    this.refreshPopupMaxHeight(popup);
+
+    if (this.hoverAwarePopups.has(popupElement)) {
       return;
     }
 
     this.hoverAwarePopups.add(popupElement);
-    popupElement.addEventListener('mouseenter', this.clearPopupCloseTimeout);
-    popupElement.addEventListener('mouseleave', () => this.schedulePopupClose(marker));
+
+    if (this.supportsHover()) {
+      popupElement.addEventListener('mouseenter', this.clearPopupCloseTimeout);
+      popupElement.addEventListener('mouseleave', () => this.schedulePopupClose(marker));
+    }
+
+    popupElement.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      marker.closePopup();
+      this.map?.getContainer().focus();
+    });
+  }
+
+  private decoratePopup(popup: L.Popup): void {
+    const popupElement = popup.getElement();
+
+    if (!popupElement) {
+      return;
+    }
+
+    const title = popupElement.querySelector<HTMLElement>('.heritage-popup__title');
+
+    if (title?.id) {
+      popupElement.setAttribute('role', 'dialog');
+      popupElement.setAttribute('aria-labelledby', title.id);
+    }
+
+    const closeButton = popupElement.querySelector<HTMLAnchorElement>(
+      '.leaflet-popup-close-button',
+    );
+
+    if (!closeButton) {
+      return;
+    }
+
+    const titleText = title?.textContent?.trim();
+    closeButton.setAttribute(
+      'aria-label',
+      titleText ? `Cerrar ficha de ${titleText}` : 'Cerrar ficha',
+    );
+    closeButton.title = 'Cerrar ficha';
+  }
+
+  private refreshPopupMaxHeight(popup: L.Popup): void {
+    const maxHeight = this.popupMaxHeight();
+
+    if (popup.options.maxHeight === maxHeight) {
+      return;
+    }
+
+    popup.options.maxHeight = maxHeight;
+    popup.update();
+  }
+
+  private popupMaxHeight(): number {
+    return Math.max(240, Math.min(420, (this.map?.getSize().y ?? 0) - 64));
+  }
+
+  private supportsHover(): boolean {
+    return typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
   }
 
   private schedulePopupClose(marker: L.Marker): void {
     this.clearPopupCloseTimeout();
     this.popupCloseTimeout = setTimeout(() => {
+      const popupElement = marker.getPopup()?.getElement();
+
+      if (popupElement?.contains(document.activeElement)) {
+        this.popupCloseTimeout = null;
+        return;
+      }
+
       marker.closePopup();
       this.popupCloseTimeout = null;
     }, 120);
@@ -650,92 +752,158 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     const imageUrl = location.images[0];
 
     if (imageUrl) {
+      const media = document.createElement('figure');
+      media.className = 'heritage-popup__media';
+
       const image = document.createElement('img');
       image.className = 'heritage-popup__image';
       image.src = imageUrl;
-      image.alt = `Imagen de ${location.title}`;
+      image.alt = `Fotografía de ${location.title}`;
       image.loading = 'lazy';
       image.decoding = 'async';
-      image.addEventListener('error', () => image.remove(), { once: true });
-      container.append(image);
+      image.addEventListener(
+        'error',
+        () => {
+          media.remove();
+          container.classList.add('heritage-popup--no-media');
+        },
+        { once: true },
+      );
+      media.append(image);
 
       const credit = location.imageCredits?.find((item) => item.url === imageUrl);
 
       if (credit) {
-        container.append(this.createImageCredit(credit));
+        media.append(this.createImageCredit(credit));
       }
+
+      container.append(media);
+    } else {
+      container.classList.add('heritage-popup--no-media');
     }
+
+    const body = document.createElement('div');
+    body.className = 'heritage-popup__body';
 
     const eyebrow = document.createElement('p');
     eyebrow.className = 'heritage-popup__eyebrow';
     eyebrow.textContent = this.categoryLabel(location.category);
 
+    if (location.historicalPeriod) {
+      const period = document.createElement('span');
+      period.className = 'heritage-popup__period';
+      period.textContent = ` · ${location.historicalPeriod}`;
+      eyebrow.append(period);
+    }
+
     const title = document.createElement('h3');
     title.className = 'heritage-popup__title';
+    title.id = `heritage-popup-title-${location.slug}`;
     title.textContent = location.title;
 
-    container.append(eyebrow, title);
+    body.append(eyebrow, title);
 
     if (location.address) {
       const address = document.createElement('p');
       address.className = 'heritage-popup__address';
       address.textContent = location.address;
-      container.append(address);
+      body.append(address);
     }
 
-    const description = document.createElement('p');
-    description.className = 'heritage-popup__text';
-    description.textContent = location.description;
-
-    const meta = document.createElement('div');
-    meta.className = 'heritage-popup__meta';
-
-    for (const circuit of location.circuits ?? []) {
-      meta.append(this.createChip(this.circuitLabel(circuit), 'heritage-popup__tag--circuit'));
+    if (location.description) {
+      const description = document.createElement('p');
+      description.className = 'heritage-popup__text';
+      description.textContent = location.description;
+      body.append(description);
     }
 
-    for (const tag of location.tags ?? []) {
-      meta.append(this.createChip(this.tagLabel(tag)));
+    const taxonomy = [
+      ...(location.circuits ?? []).map((circuit) => ({
+        label: this.circuitLabel(circuit),
+        modifier: 'heritage-popup__tag--circuit',
+      })),
+      ...(location.tags ?? []).map((tag) => ({
+        label: this.tagLabel(tag),
+        modifier: '',
+      })),
+    ];
+
+    if (taxonomy.length > 0) {
+      const meta = document.createElement('ul');
+      meta.className = 'heritage-popup__meta';
+      meta.setAttribute('aria-label', 'Circuitos y etiquetas');
+
+      for (const item of taxonomy.slice(0, 4)) {
+        const listItem = document.createElement('li');
+        listItem.append(this.createChip(item.label, item.modifier));
+        meta.append(listItem);
+      }
+
+      const hiddenItems = taxonomy.slice(4);
+
+      if (hiddenItems.length > 0) {
+        const hiddenLabels = hiddenItems.map((item) => item.label).join(', ');
+        const listItem = document.createElement('li');
+        const more = this.createChip(`+${hiddenItems.length}`);
+        more.classList.add('heritage-popup__tag--more');
+        more.title = hiddenLabels;
+        more.setAttribute('aria-hidden', 'true');
+
+        const accessible = document.createElement('span');
+        accessible.className = 'heritage-popup__sr';
+        accessible.textContent = `Etiquetas adicionales: ${hiddenLabels}`;
+
+        listItem.append(more, accessible);
+        meta.append(listItem);
+      }
+
+      body.append(meta);
     }
 
-    meta.append(
-      this.createChip(
-        `Verificación: ${this.verificationLabel(location.verificationLevel ?? 'unverified')}`,
-        location.verificationLevel === 'verified' || location.verificationLevel === 'single-source'
-          ? 'heritage-popup__tag--verified'
-          : 'heritage-popup__tag--warning',
+    const facts = document.createElement('dl');
+    facts.className = 'heritage-popup__facts';
+    facts.append(
+      this.createFact(
+        'Verificación',
+        this.verificationLabel(location.verificationLevel ?? 'unverified'),
       ),
+      this.createFact('Conservación', this.conservationLabel(location.conservationStatus)),
     );
+    body.append(facts);
 
-    if (location.historicalPeriod) {
-      meta.append(this.createChip(location.historicalPeriod));
-    }
+    const footer = document.createElement('footer');
+    footer.className = 'heritage-popup__footer';
 
-    meta.append(
-      this.createChip(
-        `Conservación: ${this.conservationLabel(location.conservationStatus)}`,
-        location.conservationStatus === 'unknown' ? 'heritage-popup__tag--warning' : '',
-      ),
-    );
-
-    container.append(description, meta);
-
-    const panoramaAction = document.createElement('button');
-    panoramaAction.type = 'button';
-    panoramaAction.className = 'heritage-popup__panorama';
-    panoramaAction.textContent = 'Explorar en 360° junto al mapa';
-    panoramaAction.addEventListener('click', () => this.openLocationPanoramas(location));
-    container.append(panoramaAction);
+    const actions = document.createElement('div');
+    actions.className = 'heritage-popup__actions';
 
     const detail = document.createElement('a');
     detail.className = 'heritage-popup__detail';
     detail.href = `/lugares/${encodeURIComponent(location.slug)}`;
-    detail.textContent = 'Leer la historia y los detalles del lugar';
+    detail.setAttribute('aria-label', `Leer la historia de ${location.title}`);
+
+    const detailLabel = document.createElement('span');
+    detailLabel.textContent = 'Leer la historia';
+
+    const detailArrow = document.createElement('span');
+    detailArrow.className = 'heritage-popup__arrow';
+    detailArrow.setAttribute('aria-hidden', 'true');
+    detailArrow.textContent = '→';
+
+    detail.append(detailLabel, detailArrow);
     detail.addEventListener('click', (event) => {
       event.preventDefault();
       void this.router.navigate(['/lugares', location.slug]);
     });
-    container.append(detail);
+
+    const panoramaAction = document.createElement('button');
+    panoramaAction.type = 'button';
+    panoramaAction.className = 'heritage-popup__panorama';
+    panoramaAction.textContent = 'Explorar en 360°';
+    panoramaAction.setAttribute('aria-label', `Explorar en 360° junto al mapa: ${location.title}`);
+    panoramaAction.addEventListener('click', () => this.openLocationPanoramas(location));
+
+    actions.append(detail, panoramaAction);
 
     if (location.sourceUrl) {
       const source = document.createElement('a');
@@ -743,9 +911,26 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       source.href = location.sourceUrl;
       source.target = '_blank';
       source.rel = 'noopener noreferrer';
-      source.textContent = 'Ver fuente del dato';
-      container.append(source);
+      source.setAttribute(
+        'aria-label',
+        `Fuente del dato de ${location.title} (se abre en una nueva pestaña)`,
+      );
+
+      const sourceLabel = document.createElement('span');
+      sourceLabel.textContent = 'Fuente del dato';
+
+      const sourceArrow = document.createElement('span');
+      sourceArrow.className = 'heritage-popup__arrow';
+      sourceArrow.setAttribute('aria-hidden', 'true');
+      sourceArrow.textContent = '↗';
+
+      source.append(sourceLabel, sourceArrow);
+      footer.append(actions, source);
+    } else {
+      footer.append(actions);
     }
+
+    container.append(body, footer);
 
     return container;
   }
@@ -852,8 +1037,22 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
     return chip;
   }
 
-  private createImageCredit(credit: ImageCredit): HTMLParagraphElement {
-    const container = document.createElement('p');
+  private createFact(label: string, value: string): HTMLDivElement {
+    const item = document.createElement('div');
+    item.className = 'heritage-popup__fact';
+
+    const term = document.createElement('dt');
+    term.textContent = label;
+
+    const description = document.createElement('dd');
+    description.textContent = value;
+
+    item.append(term, description);
+    return item;
+  }
+
+  private createImageCredit(credit: ImageCredit): HTMLElement {
+    const container = document.createElement('figcaption');
     container.className = 'heritage-popup__credit';
 
     if (credit.author) {
@@ -871,6 +1070,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
         license.href = credit.licenseUrl!;
         license.target = '_blank';
         license.rel = 'noopener noreferrer';
+        license.setAttribute('aria-label', `${credit.license} (se abre en una nueva pestaña)`);
       }
 
       container.append(license);
@@ -882,6 +1082,7 @@ export class CoroMapComponent implements AfterViewInit, OnDestroy {
       source.href = credit.sourceUrl;
       source.target = '_blank';
       source.rel = 'noopener noreferrer';
+      source.setAttribute('aria-label', 'Ver original (se abre en una nueva pestaña)');
       source.textContent = 'Ver original';
       container.append(source);
     }

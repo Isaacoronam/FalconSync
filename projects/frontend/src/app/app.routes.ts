@@ -25,7 +25,7 @@ export const routes: Routes = [
   },
   {
     path: 'guia',
-    title: 'Guía patrimonial | FALCONSYNC',
+    title: 'Chivito, tu guía | FALCONSYNC',
     loadComponent: () =>
       import('./pages/assistant/assistant-chat.component').then(
         (module) => module.AssistantChatComponent,

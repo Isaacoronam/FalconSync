@@ -65,6 +65,9 @@ projects/frontend/
 - `src/environments/environment.ts`: URL base de la API.
 - `proxy.conf.json`: proxy de desarrollo hacia el backend.
 - `src/assets/images/locations/`: imágenes de los POI, referenciadas por el campo `images` de la API.
+- `src/assets/images/badges/`: medallones SVG por categoría para insignias sin imagen persistida.
+- `src/assets/brand/`: logo circular (512 y 128 px), variante de cabeza, avatar y poses de Chivito.
+- `design/source/`: maestros locales del logo, la hoja de Chivito y el fondo; no se publican.
 - `src/assets/favicon.ico`: favicon de FalconSync usado por `src/index.html`.
 - `e2e/`: suite Playwright de mapa, autenticación, administración de POI, aventuras, perfil y flujo de conservación con denegaciones/IDOR.
 
@@ -107,6 +110,16 @@ El detalle funcional y de seguridad está en
 El mapa usa tiles de OpenStreetMap con su atribución visible. Para producción debe revisarse la política de uso de tiles y evaluarse un proveedor con cuota o un servicio autoalojado.
 
 El icono de los marcadores se genera con `L.divIcon`, por lo que no depende de las imágenes empaquetadas de Leaflet.
+
+## Identidad y assets
+
+- `npm run brand:assets` (dentro de `projects/frontend`) regenera logo circular, marca de
+  cabeza, favicons, `apple-touch-icon`, avatar y poses de Chivito, y el fondo de Médanos.
+- Los maestros se leen de `design/source/`; los derivados se escriben en `src/assets/`.
+- El logo se enmascara a círculo para eliminar el damero incrustado del PNG original.
+- El fondo se aplica en `.app-shell::before` con overlay en `.app-shell::after`; en móvil se
+  muestra como banda inferior.
+- La guía se documenta en [`../../docs/IDENTIDAD.md`](../../docs/IDENTIDAD.md).
 
 ## Imágenes y favicon
 

@@ -8,6 +8,7 @@ import Location from '../databases/models/Location.js';
 import Report from '../databases/models/Report.js';
 import User from '../databases/models/User.js';
 import { hasCapability } from './authorizationService.js';
+import { notifyReportStateSafely } from './telegram/notifications.js';
 import { HttpError } from '../helpers/HttpError.js';
 
 function fail(status, code, message, details) {
@@ -99,6 +100,8 @@ async function appendEvent(session, {
 function publicReport(report) {
   const result = report.toJSON();
   delete result.triage?.notes;
+  // La clave de idempotencia es interna del canal y no debe salir por la API.
+  delete result.sourceActionKey;
   return result;
 }
 
@@ -110,6 +113,7 @@ function auditReport(report) {
     locationId: result.locationId,
     category: result.category,
     state: result.state,
+    sourceChannel: result.sourceChannel,
     triage: result.triage
       ? {
           decision: result.triage.decision,
@@ -239,33 +243,54 @@ async function validateReportTarget(input, session) {
 }
 
 export async function createReport(input, actorId, correlationId) {
-  return inTransaction(async (session) => {
-    await validateReportTarget(input, session);
+  try {
+    return await inTransaction(async (session) => {
+      await validateReportTarget(input, session);
 
-    const report = new Report({
-      reporterId: actorId,
-      heritageAssetId: input.heritageAssetId ?? null,
-      locationId: input.locationId ?? null,
-      category: input.category,
-      description: input.description,
-      capturedAt: input.capturedAt ?? new Date(),
-      gps: input.gps ?? undefined,
-      accuracyMeters: input.accuracyMeters,
+      const report = new Report({
+        reporterId: actorId,
+        heritageAssetId: input.heritageAssetId ?? null,
+        locationId: input.locationId ?? null,
+        category: input.category,
+        description: input.description,
+        capturedAt: input.capturedAt ?? new Date(),
+        gps: input.gps ?? undefined,
+        accuracyMeters: input.accuracyMeters,
+        sourceChannel: input.sourceChannel ?? 'web',
+        ...(input.sourceActionKey
+          ? { sourceActionKey: input.sourceActionKey }
+          : {}),
+      });
+
+      await report.save({ session });
+      await appendEvent(session, {
+        aggregateType: 'Report',
+        aggregateId: report._id,
+        eventType: 'report.created',
+        actorId,
+        toState: report.state,
+        correlationId,
+        payload: {
+          category: report.category,
+          sourceChannel: report.sourceChannel,
+        },
+      });
+
+      return publicReport(report);
     });
+  } catch (error) {
+    // Un reintento del mismo canal no puede duplicar el reporte.
+    if (error?.code === 11000 && input.sourceActionKey) {
+      const existing = await Report.findOne({
+        sourceActionKey: input.sourceActionKey,
+      });
+      if (existing) {
+        return publicReport(existing);
+      }
+    }
 
-    await report.save({ session });
-    await appendEvent(session, {
-      aggregateType: 'Report',
-      aggregateId: report._id,
-      eventType: 'report.created',
-      actorId,
-      toState: report.state,
-      correlationId,
-      payload: { category: report.category },
-    });
-
-    return publicReport(report);
-  });
+    throw error;
+  }
 }
 
 export async function listOwnReports(actorId, { page = 1, limit = 20 } = {}) {
@@ -364,7 +389,8 @@ export async function triageReport(
 ) {
   requireVersion(expectedVersion);
 
-  return inTransaction(async (session) => {
+  let notification = null;
+  const result = await inTransaction(async (session) => {
     const report = await Report.findById(reportId).session(session);
 
     if (!report) {
@@ -436,8 +462,15 @@ export async function triageReport(
       correlationId,
     });
 
-    return publicReport(report);
+    notification = publicReport(report);
+    return notification;
   });
+
+  if (notification) {
+    notifyReportStateSafely(notification);
+  }
+
+  return result;
 }
 
 export async function convertReport(
@@ -449,7 +482,8 @@ export async function convertReport(
 ) {
   requireVersion(expectedVersion);
 
-  return inTransaction(async (session) => {
+  let notification = null;
+  const result = await inTransaction(async (session) => {
     const report = await Report.findById(reportId).session(session);
 
     if (!report) {
@@ -583,11 +617,18 @@ export async function convertReport(
       payload: { reportId: idOf(report._id) },
     });
 
+    notification = publicReport(report);
     return {
-      report: publicReport(report),
+      report: notification,
       inspection: inspection.toJSON(),
     };
   });
+
+  if (notification) {
+    notifyReportStateSafely(notification);
+  }
+
+  return result;
 }
 
 export async function createInspection(input, actor, correlationId) {

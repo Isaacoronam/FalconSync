@@ -3,10 +3,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
+  afterRenderEffect,
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -20,8 +23,10 @@ import {
   AssistantStatus,
   ChatMessage,
 } from '../../models/assistant.model';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth.service';
 import { AssistantApiService } from '../../services/assistant-api.service';
+import { CHIVITO, TECHNICAL_GUIDE_NAME } from '../../services/utils/chivito';
 import { apiErrorMessage } from '../../services/utils/api-error';
 
 const TOURIST_PROMPTS = [
@@ -37,8 +42,8 @@ const TECHNICAL_PROMPTS = [
   '¿Qué medidas preventivas se recomiendan antes de intervenir un muro?',
 ];
 
-const UNAVAILABLE_MESSAGE = 'La guía no está disponible en este momento. Inténtalo más tarde.';
-const QUERY_ERROR_MESSAGE = 'No se pudo consultar el asistente.';
+const UNAVAILABLE_MESSAGE = 'Chivito no está disponible en este momento. Inténtalo más tarde.';
+const QUERY_ERROR_MESSAGE = 'No se pudo consultar a Chivito.';
 
 type StatusState = 'loading' | 'ready' | 'error';
 
@@ -64,6 +69,9 @@ export class AssistantChatComponent implements OnInit {
   private readonly assistantApi = inject(AssistantApiService);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly chivito = CHIVITO;
+  protected readonly technicalGuideName = TECHNICAL_GUIDE_NAME;
+  protected readonly telegramBotUrl = environment.telegramBotUrl;
   protected readonly mode = signal<AssistantScope>('tourist');
   protected readonly draft = signal('');
   protected readonly messages = signal<ChatMessage[]>([]);
@@ -96,15 +104,18 @@ export class AssistantChatComponent implements OnInit {
     }
 
     if (!this.touristAvailable()) {
-      return { tone: 'neutral', label: 'Guía en preparación' };
+      return { tone: 'neutral', label: 'Chivito en preparación' };
     }
 
     const corpusVersion = this.status()?.corpusVersion;
     return {
       tone: 'available',
-      label: corpusVersion ? `Guía disponible · corpus ${corpusVersion}` : 'Guía disponible',
+      label: corpusVersion ? `Chivito disponible · corpus ${corpusVersion}` : 'Chivito disponible',
     };
   });
+  protected readonly thinkingLabel = computed(() =>
+    this.mode() === 'tourist' ? 'Chivito está pensando…' : 'Buscando en las fuentes disponibles…',
+  );
   protected readonly prompts = computed(() =>
     this.mode() === 'tourist' ? TOURIST_PROMPTS : TECHNICAL_PROMPTS,
   );
@@ -116,6 +127,19 @@ export class AssistantChatComponent implements OnInit {
   private conversationEpoch = 0;
   private messageSequence = 0;
   private statusRequest: Subscription | null = null;
+  private readonly messagesRef = viewChild<ElementRef<HTMLElement>>('messageHistory');
+  /** Indica si el historial debe seguir el mensaje más reciente. */
+  private followLatest = true;
+  private lastScrollTop = 0;
+
+  constructor() {
+    afterRenderEffect(() => {
+      const hasContent = this.messages().length > 0 || this.sending() || this.error() !== null;
+      if (hasContent) {
+        this.scrollMessagesToEnd();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadStatus();
@@ -152,6 +176,7 @@ export class AssistantChatComponent implements OnInit {
       this.conversationEpoch += 1;
       this.sending.set(false);
       this.error.set(null);
+      this.followLatest = true;
     }
   }
 
@@ -190,6 +215,27 @@ export class AssistantChatComponent implements OnInit {
     this.send();
   }
 
+  /**
+   * Sigue el final solo si la persona está cerca de él. Desplazarse hacia arriba
+   * desactiva el seguimiento para no arrastrar la vista mientras lee.
+   */
+  protected onMessagesScroll(): void {
+    const history = this.messagesRef()?.nativeElement;
+    if (!history) {
+      return;
+    }
+
+    const scrolledUp = history.scrollTop < this.lastScrollTop - 1;
+    const nearBottom = history.scrollHeight - history.scrollTop - history.clientHeight <= 80;
+    this.lastScrollTop = history.scrollTop;
+
+    if (nearBottom) {
+      this.followLatest = true;
+    } else if (scrolledUp) {
+      this.followLatest = false;
+    }
+  }
+
   protected citationDetails(citation: AssistantCitation): string {
     return [
       citation.sourceLabel,
@@ -206,7 +252,7 @@ export class AssistantChatComponent implements OnInit {
    * Si `fromComposer` es true, el borrador se limpia al recibir la respuesta.
    */
   private submitQuestion(question: string, contextLocationId?: string, fromComposer = false): void {
-    if (!this.canUseChat() || this.sending() || question.length < 3 || question.length > 2000) {
+    if (!this.canUseChat() || this.sending() || question.length < 2 || question.length > 2000) {
       return;
     }
 
@@ -223,6 +269,7 @@ export class AssistantChatComponent implements OnInit {
 
     this.sending.set(true);
     this.error.set(null);
+    this.followLatest = true;
     this.assistantApi
       .query(scope, request)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -282,6 +329,29 @@ export class AssistantChatComponent implements OnInit {
           this.sending.set(false);
         },
       });
+  }
+
+  /** Baja al último mensaje sin arrastrar la vista si la persona lee hacia arriba. */
+  private scrollMessagesToEnd(): void {
+    const history = this.messagesRef()?.nativeElement;
+    if (!history || !this.followLatest) {
+      return;
+    }
+
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (typeof history.scrollTo === 'function') {
+      history.scrollTo({
+        top: history.scrollHeight,
+        behavior: reducedMotion ? 'auto' : 'smooth',
+      });
+    } else {
+      // jsdom no implementa scrollTo; el fallback mantiene las pruebas estables.
+      history.scrollTop = history.scrollHeight;
+    }
   }
 
   private nextMessageId(): string {

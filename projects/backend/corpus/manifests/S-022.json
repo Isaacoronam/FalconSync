@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "source": {
     "sourceId": "S-022",
-    "title": "Preguntas frecuentes de FALCONSYNC y alcance de la guía (V2)",
+    "title": "Preguntas frecuentes de FALCONSYNC y alcance de la guía (V3)",
     "institution": "Proyecto FALCONSYNC",
-    "version": "Versión V2 redactada el 2026-11-22 a partir de la documentación del proyecto; activada el 2026-11-23",
+    "version": "V3 2026-11-26: mapa real y Ruta del Casco Histórico; parte de la V2 activada el 2026-11-23",
     "retrievedAt": "2026-11-22T00:00:00.000Z",
     "verifiedAt": "2026-11-23T00:00:00.000Z",
     "level": "C",
-    "sourceLabel": "No verificado",
+    "sourceLabel": "Documentación del proyecto",
     "usagePolicy": "context",
     "indexingPolicy": "full_text",
     "credibilityNotes": "Redacción del proyecto sobre sus funciones y sobre el alcance de la guía. No es una fuente independiente. Activación instruida por el responsable del proyecto el 2026-11-23 y registrada con la verificación de derechos del historiador del proyecto.",
@@ -42,14 +42,15 @@
       "chunkKey": "S-022#faq.mapa",
       "ordinal": 1,
       "section": "Mapa interactivo",
-      "text": "El mapa interactivo muestra los lugares publicados de Coro. Puede usar tu geolocalización y filtrar por región.",
+      "text": "El mapa interactivo muestra los lugares publicados de Coro y permite filtrar por categoría. La geolocalización se usa en el check-in cuando compartes tu ubicación.",
       "assistantScopes": ["tourist"],
       "topics": ["FALCONSYNC", "mapa"],
       "poiSlugs": [],
       "questions": [
         "¿Qué puedo ver en el mapa?",
         "¿Cómo funciona el mapa?",
-        "¿Dónde veo los lugares en el mapa?"
+        "¿Dónde veo los lugares en el mapa?",
+        "¿Cómo puedo ver el turismo de Coro?"
       ]
     },
     {
@@ -120,6 +121,22 @@
         "¿Qué puedes responder?",
         "¿Qué tipo de preguntas puedo hacer?",
         "¿Esta guía reemplaza una visita guiada?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.ruta-casco",
+      "ordinal": 7,
+      "section": "Ruta del Casco Histórico",
+      "text": "La Ruta del Casco Histórico de Coro es un recorrido peatonal recomendado de cinco paradas: Catedral de Coro, Casa de las Ventanas de Hierro, Casa del Sol, Plaza Bolívar y Arco de la Federación. Dura aproximadamente 120 minutos y es de dificultad fácil. Es una recomendación, no una ruta oficial ni una navegación paso a paso.",
+      "claimType": "tourism",
+      "assistantScopes": ["tourist"],
+      "topics": ["rutas", "recorrido", "casco histórico"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué rutas turísticas recomiendas en Coro?",
+        "¿Cuál es la Ruta del Casco Histórico de Coro?",
+        "¿Qué puedo visitar en dos horas en el casco histórico?",
+        "¿Qué recorridos peatonales hay?"
       ]
     }
   ]

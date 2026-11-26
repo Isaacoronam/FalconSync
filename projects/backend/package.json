@@ -23,6 +23,11 @@
     "backfill:achievements": "node scripts/backfillAchievements.js",
     "rag:ingest": "node scripts/ingestRagCorpus.js",
     "rag:evaluate": "node scripts/evaluateRagCorpus.js",
+    "mcp:start": "node bin/mcpServer.js",
+    "telegram:start": "node bin/telegramBot.js",
+    "telegram:webhook:set": "node scripts/telegramWebhook.js set",
+    "telegram:webhook:delete": "node scripts/telegramWebhook.js delete",
+    "telegram:commands:set": "node scripts/telegramWebhook.js commands",
     "migrate:roles": "node scripts/migrateRoles.js",
     "verify:roles": "node scripts/verifyRoles.js",
     "create-admin": "node scripts/createAdmin.js",
@@ -31,18 +36,21 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.2",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.3.0",
     "express-rate-limit": "^8.7.3",
+    "grammy": "^1.48.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.12.0",
     "multer": "^2.5.0",
     "qrcode": "^1.5.4",
-    "sharp": "^0.35.5"
+    "sharp": "^0.35.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "supertest": "^7.1.4"

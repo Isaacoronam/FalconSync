@@ -30,6 +30,8 @@ export const AUDIT_ACTIONS = [
   'source.superseded',
   'source.index.rebuilt',
   'source.embeddings.rebuilt',
+  'channel.linked',
+  'channel.unlinked',
 ];
 
 const auditLogSchema = new mongoose.Schema(
@@ -66,6 +68,7 @@ const auditLogSchema = new mongoose.Schema(
         'User',
         'Panorama',
         'SourceDocument',
+        'ChannelLink',
       ],
       index: true,
     },

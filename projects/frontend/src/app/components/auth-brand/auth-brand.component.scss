@@ -1,0 +1,53 @@
+:host {
+  display: block;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.auth-brand__logo {
+  width: 4rem;
+  height: 4rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.auth-brand__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.auth-brand__name {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.auth-brand__tagline {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 420px) {
+  .auth-brand__logo {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .auth-brand__name {
+    font-size: 1.25rem;
+  }
+}

@@ -57,10 +57,7 @@ export const LOCATION_TAG_LABELS: Record<LocationTag, string> = {
   'guided-tour': 'Visita guiada',
 };
 
-export const LOCATION_VERIFICATION_LABELS: Record<
-  LocationVerificationLevel,
-  string
-> = {
+export const LOCATION_VERIFICATION_LABELS: Record<LocationVerificationLevel, string> = {
   unverified: 'Sin verificar',
   'single-source': 'Fuente única',
   verified: 'Verificado en campo',
@@ -103,17 +100,17 @@ export const LOCATION_TAG_FILTER_OPTIONS: FilterOption<LocationTag>[] = [
   })),
 ];
 
-export const LOCATION_CIRCUIT_CHOICES: ChoiceOption<LocationCircuit>[] =
-  LOCATION_CIRCUITS.map((value) => ({
+export const LOCATION_CIRCUIT_CHOICES: ChoiceOption<LocationCircuit>[] = LOCATION_CIRCUITS.map(
+  (value) => ({
     value,
     label: LOCATION_CIRCUIT_LABELS[value],
-  }));
+  }),
+);
 
-export const LOCATION_TAG_CHOICES: ChoiceOption<LocationTag>[] =
-  LOCATION_TAGS.map((value) => ({
-    value,
-    label: LOCATION_TAG_LABELS[value],
-  }));
+export const LOCATION_TAG_CHOICES: ChoiceOption<LocationTag>[] = LOCATION_TAGS.map((value) => ({
+  value,
+  label: LOCATION_TAG_LABELS[value],
+}));
 
 export const LOCATION_VERIFICATION_CHOICES: ChoiceOption<LocationVerificationLevel>[] =
   LOCATION_VERIFICATION_LEVELS.map((value) => ({
@@ -128,4 +125,6 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'location.restored': 'POI restaurado',
   'location.image.uploaded': 'Imagen añadida',
   'location.image.removed': 'Imagen eliminada',
+  'channel.linked': 'Canal vinculado',
+  'channel.unlinked': 'Canal desvinculado',
 };

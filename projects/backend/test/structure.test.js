@@ -32,6 +32,7 @@ const API_MODULES = [
   'adventures',
   'assistant',
   'auth',
+  'channels',
   'check-ins',
   'conservation',
   'evidence',

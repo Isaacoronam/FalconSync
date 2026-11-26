@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Estado | Aceptada (revisada el 2026-11-17; addendas del 2026-11-20, 2026-11-23 y 2026-11-24): RAG sin proveedor externo, respuesta extractiva y guía turística V3 con expansión de corpus y preguntas compuestas |
+| Estado | Aceptada (revisada el 2026-11-17; addendas del 2026-11-20, 2026-11-23, 2026-11-24, 2026-11-25 y 2026-11-26): RAG sin proveedor externo, respuesta extractiva y guía turística V5 con separación de conceptos, compuestas y acceso |
 | Fecha | 2026-11-20 (versión inicial del 2026-11-13; revisión del 2026-11-17) |
 | Decisores | Responsable del proyecto |
-| Relacionados | [`../FUENTES-RAG.md`](../FUENTES-RAG.md) v1.8, [`../CORPUS-POI.md`](../CORPUS-POI.md), [`../REQUISITOS.md`](../REQUISITOS.md) (RF-57, RF-59, RF-81, RN-17, RN-19, RN-20, RN-22), [`../PLAN-IMPLEMENTACION.md`](../PLAN-IMPLEMENTACION.md) §11 |
+| Relacionados | [`../FUENTES-RAG.md`](../FUENTES-RAG.md) v1.10, [`../CORPUS-POI.md`](../CORPUS-POI.md), [`../REQUISITOS.md`](../REQUISITOS.md) (RF-57, RF-59, RF-81, RN-17, RN-19, RN-20, RN-22), [`../PLAN-IMPLEMENTACION.md`](../PLAN-IMPLEMENTACION.md) §11 |
 
 ## Contexto
 
@@ -110,6 +110,49 @@ Consecuencias:
   (frescura de `FUENTES-RAG.md` §2.2).
 - `rag-golden-v2.json` no se modifica: su regresión se ejecuta con `--sources S-002,S-003,S-020,S-021,S-022`
   para aislar el cambio de código; el comportamiento nuevo se mide con el conjunto v3.
+
+## Addendum 2026-11-25 - guía turística V4
+
+La V4 corrige los defectos observados en conversaciones reales sin cambiar el principio de
+respuesta extractiva con citas. La fuente canónica del comportamiento pasa a
+`FUENTES-RAG.md` v1.9.
+
+| Tema | Decisión |
+|---|---|
+| Saludos | Un mensaje completo de saludo responde `answerType: greeting` con bienvenida y 3 sugerencias, sin consultar el corpus. La validación admite 2 caracteres solo para saludos. |
+| Coincidencia | Las preguntas curadas se comparan sin acentos, mayúsculas ni puntuación. El umbral léxico de POI sube a 0.6 y «Coro» no cuenta como token distintivo del título. |
+| Citas | La cita secundaria exige cobertura compuesta, pertenencia al POI resuelto o un margen ≤0.15 respecto de la principal. Las fuentes internas no exponen URL pública. |
+| Identidad de Coro | `S-026#introduccion` aporta una definición general de 24 palabras; las preguntas de ciudad, producto, turismo y tapia quedan curadas en los manifiestos. |
+| Composición | Deduplicación de frases, capitalización, aviso de historia condicional y aviso de ruta no verificada. |
+| Evaluación | `rag-golden-v4.json` (134 casos) el 2026-11-25: 134/134 y todas las metas cumplidas (p95 54 ms). Regresión v2 con `--sources`: 59/59. V3 queda congelado con 123/125 por p-20 y p-30, dos expectativas obsoletas de falsos positivos léxicos. |
+
+Consecuencias:
+
+- El corpus de desarrollo contiene 14 fuentes y 132 fragmentos verificados.
+- `rag-golden-v3.json` no se edita; las correcciones y los casos nuevos viven en v4.
+
+## Addendum 2026-11-26 - guía turística V5
+
+La V5 corrige respuestas tangenciales observadas en conversaciones reales sin cambiar la
+respuesta extractiva con citas. La fuente canónica pasa a `FUENTES-RAG.md` v1.10.
+
+| Tema | Decisión |
+|---|---|
+| Separación de conceptos | «ciudad» y «Coro» no son señales suficientes para atribuir un POI. «¿Qué es la ciudad?» responde sobre la ciudad; «¿Qué es la Ciudad Deportiva?» resuelve su ficha. |
+| Preguntas compuestas | Se dividen hasta en tres subconsultas por «?», comas o conectores interrogativos. Cada parte resuelve su POI, recupera su evidencia y compone su texto en orden; una parte sin evidencia abstiene el conjunto. Las partes elípticas usan la selección de la pregunta completa. |
+| Acceso | Ruta, estacionamiento, transporte, distancia y visitas nocturnas exigen evidencia del aspecto preguntado. Sin ella se abstienen con un mensaje específico. Una ficha de POI solo lleva el aviso de ruta no verificada; un dato de bus/avenida se etiqueta como acceso registrado. |
+| Entidades no soportadas | «¿Qué es la Casa X?» sin POI resuelto y sin la palabra distintiva en la evidencia se abstiene; no se sustituye por otra ficha parecida. |
+| Horarios y precios | El aviso genérico de datos no verificados se retira cuando la respuesta aporta horario/estado. Una pregunta de precio sin fuente usa un mensaje de precios, no de horarios. |
+| Corpus | S-022 pasa a V3: corrige el mapa (filtro por categoría; geolocalización en check-in) y añade la Ruta del Casco Histórico como recomendación, no como navegación. |
+| Evaluación | `rag-golden-v5.json` (146 casos) el 2026-11-26: 146/146, 0 fallos, `unmetTargets` vacío; sourceHit 0.92, citationValidity 1, p95 110 ms. V4 se conserva congelado; sus p-45/p-48 premiaban respuestas no sustentadas. |
+
+Consecuencias:
+
+- El corpus de evaluación contiene 14 fuentes y 133 fragmentos; la reingesta del corpus de
+  desarrollo requiere un historiador activo que verifique los derechos de la S-022 V3.
+- El asistente técnico sigue cerrado; la ruta es una recomendación con paradas, sin cálculo
+  de calles ni navegación giro a giro.
+- `rag-golden-v4.json` no se edita; las expectativas corregidas y los casos nuevos viven en v5.
 
 ## Alternativas consideradas
 

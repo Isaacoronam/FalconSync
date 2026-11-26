@@ -1,0 +1,120 @@
+{
+  "corpusVersion": "2026-11-22.1",
+  "date": "2026-11-25",
+  "environment": "MongoDB replica set local falconsyncTest en 127.0.0.1:27018, base temporal falconsync_rag_eval",
+  "dataset": "projects/backend/corpus/evaluation/rag-golden-v4.json",
+  "report": "projects/backend/corpus/evaluation/rag-golden-v4-report.json",
+  "sampleSize": 134,
+  "embeddingModel": "Xenova/paraphrase-multilingual-MiniLM-L12-v2@q8",
+  "minSimilarity": 0.6,
+  "metrics": {
+    "poiAccuracy": 1,
+    "clarificationAccuracy": 1,
+    "abstentionAccuracy": 1,
+    "sourceHit": 0.9418604651162791,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "invalidCitations": 0,
+    "latencyP50Ms": 22,
+    "latencyP95Ms": 54
+  },
+  "unmetTargets": [],
+  "failures": 0,
+  "scope": {
+    "tourist": "enabled",
+    "technical": "disabled"
+  },
+  "sources": [
+    "S-002",
+    "S-003",
+    "S-020",
+    "S-021",
+    "S-022",
+    "S-024",
+    "S-025",
+    "S-026",
+    "S-027",
+    "S-028",
+    "S-029",
+    "S-030",
+    "S-031",
+    "S-032"
+  ],
+  "declaredAsDraft": [],
+  "excludedSources": ["S-005", "S-023"],
+  "caseComposition": {
+    "v3CarriedOver": 125,
+    "v3CorrectedExpectations": ["p-20", "p-30"],
+    "newCases": 9,
+    "newCaseCategories": {
+      "saludo": 2,
+      "identidad_ciudad": 2,
+      "producto": 2,
+      "arquitectura_tierra": 1,
+      "orientacion": 1,
+      "poi_overview": 1
+    },
+    "total": 134
+  },
+  "v2Regression": {
+    "dataset": "projects/backend/corpus/evaluation/rag-golden-v2.json",
+    "report": "projects/backend/corpus/evaluation/rag-golden-v2-report.json",
+    "command": "npm --prefix projects/backend run rag:evaluate -- --dataset corpus/evaluation/rag-golden-v2.json --report corpus/evaluation/rag-golden-v2-report.json --sources S-002,S-003,S-020,S-021,S-022",
+    "corpus": "las cinco fuentes originales (aisla cambios de código de los del corpus)",
+    "sampleSize": 59,
+    "failures": 0,
+    "latencyP95Ms": 25
+  },
+  "v3Frozen": {
+    "dataset": "projects/backend/corpus/evaluation/rag-golden-v3.json",
+    "report": "projects/backend/corpus/evaluation/rag-golden-v3-2026-11-25-report.json",
+    "sampleSize": 125,
+    "failures": 2,
+    "failureIds": ["p-20", "p-30"],
+    "unmetTargets": [],
+    "reason": "p-20 esperaba una aclaración entre Paseo Independencia (0.5 por «paseo») e Iglesia de San Francisco (0.545 por «francisco»); p-30 esperaba atribuir «un monumento» genérico a Monumento de las Madres (0.5 por «monumento»). Son falsos positivos léxicos corregidos por el umbral 0.6. V3 se conserva sin editar; v4 documenta las expectativas corregidas."
+  },
+  "categoryBreakdown": {
+    "adversarial": "3/3",
+    "ambiguity": "2/2",
+    "arquitectura_tierra": "1/1",
+    "compound": "6/6",
+    "dataset_atractivos": "10/10",
+    "dataset_cultura": "10/10",
+    "dataset_logistica": "10/10",
+    "dataset_normativa": "10/10",
+    "dataset_robustez": "10/10",
+    "follow_up": "3/3",
+    "heritage": "6/6",
+    "hueque_unpublished": "1/1",
+    "identidad_ciudad": "2/2",
+    "multi_source": "1/1",
+    "orientacion": "1/1",
+    "out_of_scope": "9/9",
+    "paraphrase": "10/10",
+    "poi_detail": "2/2",
+    "poi_overview": "24/24",
+    "poi_paraphrase": "2/2",
+    "product": "7/7",
+    "producto": "2/2",
+    "saludo": "2/2"
+  },
+  "behaviorChanges": [
+    "Saludos de mensaje completo responden answerType greeting con 3 sugerencias y sin citas; la validación admite 2 caracteres solo para saludos.",
+    "Las preguntas curadas se comparan sin acentos, mayúsculas ni puntuación.",
+    "POI_LEXICAL_MIN sube a 0.6 y «Coro» no cuenta como token distintivo del título.",
+    "La segunda cita exige cobertura compuesta, pertenencia al POI resuelto o un margen ≤0.15.",
+    "Las fuentes internas del proyecto no exponen URL pública; S-022 se etiqueta «Documentación del proyecto».",
+    "S-026 incorpora una introducción de 24 palabras para la identidad de Coro.",
+    "La respuesta deduplica frases, capitaliza el inicio, retira el aviso de historia cuando otra cita la aporta y avisa cuando no hay ruta verificada.",
+    "«Reportar» o «denunciar» daños se trata como gestión administrativa fuera de ámbito."
+  ],
+  "limitations": [
+    "El asistente técnico no está activado; S-005 y S-023 siguen en borrador.",
+    "sourceHit es 0.94: algunas expectativas piden más fuentes de las que caben en el máximo de citas (2 simples, 3 compuestas); no hay fallos de caso.",
+    "Los horarios solo se responden donde hay fuente publicada: MUCOR (S-030) y misas de la Catedral (S-031); el resto responde «Sin horarios confirmados».",
+    "S-026 a S-029 y S-032 son nivel D (Wikipedia/Wikivoyage): resúmenes propios ≤25 palabras con atribución y enlace; nunca única autoridad de un hecho normativo o de estado actual.",
+    "El corpus de desarrollo 27018 quedó reingerido y verificado con 14 fuentes y 132 fragmentos."
+  ]
+}

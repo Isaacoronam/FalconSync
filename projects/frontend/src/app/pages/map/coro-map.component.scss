@@ -90,8 +90,9 @@
   min-height: 0;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(251, 247, 239, 0.92);
-  box-shadow: var(--shadow);
+  background: rgba(251, 247, 239, 0.8);
+  box-shadow: 0 14px 36px rgba(43, 26, 19, 0.09);
+  backdrop-filter: blur(10px);
   overflow: hidden;
 }
 

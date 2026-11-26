@@ -16,14 +16,34 @@ import { hashPassword } from '../microservices/authService.js';
 import {
   answerAssistantQuestion,
   clearAssistantCaches,
+  DISTANCE_ABSTENTION_MESSAGE,
   FALLBACK_MESSAGE,
+  NIGHT_TOUR_ABSTENTION_MESSAGE,
+  PARKING_ABSTENTION_MESSAGE,
+  PRICE_ABSTENTION_MESSAGE,
+  ROUTE_ABSTENTION_MESSAGE,
   SCHEDULE_ABSTENTION_MESSAGE,
+  TRANSPORT_ABSTENTION_MESSAGE,
 } from '../microservices/assistantService.js';
 import { modelIdentity } from '../microservices/embeddingService.js';
 import { insertLocations } from '../seeders/seedLocations.js';
 import { ingestManifest, verifyCorpus } from './ingestRagCorpus.js';
 
 const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// Mensajes de abstención deliberados: el fallback no es solo el genérico; una
+// abstención específica (ruta, estacionamiento, horario, precio) también es
+// exacta y honesta.
+const EXACT_ABSTENTION_MESSAGES = new Set([
+  FALLBACK_MESSAGE,
+  SCHEDULE_ABSTENTION_MESSAGE,
+  PRICE_ABSTENTION_MESSAGE,
+  ROUTE_ABSTENTION_MESSAGE,
+  PARKING_ABSTENTION_MESSAGE,
+  NIGHT_TOUR_ABSTENTION_MESSAGE,
+  TRANSPORT_ABSTENTION_MESSAGE,
+  DISTANCE_ABSTENTION_MESSAGE,
+]);
 
 // Base de datos propia y desechable: nunca se toca la de desarrollo ni la de pruebas.
 const EVAL_DB_NAME = 'falconsync_rag_eval';
@@ -143,9 +163,9 @@ function parseArguments(args) {
 function printHelp() {
   console.log(
     [
-      'Evalúa el asistente turístico contra los conjuntos dorados RAG (v2 y v3).',
+      'Evalúa el asistente turístico contra los conjuntos dorados RAG (v2 a v5).',
       '  node scripts/evaluateRagCorpus.js [--dataset <archivo.json>] [--report <archivo.json>]',
-      '  node scripts/evaluateRagCorpus.js --dataset <v2> --report <informe> --sources S-002,S-003,S-020,S-021,S-022',
+      '  node scripts/evaluateRagCorpus.js --dataset <v5> --report <informe>',
       'Usa una base de datos temporal propia (falconsync_rag_eval) que limpia al inicio.',
       '--sources limita la ingesta de la evaluación (para regresiones bajo las condiciones originales).',
       'Requiere un replica set (transacciones de ingesta) y el modelo de embeddings local.',
@@ -367,10 +387,7 @@ async function runCases(cases) {
     const isClarification = testCase.expect.answerType === 'clarification';
     if (testCase.expect.abstained === true && !isClarification) {
       fallbackTotal += 1;
-      if (
-        answer.answer === FALLBACK_MESSAGE ||
-        answer.answer === SCHEDULE_ABSTENTION_MESSAGE
-      ) {
+      if (EXACT_ABSTENTION_MESSAGES.has(answer.answer)) {
         fallbackExact += 1;
       }
 

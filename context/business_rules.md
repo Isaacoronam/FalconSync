@@ -91,14 +91,20 @@ Un admin no puede usar su rol para inspeccionar, confirmar severidad ni cerrar u
 - Un usuario no puede registrar dos veces el mismo POI.
 - La foto del check-in es opcional y se almacena como contenido privado.
 
-## Asistentes RAG (planificados, no implementados)
+## Asistentes RAG (implementados)
 
+- El asistente turístico está activo con un corpus curado, citas verificables y abstención;
+  el asistente técnico está implementado pero cerrado hasta que su corpus sea aprobado.
 - RAG v1 es extractivo y sin proveedor externo: responde con citas literales de máximo 25
   palabras o hechos estructurados verificados, o se abstiene.
 - El asistente técnico usa fuentes A/B/C técnicas y no datos de inspección en v1; el turístico
   usa A–D y E etiquetada, sin búsqueda externa en vivo.
 - La ingesta es por CLI y manifiestos; no hay subida de PDF en v1.
 - El asistente turístico anónimo no persiste conversaciones; el técnico conserva 90 días.
+- Las rutas son recomendaciones y datos de acceso registrados: no hay navegación giro a giro
+  ni cálculo de rutas por calles.
+- Los horarios solo se responden con una fuente publicada y fechada; sin ella se responde
+  «Sin horarios confirmados».
 
 ## Referencias de detalle
 

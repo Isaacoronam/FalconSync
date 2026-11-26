@@ -214,7 +214,7 @@
         Ver todo Falcón
       </button>
     </div>
-    @if (tourState() === 'closed') {
+    @if (tourState() === 'closed' && !popupOpen()) {
       <div class="map-stage__overlay" aria-hidden="true">
         <span class="map-stage__hint">Selecciona un punto para ver su ficha</span>
       </div>

@@ -18,6 +18,7 @@ controladores y validadores son la referencia para payloads, errores y permisos.
 | `/api/interventions` | Transiciones de intervenciones | `PATCH /:id` |
 | `/api/evidence` | Evidencia privada con autorización por recurso | `POST /`, `GET /`, `GET /:id` |
 | `/api/assistant` | Guía turística y apoyo técnico RAG | `GET /status`, `POST /tourist/query`, `POST /inspection/query` |
+| `/api/channels` | Vinculación de canales externos (Telegram) | `GET /telegram`, `POST /telegram/link-code`, `DELETE /telegram` |
 | `/api/sources` | Metadatos de las fuentes del corpus | `GET /` |
 
 Las rutas de detalle son:
@@ -47,6 +48,10 @@ Las rutas de detalle son:
   incluye `suggestions`, `options` y `poi`. Ver [`docs/FUENTES-RAG.md`](../docs/FUENTES-RAG.md) §8.
 - Fuentes: `GET /sources` exige `source.read` y devuelve solo metadatos paginados, nunca
   fragmentos ni `storageKey`.
+- Canales: `GET /channels/telegram` consulta el vínculo, `POST /channels/telegram/link-code`
+  genera un código de un solo uso y `DELETE /channels/telegram` revoca el vínculo. Todas
+  exigen autenticación. El bot de Telegram consume el servidor MCP por stdio; no hay
+  endpoints públicos nuevos para MCP. Ver [`docs/INTEGRACION-TELEGRAM.md`](../docs/INTEGRACION-TELEGRAM.md).
 
 El check-in y la foto pueden guardarse en fases separadas. Los tokens de QR no deben
 guardarse ni registrarse en claro fuera del flujo de rotación.

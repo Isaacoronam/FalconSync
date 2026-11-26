@@ -24,6 +24,8 @@
 | [ADR-005](./ADR-005-rag-fuentes.md) | RAG con fuentes verificadas, citas y abstención | Aceptada (revisada 2026-11-17; addendum 2026-11-20): RAG v1 sin proveedor externo, respuesta extractiva e ingesta por CLI |
 | [ADR-006](./ADR-006-visita-360.md) | Visita 360° obligatoria con derechos y fallback | Aceptada e implementada; contenido real pendiente |
 | [ADR-007](./ADR-007-operacion-slo.md) | SLO, RPO/RTO, backups y rollback | Propuesta |
+| [ADR-008](./ADR-008-identidad-chivito.md) | Identidad Chivito, chat HTTP/RAG y celebración de check-in | Aceptada e implementada |
+| [ADR-009](./ADR-009-telegram-mcp.md) | Canal de Telegram vía MCP con identidad vinculada | Aceptada e implementada (MVP) |
 
 ## Diseño de Fase 1
 
@@ -72,6 +74,8 @@ corresponde, indican qué partes ya están implementadas y cuáles siguen pendie
 | D-27 | El historiador valida y propone fuentes; admin ejecuta `source.manage`. | Aceptada (2026-11-20) | RBAC sin cambios; la CLI exige actor autorizado y auditoría. |
 | D-28 | Búsqueda externa en vivo (RF-60) diferida a v1.1. | Aceptada (2026-11-20) | v1 responde solo con corpus curado y fechado. |
 | D-29 | Apertura del asistente solo con cobertura oficial verificada. | Aceptada (2026-11-20) | Sin cobertura suficiente: modo restringido o no se abre. |
+| D-30 | Chivito es la identidad del guía turístico; el apoyo técnico no usa su avatar ni su voz. | Aceptada (2026-11-25) | Chat, perfil y celebración comparten personaje; conservación mantiene su separación. |
+| D-31 | La celebración de check-in solo se abre con `201` y una insignia nueva; los registros sin imagen usan el medallón de su categoría. | Aceptada (2026-11-25) | No se festejan errores ni duplicados; no se inventan datos de insignias. |
 
 ## Regla de cambio
 
