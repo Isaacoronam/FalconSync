@@ -1,4 +1,5 @@
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PERSON_NAME_PATTERN = /^[\p{L}\p{M}]+(?:[ '\u2019-][\p{L}\p{M}]+)*$/u;
 
 export const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,28}[a-z0-9])$/;
 
@@ -8,13 +9,14 @@ export function normalizeUsername(value) {
     : '';
 }
 
-export function usernameFromIdentity({ name, email } = {}) {
+export function usernameFromIdentity({ name, surname, email } = {}) {
+  const fullName = [name, surname]
+    .filter((part) => typeof part === 'string' && part.trim())
+    .join(' ')
+    .trim();
   const source =
-    typeof name === 'string' && name.trim()
-      ? name
-      : typeof email === 'string'
-        ? email.split('@')[0]
-        : '';
+    fullName ||
+    (typeof email === 'string' ? email.split('@')[0] : '');
   const base = source
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -75,6 +77,45 @@ export function validateName(value) {
 
   if (name.length > 80) {
     issues.push('El nombre no puede superar 80 caracteres');
+  }
+
+  return issues;
+}
+
+export function normalizePersonName(value) {
+  return typeof value === 'string'
+    ? value.normalize('NFC').trim().replace(/\s+/g, ' ')
+    : '';
+}
+
+export function validatePersonName(
+  value,
+  { field = 'El nombre', maxLength = 16 } = {},
+) {
+  if (typeof value !== 'string') {
+    return [`${field} es obligatorio`];
+  }
+
+  const name = normalizePersonName(value);
+  const issues = [];
+
+  if (!name) {
+    issues.push(`${field} es obligatorio`);
+    return issues;
+  }
+
+  if (name.length < 2) {
+    issues.push(`${field} debe tener al menos 2 letras`);
+  }
+
+  if (name.length > maxLength) {
+    issues.push(`${field} no puede superar ${maxLength} caracteres`);
+  }
+
+  if (!PERSON_NAME_PATTERN.test(name)) {
+    issues.push(
+      `${field} solo puede contener letras, espacios, guiones y apóstrofes`,
+    );
   }
 
   return issues;

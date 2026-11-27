@@ -17,6 +17,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import {
   DAMAGE_CATEGORIES,
   DamageCategory,
@@ -52,7 +53,14 @@ import { EvidencePanelComponent } from '../../../components/conservation/evidenc
 
 @Component({
   selector: 'app-inspection-detail',
-  imports: [DatePipe, EvidencePanelComponent, FormsModule, ReactiveFormsModule, RouterLink],
+  imports: [
+    DatePipe,
+    EvidencePanelComponent,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterLink,
+    PageSkeletonComponent,
+  ],
   templateUrl: './inspection-detail.component.html',
   styleUrl: './inspection-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -25,7 +25,9 @@ El modelo `Location` incorpora, además de los campos del CRUD administrativo:
 | `address` | texto, hasta 240 caracteres | Dirección o referencia legible. |
 | `circuits` | lista de circuitos | Agrupación temática para filtros y recorridos. |
 | `tags` | lista de etiquetas | Características del lugar para filtros y fichas. |
+| `whatIs` | texto, hasta 5000 caracteres | Presentación ampliada: qué es el lugar y por qué importa. |
 | `historicalStory` | texto, hasta 10000 caracteres | Historia editorial del lugar. |
+| `contentReviewedAt` | fecha o `null` | Última revisión editorial de la ficha. |
 | `interestingFacts` | hasta 8 textos de 280 caracteres | Datos breves de interés para turistas. |
 | `visitorInfo` | texto, hasta 2000 caracteres | Información práctica para planificar la visita. |
 | `contentSources` | hasta 10 URL http(s) | Referencias de la historia y el contenido editorial. |
@@ -36,29 +38,37 @@ El modelo `Location` incorpora, además de los campos del CRUD administrativo:
 | `isProvisional` | booleano | Marca ubicaciones o datos pendientes de verificación. |
 | `isCatalogVisible` | booleano | Control editorial de inclusión en el catálogo y el mapa públicos. |
 
-El formulario administrativo edita la historia, los datos de interés, la información para
-visitantes y las fuentes editoriales por separado de la fuente cartográfica. Las fuentes
-editoriales no se inventan ni se deducen de `sourceUrl` o `coordinateSource`. Los campos
-son opcionales durante esta transición para no invalidar POI ya publicados; una ficha sin
-`historicalStory` muestra explícitamente que la reseña ampliada está pendiente de fuentes
+El formulario administrativo edita la presentación, la historia, los datos de interés, la
+información para visitantes y las fuentes editoriales por separado de la fuente cartográfica.
+Las fuentes editoriales no se inventan ni se deducen de `sourceUrl` o `coordinateSource`. Los
+campos son opcionales durante esta transición para no invalidar POI ya publicados; una ficha
+sin `historicalStory` muestra explícitamente que la reseña ampliada está pendiente de fuentes
 verificadas.
 
-### Criterio editorial del catálogo inicial
+### Criterio editorial del catálogo
 
-Las reseñas ampliadas del catálogo se incorporan al seed y se sincronizan con la base
-existente mediante `npm run seed:editorial`, un comando que solo llena los cuatro campos
-editoriales y se aborta si encuentra contenido previo; no elimina POI ni modifica otros
-campos. Se usó la ficha oficial de UNESCO para el contexto urbano de Coro y La Vela; esta
-fuente describe sus técnicas constructivas y advierte que la Catedral y la Plaza Bolívar,
-aunque son atributos relevantes, no están dentro de los límites actuales del bien inscrito.
-La ficha de los Médanos usa una referencia secundaria para contexto general del parque.
+Las reseñas ampliadas se incorporan al seed y se sincronizan con la base existente mediante
+`npm run seed:sync`, que actualiza los campos editoriales e imágenes sin cambiar el estado de
+publicación ni las coordenadas salvo las excepciones documentadas. La investigación de
+2026-11-26 añadió `whatIs`, la fecha `contentReviewedAt`, fuentes por ficha y 20 fotografías
+adicionales con licencia CC de Wikimedia Commons. Se conserva el contenido anterior como
+respaldo en `seedLocations.js` y la nueva capa vive en `seeders/locationResearch.js`.
+
+La ficha oficial de UNESCO se usa para el contexto urbano de Coro y La Vela; esta fuente
+describe sus técnicas constructivas y advierte que la Catedral y la Plaza Bolívar, aunque son
+atributos relevantes, no están dentro de los límites actuales del bien inscrito. Las fichas
+de Médanos y del Parque Nacional usan INPARQUES, UNESCO y referencias secundarias, y
+distinguen el sector turístico de dunas del área protegida completa.
 
 El material recibido para varios POI contiene detalles que no se pudieron corroborar en una
 fuente patrimonial o institucional accesible (por ejemplo, fechas exactas, autorías,
 dimensiones, procedencia de piezas, colecciones y servicios actuales). Esos datos no se
 presentan como hechos confirmados: se excluyeron o quedaron señalados en la reseña para
-verificación posterior. Los horarios, tarifas, actividades y accesos deben confirmarse con
-cada lugar antes de la visita.
+verificación posterior. Las discrepancias de datación se conservan con su atribución; por
+ejemplo, el Arco de la Federación se documenta como obra de 1920 —no del siglo XIX— y la
+Casa de las Ventanas de Hierro se sitúa hacia 1765, aunque otras fichas repitan el siglo XVII.
+Los horarios, tarifas, actividades y accesos deben confirmarse con cada lugar antes de la
+visita.
 
 ### Categorías
 
@@ -259,11 +269,34 @@ y se sirve en `/images/locations/manifest.json`.
 | `Gelateria-el-sol.jpeg` | Gelatería El Sol | Pendiente | Pendiente | Sin verificar |
 | `parque-nacional-medanos-de-coro.jpg` | Parque Nacional Médanos de Coro | Pendiente | Pendiente | Sin verificar |
 
-Las cinco imágenes acreditadas se tomaron de Wikimedia Commons y sus autores, licencia,
-enlace a la licencia y página de origen están registrados en `imageCredits` y se muestran
-en el popup del mapa. Las otras 18 imágenes fueron suministradas por el responsable del
+Las imágenes acreditadas se tomaron de Wikimedia Commons y sus autores, licencia, enlace a
+la licencia y página de origen están registrados en `imageCredits` y se muestran en la ficha
+y el popup del mapa. Las imágenes sin crédito fueron suministradas por el responsable del
 proyecto y **no tienen autoría ni licencia verificadas**; deben confirmarse antes de publicar
 el sitio.
+
+### Ampliación visual del 2026-11-26
+
+Se añadieron 20 fotografías con licencia CC BY-SA desde Wikimedia Commons para dar galería a
+diez lugares. Cada archivo declara autor, licencia y página de origen en `imageCredits` y en
+el manifiesto.
+
+| POI | Archivos nuevos | Autoría |
+|---|---|---|
+| Catedral de Coro | `catedral-de-coro-02.jpg`, `catedral-de-coro-03.jpg` | Janethrodri; Juan Carlo Castillo Ortega |
+| Casa Balcón de los Arcaya | `casa-balcon-de-los-arcaya-02.jpg`, `-03.jpg` | Zerojosefer; Juan Carlo Castillo Ortega |
+| Casa de las Ventanas de Hierro | `casa-de-las-ventanas-de-hierro-02.jpg`, `-03.jpg` | Zerojosefer; Janethrodri |
+| Casa del Sol | `casa-del-sol-02.jpg`, `casa-del-sol-03.jpg` | Zerojosefer; Carlos E. Perez S.L |
+| Cruz de San Clemente | `cruz-de-san-clemente-02.jpg`, `-03.jpg` | ArwinJ; Carlos E. Perez S.L |
+| Casa Museo Locos de la Vela | `casa-museo-locos-de-la-vela-02.jpg`, `-03.jpg` | Oliver J. Bello |
+| Médanos de Coro | `medanos-de-coro-02.jpg`, `medanos-de-coro-03.jpg` | Rjcastillo |
+| Parque Nacional Médanos de Coro | `parque-nacional-medanos-de-coro-02.jpg`, `-03.jpg` | Rjcastillo; Julianlopez70 |
+| Museo de Arte de Coro | `museo-de-arte-de-coro-02.jpg`, `-03.jpg` | Juan Carlo Castillo Ortega |
+| Plaza Bolívar de Coro | `plaza-bolivar-de-coro-02.jpg`, `-03.jpg` | ArwinJ; Juan Carlo Castillo Ortega |
+
+Las licencias son CC BY-SA 3.0 o 4.0 según el archivo. No se descargaron imágenes de
+Pinterest, Getty, prensa sin permiso ni búsquedas de Google. La galería de la ficha muestra
+solo imágenes locales; si una imagen falla, se oculta y queda el fallback de la portada.
 
 ## Mapa público y clustering
 
@@ -281,14 +314,16 @@ el sitio.
 
 ## Verificación ejecutada en la sesión actual
 
-| Comprobación | Comando | Resultado real (2026-11-19) |
+| Comprobación | Comando | Resultado real (2026-11-26) |
 |---|---|---|
-| Pruebas backend | `npm run test:backend` | 110/110 aprobadas |
-| Pruebas frontend | `npm run test:frontend` | 53/53 aprobadas |
-| Build de producción | `npm run build` | Correcto, sin advertencias |
-| E2E Chromium local | `$env:CI=1; npm run e2e` | 19/19 aprobadas en copia limpia (2026-11-19) |
+| Pruebas backend | `npm run test:backend` | 190/190 aprobadas |
+| Pruebas frontend | `npm run test:frontend` | 111/111 aprobadas |
+| Build de producción | `npm run build` | Correcto |
+| E2E Chromium local (modo rápido) | `npm run e2e` | 42 aprobadas, 6 omitidas (48 totales) |
+| E2E con corpus RAG | `npm run e2e:rag` | 47 aprobadas, 1 omitida esperada (48 totales) |
 | E2E remoto (GitHub Actions) | Workflow CI | Pendiente de ejecución remota autorizada |
-| Idempotencia del seed | `test/seedLocations.test.js` | 23 insertados la primera vez, 0 la segunda; verificación correcta |
+| Idempotencia del seed | `test/seedLocations.test.js` | 24 insertados la primera vez, 0 la segunda; 23 publicados y 1 borrador |
+| Imágenes locales | `test/seedLocations.test.js` | 43 archivos existentes; portadas y galerías cargan en E2E |
 | Contenido editorial del seed | `node --test test/seedLocations.test.js` | 4/4 aprobadas; las 23 fichas incluyen historia, datos de interés e información para visitantes |
 | Sincronización editorial | `npm run seed:editorial` | Actualiza solo los campos editoriales; aborta si ya hay contenido para no sobrescribirlo |
 | Sincronización local | `npm run seed:sync` | 23 registros actualizados; coordenada del Parque Nacional sincronizada; 23 POI verificados sin desviaciones |

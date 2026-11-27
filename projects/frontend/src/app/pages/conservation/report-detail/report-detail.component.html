@@ -17,7 +17,7 @@
   </header>
 
   @if (loading()) {
-    <p class="conservation-state">Cargando el reporte…</p>
+    <app-page-skeleton variant="detail" label="Cargando el reporte…" [rows]="4" />
   } @else if (error()) {
     <div class="conservation-alert" role="alert">
       <p>{{ error() }}</p>

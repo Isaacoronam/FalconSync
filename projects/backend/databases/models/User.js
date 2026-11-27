@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema(
       minlength: [2, 'El nombre debe tener al menos 2 caracteres'],
       maxlength: [80, 'El nombre no puede superar 80 caracteres'],
     },
+    surname: {
+      type: String,
+      trim: true,
+      default: '',
+      maxlength: [16, 'El apellido no puede superar 16 caracteres'],
+    },
     username: {
       type: String,
       trim: true,

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -19,14 +26,18 @@ import {
   LOCATION_TAG_CHOICES,
   LOCATION_VERIFICATION_CHOICES,
 } from '../../../services/utils/location-labels';
-import { LocationPickerComponent, PickerCoordinates } from '../../../components/admin/location-picker/location-picker.component';
+import {
+  LocationPickerComponent,
+  PickerCoordinates,
+} from '../../../components/admin/location-picker/location-picker.component';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 @Component({
   selector: 'app-admin-poi-form',
-  imports: [ReactiveFormsModule, RouterLink, LocationPickerComponent],
+  imports: [ReactiveFormsModule, RouterLink, LocationPickerComponent, PageSkeletonComponent],
   templateUrl: './admin-poi-form.component.html',
   styleUrl: './admin-poi-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,21 +62,14 @@ export class AdminPoiFormComponent implements OnInit {
 
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    slug: [
-      '',
-      [
-        Validators.maxLength(100),
-        Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-      ],
-    ],
+    slug: ['', [Validators.maxLength(100), Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
     category: ['architecture', [Validators.required]],
-    description: [
-      '',
-      [Validators.required, Validators.minLength(10), Validators.maxLength(5000)],
-    ],
+    description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(5000)]],
     address: ['', [Validators.maxLength(240)]],
     historicalPeriod: ['', [Validators.maxLength(120)]],
+    whatIs: ['', [Validators.maxLength(5000)]],
     historicalStory: ['', [Validators.maxLength(10000)]],
+    contentReviewedAt: [''],
     interestingFactsText: ['', [Validators.maxLength(2300)]],
     visitorInfo: ['', [Validators.maxLength(2000)]],
     contentSourcesText: ['', [Validators.maxLength(5000)]],
@@ -132,7 +136,9 @@ export class AdminPoiFormComponent implements OnInit {
             description: data.description,
             address: data.address ?? '',
             historicalPeriod: data.historicalPeriod ?? '',
+            whatIs: data.whatIs ?? '',
             historicalStory: data.historicalStory ?? '',
+            contentReviewedAt: data.contentReviewedAt ? data.contentReviewedAt.slice(0, 10) : '',
             interestingFactsText: (data.interestingFacts ?? []).join('\n'),
             visitorInfo: data.visitorInfo ?? '',
             contentSourcesText: (data.contentSources ?? []).join('\n'),
@@ -197,6 +203,7 @@ export class AdminPoiFormComponent implements OnInit {
 
     const values = this.form.getRawValue();
     const coordinateVerifiedAt = values.coordinateVerifiedAt.trim();
+    const contentReviewedAt = values.contentReviewedAt.trim();
 
     if (values.status === 'published' && values.isProvisional) {
       this.error.set(
@@ -206,9 +213,7 @@ export class AdminPoiFormComponent implements OnInit {
     }
 
     if (values.status === 'published' && !coordinateVerifiedAt) {
-      this.error.set(
-        'No puedes publicar sin fecha de verificación de coordenadas.',
-      );
+      this.error.set('No puedes publicar sin fecha de verificación de coordenadas.');
       return;
     }
 
@@ -220,7 +225,9 @@ export class AdminPoiFormComponent implements OnInit {
       circuits: this.selectedCircuits(),
       tags: this.selectedTags(),
       historicalPeriod: values.historicalPeriod.trim() || undefined,
+      whatIs: values.whatIs.trim() || undefined,
       historicalStory: values.historicalStory.trim() || undefined,
+      contentReviewedAt: contentReviewedAt || null,
       interestingFacts: values.interestingFactsText
         .split(/\r?\n/)
         .map((fact) => fact.trim())

@@ -177,6 +177,15 @@ const locationSchema = new mongoose.Schema(
       trim: true,
       maxlength: [10000, 'La historia no puede superar 10000 caracteres'],
     },
+    whatIs: {
+      type: String,
+      trim: true,
+      maxlength: [5000, 'La sección «Qué es» no puede superar 5000 caracteres'],
+    },
+    contentReviewedAt: {
+      type: Date,
+      default: null,
+    },
     interestingFacts: {
       type: [
         {

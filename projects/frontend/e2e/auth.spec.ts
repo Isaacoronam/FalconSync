@@ -22,18 +22,19 @@ test('protege /admin, registra, conserva la sesión y cierra sesión', async ({ 
   await page.getByRole('link', { name: 'Crear una cuenta' }).click();
   await expect(page).toHaveURL(/\/registro$/);
 
-  await page.locator('#register-name').fill('Usuario E2E');
+  await page.locator('#register-name').fill('Usuario');
+  await page.locator('#register-surname').fill('Prueba');
   await page.locator('#register-email').fill(email);
   await page.locator('#register-password').fill('UsuarioE2E123');
   await page.locator('#register-confirm-password').fill('UsuarioE2E123');
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
 
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.locator('.site-nav__user')).toContainText('Usuario E2E');
+  await expect(page.locator('.site-nav__user')).toContainText('Usuario Prueba');
   await expect(page.getByRole('link', { name: 'Admin', exact: true })).toHaveCount(0);
 
   await page.reload();
-  await expect(page.locator('.site-nav__user')).toContainText('Usuario E2E');
+  await expect(page.locator('.site-nav__user')).toContainText('Usuario Prueba');
 
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/acceso-denegado$/);
@@ -45,7 +46,7 @@ test('protege /admin, registra, conserva la sesión y cierra sesión', async ({ 
 
   await login(page, email, 'UsuarioE2E123');
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.locator('.site-nav__user')).toContainText('Usuario E2E');
+  await expect(page.locator('.site-nav__user')).toContainText('Usuario Prueba');
 });
 
 test('rechaza credenciales inválidas con un mensaje accesible', async ({ page }) => {

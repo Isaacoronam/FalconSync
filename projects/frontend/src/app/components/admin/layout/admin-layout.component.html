@@ -67,7 +67,7 @@
     </nav>
 
     <div class="admin-sidebar__footer">
-      <p class="admin-sidebar__user">{{ auth.currentUser()?.name }}</p>
+      <p class="admin-sidebar__user">{{ displayName() }}</p>
       <p class="admin-sidebar__role">{{ roleLabel() }}</p>
       <a class="admin-sidebar__map-link" routerLink="/">Volver al mapa</a>
     </div>

@@ -5,7 +5,7 @@
 } @else if (error()) {
   <p class="form-error" role="alert">{{ error() }}</p>
 } @else if (loading()) {
-  <p>Cargando progreso…</p>
+  <app-page-skeleton variant="profile" label="Cargando progreso…" [rows]="3" />
 } @else {
   @let progress = this.progress()!;
 
@@ -31,7 +31,7 @@
   <div class="progreso-barra">
     <div
       class="progreso-barra__relleno"
-      [style.width.%]="progress.percentage"
+      [style.transform]="'scaleX(' + progress.percentage / 100 + ')'"
       [attr.aria-valuenow]="progress.percentage"
       role="progressbar"
       aria-label="Progreso del recorrido"
@@ -54,10 +54,7 @@
           <span class="progreso-item__orden">{{ stop.order }}</span>
           <span class="progreso-item__lugar">{{ stop.location.title }}</span>
         </div>
-        <span
-          class="progreso-item__estado"
-          [class.progreso-item__estado--visitado]="stop.visited"
-        >
+        <span class="progreso-item__estado" [class.progreso-item__estado--visitado]="stop.visited">
           {{ stop.visited ? 'Visitada' : 'Pendiente' }}
         </span>
         @if (stop.visited && stop.checkInAt) {
@@ -73,7 +70,8 @@
       <h2>¡Ruta completada!</h2>
       <p>
         Has visitado todas las paradas de
-        <strong>{{ progress.adventure.title }}</strong>.
+        <strong>{{ progress.adventure.title }}</strong
+        >.
       </p>
       @if (badge) {
         <div class="progreso-insignia">

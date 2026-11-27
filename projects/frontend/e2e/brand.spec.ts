@@ -23,16 +23,16 @@ test('header muestra el logo oficial y sirve los iconos de marca', async ({ page
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('alt', '');
   await expect(logo).toHaveAttribute('src', /brand\/falconsync-logo-128\.png/);
-  await expect(logo).toHaveAttribute('width', '56');
-  await expect(logo).toHaveAttribute('height', '56');
+  await expect(logo).toHaveAttribute('width', '48');
+  await expect(logo).toHaveAttribute('height', '48');
 
   const naturalWidth = await logo.evaluate((img) => (img as HTMLImageElement).naturalWidth);
   expect(naturalWidth).toBeGreaterThan(0);
 
   const box = await logo.boundingBox();
   expect(box).not.toBeNull();
-  expect(box!.width).toBeCloseTo(56, 0);
-  expect(box!.height).toBeCloseTo(56, 0);
+  expect(box!.width).toBeCloseTo(48, 0);
+  expect(box!.height).toBeCloseTo(48, 0);
 
   // No debe quedar la letra F como marca textual en el encabezado.
   await expect(page.locator('.brand__mark span')).toHaveCount(0);

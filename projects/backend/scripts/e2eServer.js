@@ -25,14 +25,17 @@ const INSPECTOR_PASSWORD = 'InspectorE2E123';
 const HISTORIAN_EMAIL = 'historian@e2e.local';
 const HISTORIAN_PASSWORD = 'HistorianE2E123';
 
-// Corpus que usa la evaluación dorada: 14 fuentes activas (S-005 y S-023
-// quedan fuera, igual que en scripts/evaluateRagCorpus.js). Solo se ingiere
+// Corpus que usa la suite E2E: las 14 fuentes de la evaluación dorada más
+// S-033, la investigación patrimonial que sustituye a S-021. Solo se ingiere
 // cuando el entorno que lanza la suite pide el corpus RAG a propósito.
+// El orden importa: S-033 se ingiere después de S-021 para marcarla como
+// superseded y conservar la versión anterior en la base.
 const RAG_CORPUS_MANIFESTS = [
   'S-002',
   'S-003',
   'S-020',
   'S-021',
+  'S-033',
   'S-022',
   'S-024',
   'S-025',

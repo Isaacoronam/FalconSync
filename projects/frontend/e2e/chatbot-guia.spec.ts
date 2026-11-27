@@ -7,8 +7,9 @@ import { expect, test, Page } from '@playwright/test';
  * - Por defecto (sin RAG_TOURIST_ENABLED/RAG_CORPUS_VERSION del entorno que
  *   lanza la suite): la guía está "en preparación"; los casos B y C se omiten
  *   y el caso D valida el estado bloqueado. `guia.spec.ts` no cambia.
- * - Con corpus: el backend ingiere las 14 fuentes de la evaluación dorada al
- *   arrancar y esta spec conversa de verdad con la guía.
+ * - Con corpus: el backend ingiere las 14 fuentes de la evaluación dorada más
+ *   S-033 (investigación patrimonial) al arrancar y esta spec conversa de verdad
+ *   con la guía.
  *
  * Cada pregunta deja evidencia en la salida: `[Q]` con la pregunta, `[A]` con
  * el texto literal de la respuesta visible en la UI y `[API]` con los
@@ -53,12 +54,13 @@ type Observacion = {
 /** Crea un perfil único por la UI y comprueba que la sesión queda iniciada. */
 async function crearPerfilPorUi(page: Page): Promise<{ nombre: string; email: string }> {
   const sufijo = `${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
-  const nombre = `Guia E2E ${sufijo.slice(-6)}`;
+  const nombre = 'Guia Local';
   const email = `guia-${sufijo}@example.com`;
   const contrasena = 'GuiaE2E123456';
 
   await page.goto('/registro');
   await page.locator('#register-name').fill(nombre);
+  await page.locator('#register-surname').fill('Visitante');
   await page.locator('#register-email').fill(email);
   await page.locator('#register-password').fill(contrasena);
   await page.locator('#register-confirm-password').fill(contrasena);
@@ -445,7 +447,7 @@ test('Caso C — preguntas compuestas: una sola respuesta y abstención completa
   expect(c1b.errorUi).toBeNull();
   expect(datosDe(c1b).abstained).toBe(false);
   expect(fuentesDe(c1b)).toContain('S-002');
-  expect(fuentesDe(c1b).some((fuente) => fuente === 'S-020' || fuente === 'S-021')).toBe(true);
+  expect(fuentesDe(c1b).some((fuente) => fuente === 'S-020' || fuente === 'S-033')).toBe(true);
   expect(c1b.citasUi).toBeGreaterThanOrEqual(2);
 });
 
@@ -470,4 +472,91 @@ test('Caso C3b — la forma «y quién» de la mezcla conocida+desconocida tambi
     `Respuesta observada en C3b: «${c3b.respuestaUi}»`,
   ).toBe(true);
   expect(c3b.citasUi).toBe(0);
+});
+
+test('Caso F — los 23 lugares responden con la investigación patrimonial y hechos clave', async ({
+  page,
+}) => {
+  test.setTimeout(300_000);
+  const consultar = await prepararGuiaConPerfil(page);
+
+  const lugares: Array<{ slug: string; title: string }> = [
+    { slug: 'arco-de-la-federacion', title: 'Arco de la Federación' },
+    { slug: 'casa-balcon-de-los-arcaya', title: 'Casa Balcón de los Arcaya' },
+    { slug: 'casa-museo-locos-de-la-vela', title: 'Casa Museo Locos de la Vela' },
+    {
+      slug: 'casa-de-las-ventanas-de-hierro',
+      title: 'Casa de las Ventanas de Hierro',
+    },
+    { slug: 'casa-del-sol', title: 'Casa del Sol' },
+    { slug: 'catedral-de-coro', title: 'Catedral de Coro' },
+    { slug: 'ciudad-deportiva', title: 'Ciudad Deportiva' },
+    { slug: 'cruz-de-san-clemente', title: 'Cruz de San Clemente' },
+    { slug: 'heladeria-el-sol', title: 'Gelatería El Sol' },
+    { slug: 'iglesia-de-san-clemente', title: 'Iglesia de San Clemente' },
+    { slug: 'iglesia-de-san-francisco', title: 'Iglesia de San Francisco' },
+    { slug: 'medanos-de-coro', title: 'Médanos de Coro' },
+    { slug: 'mirador-ali-primera', title: 'Mirador Alí Primera' },
+    { slug: 'monumento-de-las-madres', title: 'Monumento de las Madres' },
+    { slug: 'museo-alberto-henriquez', title: 'Museo Alberto Henríquez' },
+    { slug: 'museo-de-arte-de-coro', title: 'Museo de Arte de Coro' },
+    { slug: 'museo-diocesano', title: 'Museo Diocesano' },
+    { slug: 'museo-guadalupano', title: 'Museo Guadalupano' },
+    {
+      slug: 'parque-nacional-medanos-de-coro',
+      title: 'Parque Nacional Médanos de Coro',
+    },
+    { slug: 'paseo-independencia', title: 'Paseo Independencia' },
+    { slug: 'plaza-antillana', title: 'Plaza Antillana' },
+    { slug: 'plaza-bolivar-de-coro', title: 'Plaza Bolívar de Coro' },
+    { slug: 'teatro-armonia', title: 'Teatro Armonía' },
+  ];
+
+  expect(lugares).toHaveLength(23);
+
+  for (const lugar of lugares) {
+    const observacion = await hacerPregunta(page, consultar, `¿Qué es ${lugar.title}?`);
+    const datos = datosDe(observacion);
+
+    expect(observacion.errorUi, `Error en ${lugar.title}`).toBeNull();
+    expect(datos.abstained, `${lugar.title} no debe abstenerse`).toBe(false);
+    expect(datos.poi?.slug, `${lugar.title} debe resolver su POI`).toBe(lugar.slug);
+    expect(datos.citations.length, `${lugar.title} debe citar evidencia`).toBeGreaterThan(0);
+    expect(fuentesDe(observacion), `${lugar.title} debe usar S-033`).toContain('S-033');
+    expect(observacion.respuestaUi.length).toBeGreaterThan(30);
+  }
+
+  const hechos: Array<{ pregunta: string; esperado: string[] }> = [
+    { pregunta: '¿Cuándo se inauguró el Arco de la Federación?', esperado: ['1920'] },
+    {
+      pregunta: '¿Cuándo se construyó la Casa de las Ventanas de Hierro?',
+      esperado: ['1765'],
+    },
+    { pregunta: '¿Cuándo se inauguró el Teatro Armonía?', esperado: ['1891', '1999'] },
+    {
+      pregunta: '¿Cuándo fue fundado el Museo de Arte de Coro?',
+      esperado: ['1988'],
+    },
+    {
+      pregunta: '¿Cuándo fue creado el Parque Nacional Médanos de Coro?',
+      esperado: ['1974'],
+    },
+    {
+      pregunta: '¿Cuándo se estableció la diócesis de Coro?',
+      esperado: ['1531'],
+    },
+  ];
+
+  for (const hecho of hechos) {
+    const observacion = await hacerPregunta(page, consultar, hecho.pregunta);
+    const datos = datosDe(observacion);
+
+    expect(observacion.errorUi, hecho.pregunta).toBeNull();
+    expect(datos.abstained, hecho.pregunta).toBe(false);
+    for (const fragmento of hecho.esperado) {
+      expect(observacion.respuestaUi, `${hecho.pregunta} debe contener ${fragmento}`).toContain(
+        fragmento,
+      );
+    }
+  }
 });

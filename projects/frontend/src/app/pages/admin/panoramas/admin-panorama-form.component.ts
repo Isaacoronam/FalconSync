@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdminLocation } from '../../../models/admin.model';
 import {
   AdminPanoramaDetail,
@@ -34,7 +35,7 @@ interface HotspotDraft {
 
 @Component({
   selector: 'app-admin-panorama-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './admin-panorama-form.component.html',
   styleUrl: './admin-panorama-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

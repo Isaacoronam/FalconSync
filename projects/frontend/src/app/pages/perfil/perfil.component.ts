@@ -15,6 +15,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../components/ui/page-skeleton/page-skeleton.component';
 import { environment } from '../../../environments/environment';
 import { GalleryMeta, Profile, ProfileCheckIn, ProfileStats } from '../../models/profile.model';
 import { TelegramLinkCode, TelegramLinkStatus } from '../../models/channel-link.model';
@@ -28,6 +29,7 @@ import { AuthService } from '../../services/auth.service';
 import { ChannelLinkApiService } from '../../services/channel-link-api.service';
 import { ProfileApiService } from '../../services/profile-api.service';
 import { apiErrorMessage } from '../../services/utils/api-error';
+import { userDisplayName, userInitials } from '../../services/utils/user-display';
 
 type MessageType = 'success' | 'error' | null;
 type GalleryFilter = 'all' | 'withPhoto' | 'withoutPhoto';
@@ -44,7 +46,7 @@ const GALLERY_FILTERS: Array<{ value: GalleryFilter; label: string }> = [
 
 @Component({
   selector: 'app-perfil',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './perfil.component.html',
   styleUrl: './perfil.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -141,22 +143,21 @@ export class PerfilComponent implements OnInit, OnDestroy {
     return `Foto ${index + 1} de ${total}`;
   });
 
-  protected form = { name: '', username: '', bio: '' };
+  protected form = { name: '', surname: '', username: '', bio: '' };
 
   private avatarRawUrl: string | null = null;
   private readonly photoRawUrls = new Map<string, string>();
   private readonly photoRequestVersions = new Map<string, number>();
   private galleryRequest = 0;
 
+  protected readonly displayName = computed(() => {
+    const profile = this.profile();
+    return profile ? userDisplayName(profile) : '';
+  });
+
   protected readonly initials = computed(() => {
-    const name = this.profile()?.name?.trim();
-
-    if (!name) {
-      return 'FS';
-    }
-
-    const parts = name.split(/\s+/).filter(Boolean);
-    return `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`.toUpperCase() || 'FS';
+    const profile = this.profile();
+    return profile ? userInitials(profile) : 'FS';
   });
 
   protected readonly chivitoMessage = computed(() => {
@@ -238,10 +239,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
           );
           this.auth.updateCurrentUser({
             name: data.profile.name,
+            surname: data.profile.surname,
             username: data.profile.username,
           });
           this.form = {
             name: data.profile.name,
+            surname: data.profile.surname,
             username: data.profile.username ?? '',
             bio: data.profile.bio,
           };
@@ -333,6 +336,7 @@ export class PerfilComponent implements OnInit, OnDestroy {
     this.profileApi
       .updateProfile({
         name: this.form.name,
+        surname: this.form.surname,
         username: this.form.username,
         bio: this.form.bio,
       })
@@ -342,10 +346,12 @@ export class PerfilComponent implements OnInit, OnDestroy {
           this.profile.set(data.profile);
           this.auth.updateCurrentUser({
             name: data.profile.name,
+            surname: data.profile.surname,
             username: data.profile.username,
           });
           this.form = {
             name: data.profile.name,
+            surname: data.profile.surname,
             username: data.profile.username ?? '',
             bio: data.profile.bio,
           };

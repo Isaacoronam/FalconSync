@@ -12,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import * as L from 'leaflet';
+import { PageSkeletonComponent } from '../../components/ui/page-skeleton/page-skeleton.component';
 import { PanoramaDetail, PanoramaSummary } from '../../models/panorama.model';
 import {
   CORO_INITIAL_ZOOM,
@@ -53,7 +54,7 @@ const CLUSTER_RADIUS_PX = 52;
 
 @Component({
   selector: 'app-coro-map',
-  imports: [PanoramaViewerComponent, RouterLink],
+  imports: [PanoramaViewerComponent, RouterLink, PageSkeletonComponent],
   templateUrl: './coro-map.component.html',
   styleUrl: './coro-map.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

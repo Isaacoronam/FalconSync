@@ -1,6 +1,6 @@
 # Perfil privado, insignias de lugares, avatar y fotos de check-in
 
-Fecha de verificación: 2026-11-08.
+Fecha de verificación: 2026-11-26.
 
 Este documento describe el perfil privado del turista en FalconSync, las insignias
 persistentes por lugar, el avatar y la galería de visitas con foto. El progreso de recorridos
@@ -13,7 +13,7 @@ real del repositorio y por buenas prácticas de ingeniería.
 
 - Perfil visible únicamente para su dueño. No existe directorio público ni ruta por
   `username`.
-- Edición de nombre, nombre de usuario y biografía.
+- Edición de nombre, apellido, nombre de usuario y biografía.
 - Avatar privado con carga, reemplazo y eliminación.
 - Insignias persistentes por punto de interés, con otorgamiento idempotente.
 - Galería privada paginada de visitas con filtro por presencia de foto.
@@ -45,6 +45,8 @@ real del repositorio y por buenas prácticas de ingeniería.
 
 | Campo | Uso |
 |---|---|
+| `name` | Nombre de pila, 2–16 letras. |
+| `surname` | Apellido, hasta 16 letras; vacío en cuentas anteriores a la regla. |
 | `username` | Nombre de usuario único, en minúsculas. No público en este corte. |
 | `bio` | Biografía opcional, máximo 280 caracteres. |
 | `avatarFilename` | Nombre del archivo privado. `select: false`. |
@@ -64,7 +66,7 @@ serializan directamente; el perfil devuelve `hasAvatar` y una URL autenticada co
 
 ## Nombre de usuario
 
-- Se genera al registrar una cuenta a partir del nombre o del correo.
+- Se genera al registrar una cuenta a partir de `name + surname` o del correo.
 - Se normaliza a minúsculas y solo admite letras sin tilde, números, puntos, guiones y
   guiones bajos.
 - Debe tener entre 3 y 30 caracteres, empezar y terminar con letra o número.
@@ -81,7 +83,7 @@ Todos requieren `Authorization: Bearer <access-token>`.
 | Método | Ruta | Resultado |
 |---|---|---|
 | `GET` | `/api/profile/me` | Perfil, estadísticas, aventuras, insignias y últimos check-in. |
-| `PATCH` | `/api/profile/me` | Actualiza `name`, `username` y/o `bio`. |
+| `PATCH` | `/api/profile/me` | Actualiza `name`, `surname`, `username` y/o `bio`. |
 | `GET` | `/api/profile/avatar` | Devuelve el avatar del usuario autenticado. |
 | `POST` | `/api/profile/avatar` | Sube o reemplaza el avatar (`multipart/form-data`, campo `image`). |
 | `DELETE` | `/api/profile/avatar` | Elimina el avatar y su archivo. |
@@ -391,9 +393,9 @@ ignoradas por Git. En la suite E2E se usan `test-results/e2e-uploads` y
 | Comprobación | Comando | Resultado |
 |---|---|---|
 | Pruebas de perfil y logros | `node --test test/achievements.test.js` | Aprobadas |
-| Suite backend completa | `npm run test:backend` | 178/178 aprobadas (2026-11-25) |
+| Suite backend completa | `npm run test:backend` | 190/190 aprobadas (2026-11-26) |
 | Pruebas del seed de aventura | `node --test test/seedAdventures.test.js` | 2/2 aprobadas |
-| Pruebas frontend | `npm run test:frontend` | 99/99 aprobadas (2026-11-25) |
+| Pruebas frontend | `npm run test:frontend` | 111/111 aprobadas (2026-11-26) |
 | Build de producción | `npm run build` | Correcto, sin advertencias |
 | E2E de perfil | `npx playwright test e2e/perfil.spec.ts` | Ver `docs/FALCONSYNC.md` |
 | Seed local | `npm run seed:adventures` + `--verify` | Aventura con 5 paradas, publicada y verificada |

@@ -9,6 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdventureApiService } from '../../../../services/adventure-api.service';
 import { LocationApiService } from '../../../../services/location-api.service';
 import { apiErrorMessage } from '../../../../services/utils/api-error';
@@ -25,7 +26,7 @@ interface EditDraft {
 
 @Component({
   selector: 'app-admin-aventura-stops',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './admin-aventura-stops.component.html',
   styleUrl: './admin-aventura-stops.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

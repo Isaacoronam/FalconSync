@@ -19,6 +19,13 @@ async function logout(page: Page): Promise<void> {
   await expect(page.getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
 }
 
+async function openArea(page: Page, name: string): Promise<void> {
+  await page.getByRole('button', { name: 'Áreas', exact: true }).click();
+  const menu = page.locator('#areas-menu');
+  await expect(menu).toBeVisible();
+  await menu.getByRole('link', { name, exact: true }).click();
+}
+
 async function buildEquirectangularImage(): Promise<Buffer> {
   return sharp({
     create: {
@@ -89,7 +96,7 @@ test.describe('visita 360° integrada en CoroMap', () => {
     // El historiador revisa, aprueba y publica la visita turística.
     await logout(page);
     await login(page, HISTORIAN_EMAIL, HISTORIAN_PASSWORD);
-    await page.getByRole('link', { name: 'Curaduría 360°' }).click();
+    await openArea(page, 'Curaduría 360°');
     await expect(page).toHaveURL(/\/curaduria\/panoramas$/);
 
     const row = page.getByRole('row', { name: new RegExp(title) });

@@ -8,13 +8,14 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdventureApiService } from '../../../services/adventure-api.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
 import { Adventure, AdventureStop, difficultyLabel, statusLabel } from '../../../models/adventure.model';
 
 @Component({
   selector: 'app-aventura-detail',
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './aventura-detail.component.html',
   styleUrl: './aventura-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

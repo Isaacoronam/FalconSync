@@ -2,7 +2,9 @@
   <header class="admin-page__header">
     <div>
       <p class="admin-page__eyebrow">Administración</p>
-      <h1 id="poi-form-title">{{ isEditing() ? 'Editar punto de interés' : 'Nuevo punto de interés' }}</h1>
+      <h1 id="poi-form-title">
+        {{ isEditing() ? 'Editar punto de interés' : 'Nuevo punto de interés' }}
+      </h1>
       <p class="admin-page__lead">
         @if (isEditing()) {
           {{ locationTitle() || 'Cargando…' }}
@@ -23,7 +25,7 @@
   }
 
   @if (loading()) {
-    <p class="admin-state">Cargando punto de interés…</p>
+    <app-page-skeleton variant="form" label="Cargando punto de interés…" />
   } @else {
     <form class="admin-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <fieldset class="admin-panel admin-fieldset">
@@ -105,7 +107,24 @@
 
           <div class="admin-field">
             <label for="poi-period-field">Periodo histórico</label>
-            <input id="poi-period-field" type="text" formControlName="historicalPeriod" maxlength="120" />
+            <input
+              id="poi-period-field"
+              type="text"
+              formControlName="historicalPeriod"
+              maxlength="120"
+            />
+          </div>
+
+          <div class="admin-field admin-form-grid__full">
+            <label for="poi-what-is-field">Qué es este lugar</label>
+            <textarea
+              id="poi-what-is-field"
+              rows="5"
+              formControlName="whatIs"
+              maxlength="5000"
+              placeholder="Presentación ampliada: qué es, qué lo hace especial y por qué importa."
+            ></textarea>
+            <p class="form-field__help">Se muestra antes de la historia, en la ficha pública.</p>
           </div>
 
           <div class="admin-field admin-form-grid__full">
@@ -146,9 +165,19 @@
             ></textarea>
           </div>
 
+          <div class="admin-field">
+            <label for="poi-content-reviewed-field">Contenido revisado el</label>
+            <input
+              id="poi-content-reviewed-field"
+              type="date"
+              formControlName="contentReviewedAt"
+            />
+            <p class="form-field__help">Fecha de la última revisión editorial de esta ficha.</p>
+          </div>
+
           <p class="admin-panel__note admin-form-grid__full">
-            El estado de conservación se calcula desde la última inspección revisada y cerrada;
-            no se edita en esta ficha.
+            El estado de conservación se calcula desde la última inspección revisada y cerrada; no
+            se edita en esta ficha.
           </p>
 
           <div class="admin-field">
@@ -171,8 +200,8 @@
           </label>
 
           <p class="admin-panel__note admin-form-grid__full">
-            Para publicar, el POI no puede ser provisional y debe tener fecha de verificación
-            de coordenadas.
+            Para publicar, el POI no puede ser provisional y debe tener fecha de verificación de
+            coordenadas.
           </p>
 
           <div class="admin-field admin-form-grid__full">
@@ -224,7 +253,9 @@
               [attr.aria-describedby]="coordinateError('latitude') ? 'poi-latitude-error' : null"
             />
             @if (coordinateError('latitude')) {
-              <p id="poi-latitude-error" class="form-field__error">{{ coordinateError('latitude') }}</p>
+              <p id="poi-latitude-error" class="form-field__error">
+                {{ coordinateError('latitude') }}
+              </p>
             }
           </div>
 
@@ -239,7 +270,9 @@
               [attr.aria-describedby]="coordinateError('longitude') ? 'poi-longitude-error' : null"
             />
             @if (coordinateError('longitude')) {
-              <p id="poi-longitude-error" class="form-field__error">{{ coordinateError('longitude') }}</p>
+              <p id="poi-longitude-error" class="form-field__error">
+                {{ coordinateError('longitude') }}
+              </p>
             }
           </div>
 

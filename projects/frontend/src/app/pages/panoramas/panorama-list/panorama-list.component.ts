@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { PanoramaSummary } from '../../../models/panorama.model';
 import { PanoramaApiService } from '../../../services/panorama-api.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
@@ -8,7 +9,7 @@ import { formatPanoramaDate } from '../../../services/utils/panorama-labels';
 
 @Component({
   selector: 'app-panorama-list',
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './panorama-list.component.html',
   styleUrl: './panorama-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

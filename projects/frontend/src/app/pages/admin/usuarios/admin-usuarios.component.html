@@ -11,7 +11,7 @@
 
   <form class="admin-toolbar" [formGroup]="filters" (ngSubmit)="load(1)" novalidate>
     <div class="admin-field admin-field--grow">
-      <label for="users-search">Buscar por nombre, usuario o correo</label>
+      <label for="users-search">Buscar por nombre, apellido, usuario o correo</label>
       <input id="users-search" formControlName="q" maxlength="100" />
     </div>
     <div class="admin-field">
@@ -51,7 +51,7 @@
   }
 
   @if (loading()) {
-    <p class="admin-state">Cargando usuarios…</p>
+    <app-page-skeleton variant="table" label="Cargando usuarios…" [rows]="8" />
   } @else if (users().length === 0) {
     <div class="admin-empty">
       <p>No se encontraron usuarios con esos filtros.</p>
@@ -74,7 +74,7 @@
           @for (user of users(); track user.id) {
             <tr>
               <td data-label="Usuario">
-                <span class="admin-table__title">{{ user.name }}</span>
+                <span class="admin-table__title">{{ displayName(user) }}</span>
                 @if (user.username) {
                   <span class="admin-table__meta">&#64;{{ user.username }}</span>
                 }
@@ -98,7 +98,7 @@
                     class="button button--ghost button--small"
                     type="button"
                     [disabled]="isSelf(user)"
-                    [attr.aria-label]="'Cambiar rol de ' + user.name"
+                    [attr.aria-label]="'Cambiar rol de ' + displayName(user)"
                     (click)="openAccountDialog(user, 'role')"
                   >
                     Rol
@@ -107,7 +107,7 @@
                     class="button button--ghost button--small"
                     type="button"
                     [disabled]="isSelf(user)"
-                    [attr.aria-label]="(user.isActive ? 'Desactivar a ' : 'Activar a ') + user.name"
+                    [attr.aria-label]="(user.isActive ? 'Desactivar a ' : 'Activar a ') + displayName(user)"
                     (click)="openAccountDialog(user, 'status')"
                   >
                     {{ user.isActive ? 'Desactivar' : 'Activar' }}
@@ -115,7 +115,7 @@
                   <button
                     class="button button--ghost button--small"
                     type="button"
-                    [attr.aria-label]="'Revocar sesiones de ' + user.name"
+                    [attr.aria-label]="'Revocar sesiones de ' + displayName(user)"
                     (click)="openAccountDialog(user, 'revoke')"
                   >
                     Sesiones

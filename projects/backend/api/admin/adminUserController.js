@@ -34,6 +34,7 @@ function serializeUser(user) {
   return {
     id: user._id.toString(),
     name: user.name,
+    surname: user.surname ?? '',
     username: user.username ?? null,
     email: user.email,
     role: user.role,
@@ -154,6 +155,7 @@ export async function listAdminUsers(request, response) {
       const query = escapeRegex(request.query.q.trim());
       filter.$or = [
         { name: { $regex: query, $options: 'i' } },
+        { surname: { $regex: query, $options: 'i' } },
         { email: { $regex: query, $options: 'i' } },
         { username: { $regex: query, $options: 'i' } },
       ];
@@ -182,7 +184,7 @@ export async function listAdminUsers(request, response) {
 
   const [users, total] = await Promise.all([
     User.find(filter)
-      .select('name username email role isActive createdAt lastLoginAt')
+      .select('name surname username email role isActive createdAt lastLoginAt')
       .sort({ createdAt: -1, _id: -1 })
       .skip((page - 1) * limit)
       .limit(limit),

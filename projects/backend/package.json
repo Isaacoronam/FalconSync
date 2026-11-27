@@ -22,6 +22,8 @@
     "backfill:usernames": "node scripts/backfillUsernames.js",
     "backfill:achievements": "node scripts/backfillAchievements.js",
     "rag:ingest": "node scripts/ingestRagCorpus.js",
+    "rag:generate-poi": "node scripts/generatePoiResearchCorpus.js",
+    "rag:apply-poi": "node scripts/applyPoiResearchCorpus.js",
     "rag:evaluate": "node scripts/evaluateRagCorpus.js",
     "mcp:start": "node bin/mcpServer.js",
     "telegram:start": "node bin/telegramBot.js",

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdminLocation } from '../../../models/admin.model';
 import {
   LocationCategory,
@@ -35,7 +36,7 @@ const STATUS_OPTIONS: Array<{ value: LocationStatus | 'all'; label: string }> = 
 
 @Component({
   selector: 'app-admin-poi-list',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './admin-poi-list.component.html',
   styleUrl: './admin-poi-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

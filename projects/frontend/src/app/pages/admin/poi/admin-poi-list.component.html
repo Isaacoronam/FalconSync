@@ -74,7 +74,7 @@
   }
 
   @if (loading()) {
-    <p class="admin-state">Cargando puntos de interés…</p>
+    <app-page-skeleton variant="table" label="Cargando puntos de interés…" [rows]="8" />
   } @else if (locations().length === 0) {
     <div class="admin-empty">
       <p>No hay puntos de interés con estos filtros.</p>

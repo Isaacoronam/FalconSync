@@ -22,6 +22,10 @@ inspector. La visita 360° es obligatoria y las notificaciones en tiempo real us
 ### Incluido
 
 - Catálogo público de POI, mapa y ficha editorial existentes.
+- Fichas enriquecidas de los 23 POI con «Qué es», historia, detalles, visita, fuentes, fecha
+  de revisión y galería de imágenes con créditos y licencia.
+- Corpus RAG `S-033` de investigación patrimonial, integrado sin borrar el conocimiento
+  anterior y con pruebas E2E específicas para los 23 lugares.
 - Autenticación, sesiones y roles actuales, migrados a `historian` e `inspector`.
 - Dominio de conservación: activo patrimonial, reporte, inspección, hallazgo, intervención,
   evidencia y eventos de dominio.

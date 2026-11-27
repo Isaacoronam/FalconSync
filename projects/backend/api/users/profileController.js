@@ -9,13 +9,14 @@ import { storageAdapter } from '../../microservices/storage/index.js';
 import { generateUniqueUsername } from '../../microservices/usernameService.js';
 import { HttpError } from '../../helpers/HttpError.js';
 import {
+  normalizePersonName,
   normalizeUsername,
-  validateName,
+  validatePersonName,
   validateUsername,
 } from '../../helpers/validation.js';
 
 const PROFILE_FIELDS =
-  'name username email bio role isActive mustChangePassword lastLoginAt createdAt updatedAt +avatarFilename +avatarMimeType +avatarSize +avatarUpdatedAt';
+  'name surname username email bio role isActive mustChangePassword lastLoginAt createdAt updatedAt +avatarFilename +avatarMimeType +avatarSize +avatarUpdatedAt';
 const RECENT_CHECKINS_LIMIT = 8;
 const DEFAULT_GALLERY_PAGE_SIZE = 9;
 const MAX_GALLERY_PAGE_SIZE = 48;
@@ -61,6 +62,7 @@ function serializeProfile(user) {
   return {
     id: user._id.toString(),
     name: user.name,
+    surname: user.surname ?? '',
     username: user.username ?? null,
     email: user.email,
     bio: user.bio ?? '',
@@ -284,11 +286,32 @@ export async function updateMyProfile(request, response) {
     if (typeof body.name !== 'string') {
       issues.push('El nombre debe ser texto');
     } else {
-      issues.push(...validateName(body.name));
+      const name = normalizePersonName(body.name);
+      issues.push(...validatePersonName(name, { field: 'El nombre' }));
 
       if (issues.length === 0) {
-        user.name = body.name.trim();
+        user.name = name;
         changed = true;
+      }
+    }
+  }
+
+  if (hasOwn(body, 'surname')) {
+    if (typeof body.surname !== 'string') {
+      issues.push('El apellido debe ser texto');
+    } else {
+      const surname = normalizePersonName(body.surname);
+
+      if (!surname) {
+        user.surname = '';
+        changed = true;
+      } else {
+        issues.push(...validatePersonName(surname, { field: 'El apellido' }));
+
+        if (issues.length === 0) {
+          user.surname = surname;
+          changed = true;
+        }
       }
     }
   }
@@ -346,6 +369,7 @@ export async function updateMyProfile(request, response) {
   if (!user.username) {
     user.username = await generateUniqueUsername({
       name: user.name,
+      surname: user.surname,
       email: user.email,
       excludeUserId: user._id,
     });

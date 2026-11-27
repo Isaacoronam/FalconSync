@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url";
 import { connectDB, disconnectDB } from "../databases/db.js";
 import Location from "../databases/models/Location.js";
 import { haversineDistanceMeters } from "../helpers/geo.js";
+import { RESEARCH_REVIEWED_AT, locationResearch } from "./locationResearch.js";
 
 const VERIFIED_AT = "2026-11-06T00:00:00.000Z";
 const REVIEWED_AT = "2026-11-07T00:00:00.000Z";
@@ -931,15 +932,209 @@ const editorialContent = {
   },
 };
 
+const researchImages = {
+  "catedral-de-coro": [
+    {
+      file: "catedral-de-coro-02.jpg",
+      author: "Janethrodri",
+      license: "CC BY-SA 4.0",
+      sourceUrl: "https://commons.wikimedia.org/wiki/File:Fachada_de_la_Catedral_de_Coro.jpg",
+    },
+    {
+      file: "catedral-de-coro-03.jpg",
+      author: "Juan Carlo Castillo Ortega",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Campanario_de_la_Catedral_de_Coro.JPG",
+    },
+  ],
+  "casa-balcon-de-los-arcaya": [
+    {
+      file: "casa-balcon-de-los-arcaya-02.jpg",
+      author: "Zerojosefer",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Casa_Balc%C3%B3n_de_los_Arcaya_(interior).jpg",
+    },
+    {
+      file: "casa-balcon-de-los-arcaya-03.jpg",
+      author: "Juan Carlo Castillo Ortega",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Balc%C3%B3n_delos_Arcaya.JPG",
+    },
+  ],
+  "casa-de-las-ventanas-de-hierro": [
+    {
+      file: "casa-de-las-ventanas-de-hierro-02.jpg",
+      author: "Zerojosefer",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Casa_de_Las_Ventanas_de_Hierro_(2024).jpg",
+    },
+    {
+      file: "casa-de-las-ventanas-de-hierro-03.jpg",
+      author: "Janethrodri",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Patio_Casa_de_las_Ventanas_de_Hierro.jpg",
+    },
+  ],
+  "casa-del-sol": [
+    {
+      file: "casa-del-sol-02.jpg",
+      author: "Zerojosefer",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Museo_Casa_Del_Sol_(2023).jpg",
+    },
+    {
+      file: "casa-del-sol-03.jpg",
+      author: "Carlos E. Perez S.L",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:La_Casa_del_Sol,_en_la_Calle_Federaci%C3%B3n.jpg",
+    },
+  ],
+  "cruz-de-san-clemente": [
+    {
+      file: "cruz-de-san-clemente-02.jpg",
+      author: "ArwinJ",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Cruz_de_San_Clemente_2.JPG",
+    },
+    {
+      file: "cruz-de-san-clemente-03.jpg",
+      author: "Carlos E. Perez S.L",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Cruz_de_San_Clemente_-_Cross_of_San_Clemente.JPG",
+    },
+  ],
+  "casa-museo-locos-de-la-vela": [
+    {
+      file: "casa-museo-locos-de-la-vela-02.jpg",
+      author: "Oliver J. Bello",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Locos_de_la_Vela_-_Edo._Falcon.jpg",
+    },
+    {
+      file: "casa-museo-locos-de-la-vela-03.jpg",
+      author: "Oliver J. Bello",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Locos_de_la_vela_-_Edo._Falcon..jpg",
+    },
+  ],
+  "medanos-de-coro": [
+    {
+      file: "medanos-de-coro-02.jpg",
+      author: "Rjcastillo",
+      license: "CC BY-SA 3.0",
+      sourceUrl: "https://commons.wikimedia.org/wiki/File:Medanos_de_Coro_III.jpg",
+    },
+    {
+      file: "medanos-de-coro-03.jpg",
+      author: "Rjcastillo",
+      license: "CC BY-SA 3.0",
+      sourceUrl: "https://commons.wikimedia.org/wiki/File:Medanos_de_Coro_V.jpg",
+    },
+  ],
+  "parque-nacional-medanos-de-coro": [
+    {
+      file: "parque-nacional-medanos-de-coro-02.jpg",
+      author: "Rjcastillo",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Entrada_Parque_Nacional_Medanos_de_Coro.jpg",
+    },
+    {
+      file: "parque-nacional-medanos-de-coro-03.jpg",
+      author: "Julianlopez70",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Estado_Falc%C3%B3n-Coro-M%C3%A9danos_de_Coro_(1).JPG",
+    },
+  ],
+  "museo-de-arte-de-coro": [
+    {
+      file: "museo-de-arte-de-coro-02.jpg",
+      author: "Juan Carlo Castillo Ortega",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Museo_de_Arte_Contemporaneo_de_Coro_(2).JPG",
+    },
+    {
+      file: "museo-de-arte-de-coro-03.jpg",
+      author: "Juan Carlo Castillo Ortega",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Balc%C3%B3n_del_Museo_de_Arte_Contemporaneo_de_Coro.JPG",
+    },
+  ],
+  "plaza-bolivar-de-coro": [
+    {
+      file: "plaza-bolivar-de-coro-02.jpg",
+      author: "ArwinJ",
+      license: "CC BY-SA 4.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Plaza_Bol%C3%ADvar_de_Santa_Ana_de_Coro.JPG",
+    },
+    {
+      file: "plaza-bolivar-de-coro-03.jpg",
+      author: "Juan Carlo Castillo Ortega",
+      license: "CC BY-SA 3.0",
+      sourceUrl:
+        "https://commons.wikimedia.org/wiki/File:Bol%C3%ADvar_en_Coro.JPG",
+    },
+  ],
+};
+
+function licenseUrlFor(license) {
+  return license.includes("3.0")
+    ? "https://creativecommons.org/licenses/by-sa/3.0/"
+    : "https://creativecommons.org/licenses/by-sa/4.0/";
+}
+
 for (const location of locations) {
-  Object.assign(location, editorialContent[location.slug]);
+  Object.assign(
+    location,
+    editorialContent[location.slug],
+    locationResearch[location.slug],
+  );
+
+  if (locationResearch[location.slug]) {
+    location.contentReviewedAt = RESEARCH_REVIEWED_AT;
+  }
+
+  for (const image of researchImages[location.slug] ?? []) {
+    const url = `/images/locations/${image.file}`;
+
+    if (!location.images.includes(url)) {
+      location.images.push(url);
+    }
+
+    if (!location.imageCredits.some((credit) => credit.url === url)) {
+      location.imageCredits.push({
+        url,
+        author: image.author,
+        license: image.license,
+        licenseUrl: licenseUrlFor(image.license),
+        sourceUrl: image.sourceUrl,
+      });
+    }
+  }
 }
 
 const SYNC_FIELDS = [
   "title",
   "category",
   "description",
+  "whatIs",
   "historicalStory",
+  "contentReviewedAt",
   "interestingFacts",
   "visitorInfo",
   "contentSources",
@@ -1022,7 +1217,7 @@ async function syncEditorialContent() {
 
   const slugs = locations.map((location) => location.slug);
   const stored = await Location.find({ slug: { $in: slugs } }).select(
-    "slug historicalStory interestingFacts visitorInfo contentSources",
+    "slug whatIs historicalStory contentReviewedAt interestingFacts visitorInfo contentSources",
   );
   const bySlug = new Map(stored.map((location) => [location.slug, location]));
   const missing = slugs.filter((slug) => !bySlug.has(slug));
@@ -1036,7 +1231,9 @@ async function syncEditorialContent() {
   const populated = stored
     .filter(
       (location) =>
+        location.whatIs?.trim() ||
         location.historicalStory?.trim() ||
+        location.contentReviewedAt ||
         location.interestingFacts?.length ||
         location.visitorInfo?.trim() ||
         location.contentSources?.length,
@@ -1052,9 +1249,22 @@ async function syncEditorialContent() {
   const emptyEditorialFields = [
     {
       $or: [
+        { whatIs: { $exists: false } },
+        { whatIs: null },
+        { whatIs: "" },
+      ],
+    },
+    {
+      $or: [
         { historicalStory: { $exists: false } },
         { historicalStory: null },
         { historicalStory: "" },
+      ],
+    },
+    {
+      $or: [
+        { contentReviewedAt: { $exists: false } },
+        { contentReviewedAt: null },
       ],
     },
     {
@@ -1083,9 +1293,14 @@ async function syncEditorialContent() {
 
   for (const location of locations) {
     const $set = Object.fromEntries(
-      ["historicalStory", "interestingFacts", "visitorInfo", "contentSources"].map(
-        (field) => [field, location[field]],
-      ),
+      [
+        "whatIs",
+        "historicalStory",
+        "contentReviewedAt",
+        "interestingFacts",
+        "visitorInfo",
+        "contentSources",
+      ].map((field) => [field, location[field]]),
     );
     const result = await Location.updateOne(
       {

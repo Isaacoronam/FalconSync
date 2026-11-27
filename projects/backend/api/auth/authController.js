@@ -14,9 +14,10 @@ import { HttpError } from '../../helpers/HttpError.js';
 import { generateUniqueUsername } from '../../microservices/usernameService.js';
 import {
   normalizeEmail,
+  normalizePersonName,
   validateEmail,
-  validateName,
   validatePassword,
+  validatePersonName,
 } from '../../helpers/validation.js';
 
 function refreshCookieOptions(expiresAt) {
@@ -75,11 +76,13 @@ function assertNoIssues(issues) {
 
 export async function register(request, response) {
   const body = request.body ?? {};
-  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  const name = normalizePersonName(body.name);
+  const surname = normalizePersonName(body.surname);
   const email = normalizeEmail(body.email);
 
   assertNoIssues([
-    ...validateName(name),
+    ...validatePersonName(name, { field: 'El nombre' }),
+    ...validatePersonName(surname, { field: 'El apellido' }),
     ...validateEmail(email),
     ...validatePassword(body.password),
   ]);
@@ -95,9 +98,10 @@ export async function register(request, response) {
   }
 
   const passwordHash = await hashPassword(body.password);
-  const username = await generateUniqueUsername({ name, email });
+  const username = await generateUniqueUsername({ name, surname, email });
   const user = await User.create({
     name,
+    surname,
     email,
     username,
     passwordHash,

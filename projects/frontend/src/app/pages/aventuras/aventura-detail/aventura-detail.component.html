@@ -5,7 +5,7 @@
 } @else if (error()) {
   <p class="form-error" role="alert">{{ error() }}</p>
 } @else if (loading()) {
-  <p>Cargando recorrido…</p>
+  <app-page-skeleton variant="detail" label="Cargando recorrido…" [rows]="4" />
 } @else {
   @let aventura = this.adventure()!;
 

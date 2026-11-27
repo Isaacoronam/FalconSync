@@ -168,11 +168,12 @@ erDiagram
 
 ## 5. Diccionario de datos
 
-### 5.1 `User` (existente; sin cambios de esquema)
+### 5.1 `User` (existente; se añade apellido)
 
 | Campo | Tipo | Obligatorio | Regla |
 |---|---|---:|---|
-| `name` | String(80) | Sí | 2–80 caracteres. |
+| `name` | String(80) | Sí | API de registro/perfil: 2–16 letras, espacios, guiones o apóstrofes. El esquema conserva 80 para cuentas heredadas. |
+| `surname` | String(16) | No | Hasta 16 letras; obligatorio en el registro nuevo y vacío en cuentas anteriores. |
 | `username` | String(30) | No | Único si existe; minúsculas. |
 | `email` | String(254) | Sí | Único; minúsculas. |
 | `passwordHash` | String | Sí | `select: false`; nunca se serializa. |
@@ -183,7 +184,9 @@ erDiagram
 | `lastLoginAt` | Date | No | Último acceso exitoso. |
 
 No se añaden capacidades al usuario: se calculan desde el rol. `moderator` no recibe
-capacidades nuevas y no es asignable desde la administración.
+capacidades nuevas y no es asignable desde la administración. Las cuentas anteriores a la
+regla de 16 caracteres conservan su `name` original hasta que se edite; el registro nuevo
+y la edición de perfil aplican la validación estricta.
 
 ### 5.2 `Location` (existente; campos de proyección)
 
@@ -196,6 +199,13 @@ capacidades nuevas y no es asignable desde la administración.
 | `heritageAssetId` | — | — | **No se añade**: el enlace vive en `HeritageAsset.locationId` para evitar dos fuentes de verdad. |
 
 `patrimonialStatus` implementa D-24. La etiqueta `tags: unesco` no se usa como fuente de verdad; el seed y la migración asignan el valor por POI. Un POI en `sin_clasificar` no se presenta como patrimonio ni como no patrimonio: el asistente se abstiene ante preguntas de pertenencia.
+
+La implementación actual de `Location` conserva además los campos editoriales
+`whatIs` (presentación de hasta 5000 caracteres), `historicalStory`, `contentReviewedAt`
+(fecha de la última revisión), `interestingFacts`, `visitorInfo`, `contentSources`,
+`images` e `imageCredits`. `whatIs` y `contentReviewedAt` se añadieron el 2026-11-26 para
+separar la presentación de la historia y mostrar la fecha de revisión sin confundirla con
+`coordinateVerifiedAt`, que sigue siendo exclusiva de la ubicación.
 
 Los campos editoriales, geográficos y de publicación existentes se conservan. El formulario
 administrativo de POI deja de aceptar `conservationStatus`; si lo recibe, responde

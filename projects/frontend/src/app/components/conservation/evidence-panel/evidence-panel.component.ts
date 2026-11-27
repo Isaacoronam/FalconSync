@@ -11,6 +11,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { PageSkeletonComponent } from '../../ui/page-skeleton/page-skeleton.component';
 import { Evidence, EvidenceOwnerType } from '../../../models/conservation.model';
 import { EvidenceApiService } from '../../../services/evidence-api.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
@@ -18,7 +19,7 @@ import { formatBytes } from '../../../services/utils/conservation-labels';
 
 @Component({
   selector: 'app-evidence-panel',
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, PageSkeletonComponent],
   templateUrl: './evidence-panel.component.html',
   styleUrl: './evidence-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

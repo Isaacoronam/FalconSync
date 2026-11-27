@@ -2294,11 +2294,13 @@ components:
           minimum: 0
     AdminUser:
       type: object
-      required: [id, name, username, email, role, isActive, createdAt, lastLoginAt]
+      required: [id, name, surname, username, email, role, isActive, createdAt, lastLoginAt]
       properties:
         id:
           type: string
         name:
+          type: string
+        surname:
           type: string
         username:
           type: string

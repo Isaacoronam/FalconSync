@@ -1,15 +1,37 @@
 .lugares-hero {
   margin: 0 0 2rem;
-  padding: clamp(1.5rem, 5vw, 3.5rem);
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background:
-    radial-gradient(ellipse at 88% 0, rgb(195 145 77 / 18%), transparent 42%),
-    #f4efe4;
+  padding: 0 0 clamp(1.4rem, 3vw, 2.2rem);
+  border-bottom: 1px solid var(--line);
 }
 
-.lugares-hero__eyebrow,
+.lugares-hero__intro {
+  max-width: 48rem;
+}
+
+.lugares-hero h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.9rem);
+  line-height: 1.02;
+}
+
+.lugares-hero h1 span {
+  color: var(--terracotta-dark);
+}
+
+.lugares-hero__lead {
+  max-width: 42rem;
+  margin: 1rem 0 1.4rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
 .lugar-card__eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+  align-items: center;
   margin: 0 0 0.55rem;
   color: var(--terracotta-dark);
   font-size: 0.72rem;
@@ -18,20 +40,124 @@
   text-transform: uppercase;
 }
 
-.lugares-hero h1 {
-  max-width: 16ch;
+.lugar-card__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--terracotta);
+}
+
+.lugar-card__dot[data-category='monument'] {
+  background: var(--gold);
+}
+
+.lugar-card__dot[data-category='nature'] {
+  background: var(--olive);
+}
+
+.lugar-card__dot[data-category='religious'] {
+  background: var(--plum);
+}
+
+.lugar-card__dot[data-category='urban'] {
+  background: var(--blue);
+}
+
+.lugar-card__dot[data-category='museum'] {
+  background: var(--navy);
+}
+
+.lugar-card__dot[data-category='viewpoint'] {
+  background: var(--gold-deep);
+}
+
+.lugar-card__dot[data-category='commerce'] {
+  background: var(--orange);
+}
+
+.lugar-card__dot[data-category='service'] {
+  background: var(--muted);
+}
+
+.lugar-card__period {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.lugares-filters {
+  margin: 0 0 1.6rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgb(255 253 248 / 78%);
+  box-shadow: 0 8px 24px rgb(42 35 25 / 5%);
+}
+
+.lugares-filters__heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.lugares-filters__heading h2 {
   margin: 0;
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  line-height: 1.05;
+  font-size: 1.35rem;
 }
 
-.lugares-hero > p:not(.lugares-hero__eyebrow) {
-  max-width: 42rem;
-  margin: 1rem 0 1.4rem;
-  color: var(--ink-soft);
-  line-height: 1.65;
+.lugares-filters__count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.lugares-filters__fields {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.5fr) repeat(2, minmax(10rem, 1fr)) auto;
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.lugares-filters__field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lugares-filters__field label {
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.lugares-filters__field input,
+.lugares-filters__field select {
+  width: 100%;
+  min-height: 2.7rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fffdf8;
+  color: var(--ink);
+  font: inherit;
+}
+
+.lugares-filters__field input:focus-visible,
+.lugares-filters__field select:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.lugares-filters__clear {
+  min-height: 2.7rem;
+  white-space: nowrap;
 }
 
 .lugares-grid {
@@ -41,11 +167,20 @@
 }
 
 .lugar-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: #fffdf8;
   box-shadow: 0 8px 24px rgb(42 35 25 / 5%);
+}
+
+.lugar-card:hover,
+.lugar-card:focus-within {
+  border-color: rgb(180 83 42 / 0.5);
+  box-shadow: 0 14px 32px rgb(42 35 25 / 0.11);
 }
 
 .lugar-card__media {
@@ -57,7 +192,6 @@
   color: var(--terracotta-dark);
   font-family: var(--font-display);
   font-size: 2rem;
-  text-decoration: none;
 }
 
 .lugar-card__media img {
@@ -67,12 +201,16 @@
   transition: transform 220ms ease;
 }
 
-.lugar-card:hover .lugar-card__media img {
+.lugar-card:hover .lugar-card__media img,
+.lugar-card:focus-within .lugar-card__media img {
   transform: scale(1.035);
 }
 
 .lugar-card__body {
-  padding: 1.1rem 1.2rem 1.25rem;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.1rem 1.2rem 1.1rem;
 }
 
 .lugar-card__body h2 {
@@ -82,40 +220,80 @@
   line-height: 1.2;
 }
 
-.lugar-card__body h2 a {
+.lugar-card__title-link {
   color: var(--ink);
   text-decoration: none;
+}
+
+/* Un único enlace real: el título extiende su área clicable a toda la
+   tarjeta. La imagen y «Leer historia» dejan de ser focos duplicados. */
+.lugar-card__title-link::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  content: '';
+}
+
+.lugar-card__title-link:focus-visible {
+  outline: none;
+}
+
+.lugar-card__title-link:focus-visible::after {
+  outline: 3px solid var(--terracotta-dark);
+  outline-offset: -3px;
+}
+
+.lugar-card:hover .lugar-card__title-link,
+.lugar-card__title-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .lugar-card__summary {
   display: -webkit-box;
   overflow: hidden;
-  margin: 0.65rem 0;
+  margin: 0.65rem 0 0;
   color: var(--ink-soft);
   line-height: 1.55;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
 
-.lugar-card__context {
-  margin: 0.7rem 0;
-  color: var(--muted);
-  font-size: 0.8rem;
-}
-
-.lugar-card__link {
-  display: inline-flex;
-  gap: 0.4rem;
+.lugar-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
   align-items: center;
-  margin-top: 0.4rem;
-  color: var(--terracotta-dark);
-  font-weight: 800;
-  text-decoration: none;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgb(220 199 169 / 0.55);
 }
 
-.lugar-card__link:hover,
-.lugar-card__body h2 a:hover {
-  text-decoration: underline;
+.lugar-card__context {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.lugar-card__cta {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-left: auto;
+  color: var(--terracotta-dark);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.lugar-card__cta svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .lugares-state {
@@ -125,4 +303,54 @@
 
 .lugares-state--error {
   color: #7d2418;
+}
+
+.lugares-state--empty {
+  display: grid;
+  gap: 0.7rem;
+  justify-items: start;
+  padding: 2rem 1.5rem;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  background: #fffdf8;
+}
+
+.lugares-state--empty h2 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.lugares-state--empty p {
+  max-width: 40rem;
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .lugares-filters__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lugares-filters__field--search,
+  .lugares-filters__clear {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .lugares-filters__fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lugar-card__media img {
+    transition: none;
+  }
+
+  .lugar-card:hover .lugar-card__media img,
+  .lugar-card:focus-within .lugar-card__media img {
+    transform: none;
+  }
 }

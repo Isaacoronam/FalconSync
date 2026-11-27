@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal 
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { PageSkeletonComponent } from '../../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdventureApiService } from '../../../../services/adventure-api.service';
 import { Adventure, AdminAdventuresResponse, AdventureStatus, statusLabel } from '../../../../models/adventure.model';
 import { apiErrorMessage } from '../../../../services/utils/api-error';
@@ -22,7 +23,7 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
 
 @Component({
   selector: 'app-admin-aventura-list',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './admin-aventura-list.component.html',
   styleUrl: './admin-aventura-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

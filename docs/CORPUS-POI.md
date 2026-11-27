@@ -2,10 +2,10 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.0 |
-| Fecha | 2026-11-17 |
-| Estado | Verificación documental. No modifica `projects/backend/seeders/seedLocations.js` ni la base de datos |
-| Relacionados | [`FUENTES-RAG.md`](./FUENTES-RAG.md) v1.7, [`ADR/ADR-005-rag-fuentes.md`](./ADR/ADR-005-rag-fuentes.md), [`REQUISITOS.md`](./REQUISITOS.md) (RN-20 y RN-22) |
+| Versión | 1.1 |
+| Fecha | 2026-11-26 |
+| Estado | Verificación documental y actualización aplicada al seed y al corpus S-033. Las propuestas de §4 se integraron en `seeders/locationResearch.js`; las fichas públicas y el chatbot ya las usan |
+| Relacionados | [`FUENTES-RAG.md`](./FUENTES-RAG.md) v1.10, [`ADR/ADR-005-rag-fuentes.md`](./ADR/ADR-005-rag-fuentes.md), [`REQUISITOS.md`](./REQUISITOS.md) (RN-20 y RN-22) |
 
 > Alcance: los 23 POI del seed. Las afirmaciones se citan con los identificadores S-### de `FUENTES-RAG.md` §5.
 > **Verificado**: lo confirma una fuente A, o dos fuentes independientes de nivel B o C. **Puntero**: aparece solo en Wikipedia o Wikivoyage. **Pendiente**: no hay fuente suficiente.
@@ -112,4 +112,29 @@ Las propuestas son para aprobación del responsable de contenido. Esta versión 
 
 ## 8. Alcance
 
-Este documento no modifica `seedLocations.js` ni la base de datos. La vía para aplicar las propuestas de §4 (seed o edición en el panel) se decide aparte, con aprobación del responsable de contenido.
+La investigación de 2026-11-26 se aplicó mediante `projects/backend/seeders/locationResearch.js`, que
+complementa —sin borrar— el contenido anterior de `seedLocations.js`. El corpus `S-033` se genera
+desde ese archivo con `npm run rag:generate-poi` y sustituye a `S-021` en la ingesta E2E. Las
+fichas públicas muestran `whatIs`, historia, detalles, visita, fuentes y fecha de revisión.
+
+### Correcciones aplicadas respecto de la tabla §2
+
+- **Arco de la Federación:** obra de 1920, demolida en 1953 y reconstruida; las fuentes difieren
+  entre 1980 y 1997. No es un monumento del siglo XIX.
+- **Casa de las Ventanas de Hierro:** la documentación técnica la sitúa hacia 1765 (siglo XVIII);
+  la fecha del siglo XVII y el origen sevillano del hierro quedan como tradición por verificar.
+- **Casa del Sol:** datación aproximada hacia 1680 y restauración reportada en 2013-2014.
+- **Casa Balcón de los Arcaya:** datación aproximada hacia 1725 y adecuación museística en 2012.
+- **Teatro Armonía:** primera sede en 1891, incendio en 1945 y sede actual inaugurada en 1999.
+- **Museo Guadalupano:** inaugurado en diciembre de 2012 según su información institucional.
+- **Museo de Arte de Coro (MUCOR):** fundado el 26 de noviembre de 1988.
+- **Parque Nacional Médanos de Coro:** creado en 1974; la modificación de poligonal de 2021
+  establece 80.866 hectáreas según el decreto consultado.
+- **Museo Diocesano:** antecedente de cierre prolongado en 2018; la apertura actual sigue
+  requiriendo confirmación directa.
+- **Plaza Antillana y Mirador Alí Primera:** las imágenes de referencia requieren verificación de
+  identidad; no se usaron como fotografías documentales nuevas.
+
+Las propuestas de §4 se conservan como registro de la investigación previa; cuando difieren de la
+investigación de 2026-11-26, prevalece la ficha enriquecida y se mantiene la atribución de ambas
+fuentes en el texto público.

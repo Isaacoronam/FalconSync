@@ -36,8 +36,8 @@ describe('App', () => {
     expect(mark.tagName).toBe('IMG');
     expect(mark.getAttribute('alt')).toBe('');
     expect(mark.getAttribute('src')).toContain('brand/falconsync-logo-128.png');
-    expect(mark.getAttribute('width')).toBe('56');
-    expect(mark.getAttribute('height')).toBe('56');
+    expect(mark.getAttribute('width')).toBe('48');
+    expect(mark.getAttribute('height')).toBe('48');
     expect(mark.textContent).toBe('');
     expect(compiled.querySelector('.brand__mark span')).toBeNull();
   });

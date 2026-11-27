@@ -4,7 +4,7 @@
       <p class="admin-page__eyebrow">Centro de operación turística</p>
       <h1 id="admin-title">Panel de control</h1>
       <p class="admin-page__lead">
-        Resumen de visitas, patrimonio y actividad · Hola, {{ auth.currentUser()?.name }}
+        Resumen de visitas, patrimonio y actividad · Hola, {{ displayName() }}
       </p>
     </div>
     <div class="admin-page__actions">
@@ -15,7 +15,7 @@
   </header>
 
   @if (loading()) {
-    <p class="admin-state">Cargando métricas…</p>
+    <app-page-skeleton variant="dashboard" label="Cargando métricas…" [rows]="5" />
   } @else if (error()) {
     <div class="admin-state admin-state--error" role="alert">
       <p>{{ error() }}</p>

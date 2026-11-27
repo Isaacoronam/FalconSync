@@ -25,6 +25,13 @@ async function logout(page: Page): Promise<void> {
   await expect(page.getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
 }
 
+async function openArea(page: Page, name: string): Promise<void> {
+  await page.getByRole('button', { name: 'Áreas', exact: true }).click();
+  const menu = page.locator('#areas-menu');
+  await expect(menu).toBeVisible();
+  await menu.getByRole('link', { name, exact: true }).click();
+}
+
 async function uploadEvidence(panel: Locator, purpose: string): Promise<void> {
   await panel.getByLabel('Motivo de la evidencia').fill(purpose);
   await panel
@@ -59,7 +66,7 @@ test.describe('conservación', () => {
   test('recorre reporte, triaje, inspección, intervención y cierre', async ({ page, request }) => {
     const stamp = Date.now();
     const reporterEmail = `reportante-${stamp}@example.com`;
-    const reporterName = `Reportante E2E ${stamp}`;
+    const reporterName = 'Reportante Local';
     const description = `Humedad y fisuras detectadas por E2E ${stamp}`;
     const assetCode = `E2E-${String(stamp).slice(-8)}`;
     const assetName = `Casa E2E ${stamp}`;
@@ -69,13 +76,18 @@ test.describe('conservación', () => {
     const interventionDescription = 'Consolidación de fisuras y reposición del revoque afectado.';
 
     const registered = await request.post('/api/auth/register', {
-      data: { name: reporterName, email: reporterEmail, password: USER_PASSWORD },
+      data: {
+        name: reporterName,
+        surname: 'Prueba',
+        email: reporterEmail,
+        password: USER_PASSWORD,
+      },
     });
     expect(registered.status()).toBe(201);
 
     // La persona reporta el daño y adjunta evidencia privada.
     await login(page, reporterEmail, USER_PASSWORD);
-    await page.getByRole('link', { name: 'Reportes', exact: true }).click();
+    await openArea(page, 'Reportes');
     await expect(page).toHaveURL(/\/reportes$/);
 
     await page.locator('#report-location').selectOption({ index: 1 });
@@ -97,7 +109,7 @@ test.describe('conservación', () => {
 
     // El inspector registra el activo, acepta el reporte y lo convierte.
     await login(page, INSPECTOR1_EMAIL, INSPECTOR_PASSWORD);
-    await page.getByRole('link', { name: 'Inspecciones', exact: true }).click();
+    await openArea(page, 'Inspecciones');
     await expect(page).toHaveURL(/\/inspecciones$/);
 
     await page.locator('#asset-code').fill(assetCode);
@@ -149,7 +161,7 @@ test.describe('conservación', () => {
 
     // El revisor confirma severidad, aprueba y propone la intervención.
     await login(page, INSPECTOR2_EMAIL, INSPECTOR_PASSWORD);
-    await page.getByRole('link', { name: 'Inspecciones', exact: true }).click();
+    await openArea(page, 'Inspecciones');
     const inspectionRow = page.locator('tr').filter({ hasText: assetName });
     await expect(inspectionRow).toHaveCount(1);
     await inspectionRow.getByRole('link', { name: 'Abrir' }).click();
@@ -181,7 +193,7 @@ test.describe('conservación', () => {
 
     // Otra persona aprueba, ejecuta con evidencia y completa.
     await login(page, INSPECTOR1_EMAIL, INSPECTOR_PASSWORD);
-    await page.getByRole('link', { name: 'Inspecciones', exact: true }).click();
+    await openArea(page, 'Inspecciones');
     await page
       .locator('tr')
       .filter({ hasText: assetName })
@@ -206,7 +218,7 @@ test.describe('conservación', () => {
 
     // El revisor verifica la intervención y cierra la inspección.
     await login(page, INSPECTOR2_EMAIL, INSPECTOR_PASSWORD);
-    await page.getByRole('link', { name: 'Inspecciones', exact: true }).click();
+    await openArea(page, 'Inspecciones');
     await page
       .locator('tr')
       .filter({ hasText: assetName })
@@ -245,7 +257,12 @@ test.describe('conservación', () => {
 
     for (const email of [ownerEmail, intruderEmail]) {
       const registered = await request.post('/api/auth/register', {
-        data: { name: `Cuenta ${email}`, email, password: USER_PASSWORD },
+        data: {
+          name: 'Cuenta',
+          surname: 'Prueba',
+          email,
+          password: USER_PASSWORD,
+        },
       });
       expect(registered.status()).toBe(201);
     }

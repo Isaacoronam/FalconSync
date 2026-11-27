@@ -32,10 +32,17 @@ import {
   shortId,
 } from '../../../services/utils/conservation-labels';
 import { EvidencePanelComponent } from '../../../components/conservation/evidence-panel/evidence-panel.component';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 
 @Component({
   selector: 'app-report-detail',
-  imports: [DatePipe, EvidencePanelComponent, ReactiveFormsModule, RouterLink],
+  imports: [
+    DatePipe,
+    EvidencePanelComponent,
+    ReactiveFormsModule,
+    RouterLink,
+    PageSkeletonComponent,
+  ],
   templateUrl: './report-detail.component.html',
   styleUrl: './report-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

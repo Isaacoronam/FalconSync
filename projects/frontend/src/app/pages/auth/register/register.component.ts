@@ -5,6 +5,11 @@ import { AuthBrandComponent } from '../../../components/auth-brand/auth-brand.co
 import { AuthService } from '../../../services/auth.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
 import { passwordsMatchValidator } from '../../../services/validators/password-match.validator';
+import {
+  PERSON_NAME_MAX_LENGTH,
+  normalizePersonName,
+  personNameValidator,
+} from '../../../services/validators/person-name.validator';
 
 const PASSWORD_PATTERN = /^(?=.*[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])(?=.*\d).+$/;
 
@@ -20,11 +25,15 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly formBuilder = inject(NonNullableFormBuilder);
 
+  protected readonly maxNameLength = PERSON_NAME_MAX_LENGTH;
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly showPassword = signal(false);
+  protected readonly showConfirmPassword = signal(false);
   protected readonly form = this.formBuilder.group(
     {
-      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+      name: ['', [Validators.required, personNameValidator()]],
+      surname: ['', [Validators.required, personNameValidator()]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
       password: [
         '',
@@ -41,15 +50,11 @@ export class RegisterComponent {
   );
 
   protected nameError(): string | null {
-    const control = this.form.controls.name;
+    return this.personNameError('name', 'El nombre');
+  }
 
-    if (!control.touched || control.valid) {
-      return null;
-    }
-
-    return control.hasError('required')
-      ? 'El nombre es obligatorio.'
-      : 'El nombre debe tener entre 2 y 80 caracteres.';
+  protected surnameError(): string | null {
+    return this.personNameError('surname', 'El apellido');
   }
 
   protected emailError(): string | null {
@@ -86,6 +91,18 @@ export class RegisterComponent {
     return 'Incluye al menos una letra y un número.';
   }
 
+  protected hasPasswordLength(): boolean {
+    return this.form.controls.password.value.length >= 10;
+  }
+
+  protected hasPasswordLetter(): boolean {
+    return /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(this.form.controls.password.value);
+  }
+
+  protected hasPasswordDigit(): boolean {
+    return /\d/.test(this.form.controls.password.value);
+  }
+
   protected confirmPasswordError(): string | null {
     const control = this.form.controls.confirmPassword;
 
@@ -109,14 +126,43 @@ export class RegisterComponent {
     this.submitting.set(true);
     this.error.set(null);
 
-    const { name, email, password } = this.form.getRawValue();
+    const { name, surname, email, password } = this.form.getRawValue();
 
-    this.auth.register({ name, email, password }).subscribe({
-      next: () => void this.router.navigateByUrl('/'),
-      error: (error: unknown) => {
-        this.error.set(apiErrorMessage(error, 'No se pudo crear la cuenta. Inténtalo de nuevo.'));
-        this.submitting.set(false);
-      },
-    });
+    this.auth
+      .register({
+        name: normalizePersonName(name),
+        surname: normalizePersonName(surname),
+        email,
+        password,
+      })
+      .subscribe({
+        next: () => void this.router.navigateByUrl('/'),
+        error: (error: unknown) => {
+          this.error.set(apiErrorMessage(error, 'No se pudo crear la cuenta. Inténtalo de nuevo.'));
+          this.submitting.set(false);
+        },
+      });
+  }
+
+  private personNameError(controlName: 'name' | 'surname', label: string): string | null {
+    const control = this.form.controls[controlName];
+
+    if (!control.touched || control.valid) {
+      return null;
+    }
+
+    if (control.hasError('required')) {
+      return `${label} es obligatorio.`;
+    }
+
+    if (control.hasError('personNameMin')) {
+      return `${label} debe tener al menos 2 letras.`;
+    }
+
+    if (control.hasError('personNameMax')) {
+      return `${label} no puede superar ${PERSON_NAME_MAX_LENGTH} caracteres.`;
+    }
+
+    return `${label} solo puede contener letras, espacios, guiones y apóstrofes.`;
   }
 }

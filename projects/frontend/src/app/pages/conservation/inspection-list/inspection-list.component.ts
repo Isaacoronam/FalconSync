@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import {
   HERITAGE_ASSET_TYPES,
   HeritageAsset,
@@ -37,7 +38,7 @@ import {
 
 @Component({
   selector: 'app-inspection-list',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './inspection-list.component.html',
   styleUrl: './inspection-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
