@@ -25,4 +25,12 @@ Antes de preparar un release, despliegue a staging/producción o cambio de infra
 - Copias de seguridad y recuperación consideradas cuando hay datos persistentes.
 - Responsables, ventana y criterios de éxito/abortado definidos.
 
+## Evidencia específica de FalconSync
+
+- La CI configurada ejecuta pruebas backend/frontend, build Angular y Playwright.
+- Las instrucciones de despliegue remoto, PM2, SSH, destino de estáticos y restauración
+  productiva no están definidas como operación vigente.
+- No inventes RTO/RPO, proveedor, topología productiva ni procedimiento de backup; márcalos
+  como decisiones pendientes y solicita validación.
+
 No ejecutes despliegues ni operaciones destructivas sin autorización explícita. Marca cada punto como verificado, pendiente, no aplicable o bloqueado.

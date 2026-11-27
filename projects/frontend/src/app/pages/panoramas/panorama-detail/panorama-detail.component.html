@@ -1,0 +1,99 @@
+@if (loading()) {
+  <app-page-skeleton variant="viewer" label="Cargando la visita 360°…" />
+} @else if (error() || !panorama()) {
+  <section class="panorama-state panorama-state--error" role="alert">
+    <h1>No se pudo abrir esta visita 360°</h1>
+    <p>{{ error() }}</p>
+    <a class="button button--ghost" routerLink="/panoramas">Volver a las visitas 360°</a>
+  </section>
+} @else {
+  @let scene = panorama()!;
+  <article class="panorama-article">
+    <a class="panorama-article__back" routerLink="/panoramas">← Todas las visitas 360°</a>
+
+    <header class="panorama-article__header">
+      <p class="panorama-article__eyebrow">Visita 360°</p>
+      <h1>{{ scene.title }}</h1>
+      @if (scene.location; as location) {
+        <p class="panorama-article__location">
+          <a [routerLink]="['/lugares', location.slug ?? '']">{{ location.title }}</a>
+        </p>
+      }
+      @if (scene.description) {
+        <p class="panorama-article__summary">{{ scene.description }}</p>
+      }
+    </header>
+
+    <app-panorama-viewer
+      [imageUrl]="scene.imageUrl"
+      [fallbackUrl]="scene.thumbnailUrl"
+      [fallbackAlt]="scene.fallback.alt"
+      [fallbackDescription]="scene.fallback.description"
+      [hotspots]="scene.hotspots"
+      [credits]="scene.credits"
+    />
+
+    <div class="panorama-article__layout">
+      <section aria-labelledby="panorama-derechos">
+        <h2 id="panorama-derechos">Derechos y contexto</h2>
+        <dl class="panorama-article__facts">
+          <div>
+            <dt>Autoría</dt>
+            <dd>{{ scene.author }}</dd>
+          </div>
+          <div>
+            <dt>Licencia</dt>
+            <dd>
+              @if (scene.licenseUrl) {
+                <a [href]="scene.licenseUrl" target="_blank" rel="noopener noreferrer">
+                  {{ scene.license }}
+                </a>
+              } @else {
+                {{ scene.license }}
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Crédito visible</dt>
+            <dd>{{ scene.credits }}</dd>
+          </div>
+          <div>
+            <dt>Fecha de captura</dt>
+            <dd>{{ scene.capturedAt ? formatDate(scene.capturedAt) : 'No declarada' }}</dd>
+          </div>
+          <div>
+            <dt>Formato</dt>
+            <dd>
+              Proyección equirectangular ·
+              {{ scene.width }} × {{ scene.height }} px
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <aside class="panorama-article__aside" aria-labelledby="panorama-alternativa">
+        <h2 id="panorama-alternativa">Alternativa accesible</h2>
+        <p>
+          La escena incluye una imagen fija, un texto alternativo y una descripción. La vista
+          interactiva no se inicia automáticamente y puede desactivarse en cualquier momento.
+        </p>
+        <p>
+          Si necesitas una descripción más detallada o detectas un problema de accesibilidad,
+          comunícalo al equipo de conservación desde la ficha del lugar.
+        </p>
+        @if (scene.location?.slug) {
+          <a class="button button--ghost button--block" [routerLink]="['/lugares', scene.location?.slug]">
+            Ver la ficha del lugar
+          </a>
+        }
+      </aside>
+    </div>
+
+    @if (scene.fallback.transcript) {
+      <details class="panorama-article__transcript">
+        <summary>Transcripción de la escena</summary>
+        <p>{{ scene.fallback.transcript }}</p>
+      </details>
+    }
+  </article>
+}

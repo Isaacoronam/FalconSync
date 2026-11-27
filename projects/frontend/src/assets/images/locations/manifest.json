@@ -1,0 +1,457 @@
+{
+  "generatedAt": "2026-11-26",
+  "basePath": "/images/locations",
+  "note": "Las im?genes con status pending-verification fueron suministradas por el responsable del proyecto y no tienen autor?a ni licencia confirmadas. Las im?genes incorporadas el 2026-11-26 desde Wikimedia Commons declaran autor, licencia CC BY-SA y enlace a la ficha original. No deben publicarse fuera de este repositorio las que sigan pendientes.",
+  "images": [
+    {
+      "file": "catedral-de-coro.jpg",
+      "poiSlug": "catedral-de-coro",
+      "poiTitle": "Catedral de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "casa-de-las-ventanas-de-hierro.jpg",
+      "poiSlug": "casa-de-las-ventanas-de-hierro",
+      "poiTitle": "Casa de las Ventanas de Hierro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "casa-del-sol.jpg",
+      "poiSlug": "casa-del-sol",
+      "poiTitle": "Casa del Sol",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "arco-de-la-federacion.jpg",
+      "poiSlug": "arco-de-la-federacion",
+      "poiTitle": "Arco de la Federación",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "medanos-de-coro.jpg",
+      "poiSlug": "medanos-de-coro",
+      "poiTitle": "Médanos de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "plaza-bolivar-de-coro.jpg",
+      "poiSlug": "plaza-bolivar-de-coro",
+      "poiTitle": "Plaza Bolívar de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "iglesia-de-san-francisco.jpg",
+      "poiSlug": "iglesia-de-san-francisco",
+      "poiTitle": "Iglesia de San Francisco",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iglesia_de_San_Francisco,_Coro.jpg",
+      "status": "credited"
+    },
+    {
+      "file": "iglesia-de-san-clemente.jpg",
+      "poiSlug": "iglesia-de-san-clemente",
+      "poiTitle": "Iglesia de San Clemente",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Iglesia_de_San_Clemente,_Coro.jpg",
+      "status": "credited"
+    },
+    {
+      "file": "cruz-de-san-clemente.jpg",
+      "poiSlug": "cruz-de-san-clemente",
+      "poiTitle": "Cruz de San Clemente",
+      "author": "Zerojosefer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cruz_de_San_Clemente_(Coro).jpg",
+      "status": "credited"
+    },
+    {
+      "file": "casa-balcon-de-los-arcaya.jpg",
+      "poiSlug": "casa-balcon-de-los-arcaya",
+      "poiTitle": "Casa Balcón de los Arcaya",
+      "author": "Zerojosefer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Casa_Balc%C3%B3n_de_los_Arcaya_(exterior).jpg",
+      "status": "credited"
+    },
+    {
+      "file": "museo-de-arte-de-coro.jpg",
+      "poiSlug": "museo-de-arte-de-coro",
+      "poiTitle": "Museo de Arte de Coro",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sede_Museo_de_Arte_de_Coro.jpg",
+      "status": "credited"
+    },
+    {
+      "file": "Gelateria-el-sol.jpeg",
+      "poiSlug": "heladeria-el-sol",
+      "poiTitle": "Gelatería El Sol",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "parque-nacional-medanos-de-coro.jpg",
+      "poiSlug": "parque-nacional-medanos-de-coro",
+      "poiTitle": "Parque Nacional Médanos de Coro",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "Casa-Museo-Locos-de-la-Vela.jpg",
+      "poiSlug": "casa-museo-locos-de-la-vela",
+      "poiTitle": "Casa Museo Locos de la Vela",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "ciudad-deportiva-coro.jpg",
+      "poiSlug": "ciudad-deportiva",
+      "poiTitle": "Ciudad Deportiva",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "mirador-ali-primera.jpg",
+      "poiSlug": "mirador-ali-primera",
+      "poiTitle": "Mirador Alí Primera",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "monumento-de-las-madres-coro.jpg",
+      "poiSlug": "monumento-de-las-madres",
+      "poiTitle": "Monumento de las Madres",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "museo-alberto-herique-coro.jpg",
+      "poiSlug": "museo-alberto-henriquez",
+      "poiTitle": "Museo Alberto Henríquez",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "museo-diocesano-de-coro.jpg",
+      "poiSlug": "museo-diocesano",
+      "poiTitle": "Museo Diocesano",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "museo-guadalupano.jpg",
+      "poiSlug": "museo-guadalupano",
+      "poiTitle": "Museo Guadalupano",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "paseo-independencia-coro.jpg",
+      "poiSlug": "paseo-independencia",
+      "poiTitle": "Paseo Independencia",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "plaza-antillana-coro.jpg",
+      "poiSlug": "plaza-antillana",
+      "poiTitle": "Plaza Antillana",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "teatro-armonia.jpg",
+      "poiSlug": "teatro-armonia",
+      "poiTitle": "Teatro Armonía",
+      "author": null,
+      "license": null,
+      "licenseUrl": null,
+      "sourceUrl": null,
+      "status": "pending-verification"
+    },
+    {
+      "file": "catedral-de-coro-02.jpg",
+      "poiSlug": "catedral-de-coro",
+      "poiTitle": "Catedral de Coro",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fachada_de_la_Catedral_de_Coro.jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "catedral-de-coro-03.jpg",
+      "poiSlug": "catedral-de-coro",
+      "poiTitle": "Catedral de Coro",
+      "author": "Juan Carlo Castillo Ortega",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Campanario_de_la_Catedral_de_Coro.JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-de-las-ventanas-de-hierro-02.jpg",
+      "poiSlug": "casa-de-las-ventanas-de-hierro",
+      "poiTitle": "Casa de las Ventanas de Hierro",
+      "author": "Zerojosefer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Casa_de_Las_Ventanas_de_Hierro_(2024).jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-de-las-ventanas-de-hierro-03.jpg",
+      "poiSlug": "casa-de-las-ventanas-de-hierro",
+      "poiTitle": "Casa de las Ventanas de Hierro",
+      "author": "Janethrodri",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Patio_Casa_de_las_Ventanas_de_Hierro.jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-del-sol-02.jpg",
+      "poiSlug": "casa-del-sol",
+      "poiTitle": "Casa del Sol",
+      "author": "Zerojosefer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Museo_Casa_Del_Sol_(2023).jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-del-sol-03.jpg",
+      "poiSlug": "casa-del-sol",
+      "poiTitle": "Casa del Sol",
+      "author": "Carlos E. Perez S.L",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:La_Casa_del_Sol,_en_la_Calle_Federaci%C3%B3n.jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "medanos-de-coro-02.jpg",
+      "poiSlug": "medanos-de-coro",
+      "poiTitle": "Médanos de Coro",
+      "author": "Rjcastillo",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Medanos_de_Coro_III.jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "medanos-de-coro-03.jpg",
+      "poiSlug": "medanos-de-coro",
+      "poiTitle": "Médanos de Coro",
+      "author": "Rjcastillo",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Medanos_de_Coro_V.jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "parque-nacional-medanos-de-coro-02.jpg",
+      "poiSlug": "parque-nacional-medanos-de-coro",
+      "poiTitle": "Parque Nacional Médanos de Coro",
+      "author": "Rjcastillo",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Entrada_Parque_Nacional_Medanos_de_Coro.jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "parque-nacional-medanos-de-coro-03.jpg",
+      "poiSlug": "parque-nacional-medanos-de-coro",
+      "poiTitle": "Parque Nacional Médanos de Coro",
+      "author": "Julianlopez70",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Estado_Falc%C3%B3n-Coro-M%C3%A9danos_de_Coro_(1).JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "plaza-bolivar-de-coro-02.jpg",
+      "poiSlug": "plaza-bolivar-de-coro",
+      "poiTitle": "Plaza Bolívar de Coro",
+      "author": "ArwinJ",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plaza_Bol%C3%ADvar_de_Santa_Ana_de_Coro.JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "plaza-bolivar-de-coro-03.jpg",
+      "poiSlug": "plaza-bolivar-de-coro",
+      "poiTitle": "Plaza Bolívar de Coro",
+      "author": "Juan Carlo Castillo Ortega",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bol%C3%ADvar_en_Coro.JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "cruz-de-san-clemente-02.jpg",
+      "poiSlug": "cruz-de-san-clemente",
+      "poiTitle": "Cruz de San Clemente",
+      "author": "ArwinJ",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cruz_de_San_Clemente_2.JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "cruz-de-san-clemente-03.jpg",
+      "poiSlug": "cruz-de-san-clemente",
+      "poiTitle": "Cruz de San Clemente",
+      "author": "Carlos E. Perez S.L",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cruz_de_San_Clemente_-_Cross_of_San_Clemente.JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-balcon-de-los-arcaya-02.jpg",
+      "poiSlug": "casa-balcon-de-los-arcaya",
+      "poiTitle": "Casa Balcón de los Arcaya",
+      "author": "Zerojosefer",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Casa_Balc%C3%B3n_de_los_Arcaya_(interior).jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-balcon-de-los-arcaya-03.jpg",
+      "poiSlug": "casa-balcon-de-los-arcaya",
+      "poiTitle": "Casa Balcón de los Arcaya",
+      "author": "Juan Carlo Castillo Ortega",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Balc%C3%B3n_delos_Arcaya.JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "museo-de-arte-de-coro-02.jpg",
+      "poiSlug": "museo-de-arte-de-coro",
+      "poiTitle": "Museo de Arte de Coro",
+      "author": "Juan Carlo Castillo Ortega",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Museo_de_Arte_Contemporaneo_de_Coro_(2).JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "museo-de-arte-de-coro-03.jpg",
+      "poiSlug": "museo-de-arte-de-coro",
+      "poiTitle": "Museo de Arte de Coro",
+      "author": "Juan Carlo Castillo Ortega",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Balc%C3%B3n_del_Museo_de_Arte_Contemporaneo_de_Coro.JPG",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-museo-locos-de-la-vela-02.jpg",
+      "poiSlug": "casa-museo-locos-de-la-vela",
+      "poiTitle": "Casa Museo Locos de la Vela",
+      "author": "Oliver J. Bello",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Locos_de_la_Vela_-_Edo._Falcon.jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    },
+    {
+      "file": "casa-museo-locos-de-la-vela-03.jpg",
+      "poiSlug": "casa-museo-locos-de-la-vela",
+      "poiTitle": "Casa Museo Locos de la Vela",
+      "author": "Oliver J. Bello",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Locos_de_la_vela_-_Edo._Falcon..jpg",
+      "status": "credited",
+      "addedAt": "2026-11-26"
+    }
+  ]
+}

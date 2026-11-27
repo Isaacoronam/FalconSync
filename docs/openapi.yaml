@@ -1,0 +1,4134 @@
+openapi: 3.0.3
+info:
+  title: FALCONSYNC — API de conservación y evidencia
+  version: 0.2.0
+  description: |
+    Contrato de las rutas implementadas del dominio de conservación, evidencia privada,
+    administración de cuentas, tiempo real, asistentes y visita 360°.
+
+    **Estado:** las operaciones marcadas con `x-falconsync-status: implemented` existen en el
+    código actual y se describen con sus rutas, cuerpos y envolturas reales. Las marcadas con
+    `x-falconsync-status: planned` son rutas futuras y no deben consumirse todavía.
+
+    Las rutas vigentes de autenticación, POI, perfil, check-in y administración de POI no se
+    repiten aquí; su contrato está en `docs/AUTENTICACION.md`, `docs/POI.md`, `docs/PERFIL.md`
+    y `docs/ADMINISTRACION.md`. El sobre de error es el mismo en toda la API:
+    `{ "error": { "code", "message", "details?" } }`.
+
+    Las transiciones críticas exigen `If-Match: "<version>"`. Solo `POST /evidence` admite
+    `Idempotency-Key`; los reportes e inspecciones no lo interpretan. Las listas paginadas
+    usan `{ "data": [...], "meta": { "page", "limit", "total", "hasMore" } }`; la lista de
+    cuentas usa `totalPages` en lugar de `hasMore`.
+
+    La evidencia privada se sirve únicamente por `GET /evidence/{id}` con autorización por
+    recurso y registro de acceso. En producción, mientras no exista un motor antimalware
+    desplegado, `POST /evidence` responde `503 EVIDENCE_SCAN_UNAVAILABLE`.
+  contact:
+    name: FALCONSYNC
+    url: https://github.com/Isaacoronam/FalconSync
+  license:
+    name: Uso académico y prototipado
+    url: https://github.com/Isaacoronam/FalconSync
+servers:
+  - url: http://localhost:3000/api
+    description: Desarrollo local
+  - url: https://api.example.invalid/api
+    description: Marcador de staging/producción; no es un entorno real
+tags:
+  - name: Assets
+    description: Activos patrimoniales inspeccionables y su enlace con POI.
+  - name: Reports
+    description: Avisos ciudadanos autenticados y triaje.
+  - name: Inspections
+    description: Inspecciones, hallazgos, revisión y cierre.
+  - name: Interventions
+    description: Intervenciones de conservación y verificación.
+  - name: Evidence
+    description: Evidencia privada con hash y acceso auditado.
+  - name: Notifications
+    description: Notificaciones persistidas y cursor.
+  - name: Realtime
+    description: Ticket de corta duración para Socket.IO.
+  - name: Assistant
+    description: Chivito, guía turístico, y asistente técnico con citas.
+  - name: Sources
+    description: Registro de fuentes RAG en solo lectura.
+  - name: Panoramas
+    description: Visita 360° pública.
+  - name: Admin
+    description: Administración de cuentas, accesos a evidencia y fuentes.
+security:
+  - bearerAuth: []
+paths:
+  /heritage-assets:
+    get:
+      tags: [Assets]
+      summary: Listar activos patrimoniales activos
+      description: |
+        Ruta pública. Devuelve los activos con `status=active` y `deletedAt=null`, ordenados
+        por nombre y limitados a 200. No expone `notes` ni deduce `unescoStatus` a partir del
+        POI. No admite filtros ni paginación en la implementación actual.
+      operationId: listHeritageAssets
+      x-falconsync-status: implemented
+      security: []
+      responses:
+        '200':
+          description: Lista de activos activos.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HeritageAssetSummary'
+    post:
+      tags: [Assets]
+      summary: Crear un activo patrimonial
+      description: |
+        Requiere `asset.manage`. El código es único y no se reutiliza tras archivar.
+        `unescoStatus` se registra con fuente; no se deduce del nombre ni del POI.
+      operationId: createHeritageAsset
+      x-falconsync-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeritageAssetCreate'
+      responses:
+        '201':
+          description: Activo creado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HeritageAsset'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /heritage-assets/{id}:
+    get:
+      tags: [Assets]
+      summary: Consultar un activo patrimonial
+      operationId: getHeritageAsset
+      x-falconsync-status: planned
+      parameters:
+        - $ref: '#/components/parameters/HeritageAssetId'
+      responses:
+        '200':
+          description: Detalle del activo.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HeritageAsset'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Assets]
+      summary: Actualizar un activo patrimonial
+      description: |
+        Requiere `asset.manage`. El `code` no se modifica. Cambiar el estado a `archived`
+        impide nuevas inspecciones. No altera hallazgos, inspecciones ni la proyección pública.
+      operationId: updateHeritageAsset
+      x-falconsync-status: planned
+      parameters:
+        - $ref: '#/components/parameters/HeritageAssetId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeritageAssetUpdate'
+      responses:
+        '200':
+          description: Activo actualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/HeritageAsset'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /reports:
+    post:
+      tags: [Reports]
+      summary: Crear un reporte autenticado
+      description: |
+        Crea un reporte en estado `received`. Requiere `report.create` y al menos uno de
+        `heritageAssetId` o `locationId`. La evidencia se sube después con `POST /evidence`
+        y `ownerType=Report`; el reporte puede existir sin evidencia. No admite
+        `Idempotency-Key`.
+      operationId: createReport
+      x-falconsync-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportCreate'
+      responses:
+        '201':
+          description: Reporte creado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Report'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /reports/mine:
+    get:
+      tags: [Reports]
+      summary: Listar los reportes propios
+      description: |
+        Requiere `report.read.own`. Devuelve solo reportes cuyo `reporterId` es el actor
+        autenticado, ordenados del más reciente al más antiguo. El filtro `state` no está
+        implementado en esta ruta.
+      operationId: listMyReports
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Lista paginada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /reports/queue:
+    get:
+      tags: [Reports]
+      summary: Listar reportes para triaje
+      description: |
+        Requiere `report.triage` o `report.read.all`. Devuelve reportes en `received`,
+        `triaged` o `accepted`, ordenados del más antiguo al más nuevo. Si `state` no es uno
+        de esos valores, se devuelven los tres estados.
+      operationId: listReportsForTriage
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/ReportQueueState'
+      responses:
+        '200':
+          description: Cola de triaje paginada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /reports/{id}:
+    get:
+      tags: [Reports]
+      summary: Consultar un reporte
+      description: |
+        El dueño usa `report.read.own`; un inspector con `report.read.all` puede consultarlo
+        para triaje. Un admin con `audit.read` recibe solo metadatos y eventos de auditoría,
+        sin descripción ni notas de triaje.
+      operationId: getReport
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/ReportId'
+      responses:
+        '200':
+          description: Reporte con evidencia referenciada por ID.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reports/{id}/triage:
+    patch:
+      tags: [Reports]
+      summary: Triar un reporte
+      description: |
+        Requiere `report.triage` y `If-Match`. Si el reporte está en `received`, lo pasa a
+        `triaged`. Con `decision=accept|reject|close` lo transita a `accepted`, `rejected` o
+        `closed`; rechazar o cerrar exige `reason`. El actor no puede ser el reportante.
+        Si se omite `decision` sobre un reporte ya triado, devuelve el estado actual.
+      operationId: triageReport
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/ReportId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportTriageRequest'
+      responses:
+        '200':
+          description: Reporte triado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Report'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /reports/{id}/convert:
+    post:
+      tags: [Reports]
+      summary: Convertir un reporte aceptado en inspección
+      description: |
+        Requiere `report.triage` y `If-Match`. Crea una inspección `planned` y enlaza el
+        reporte. El reporte debe estar en `accepted` y vinculado a un activo activo. La
+        inspección requiere un revisor activo distinto del inspector. No admite
+        `Idempotency-Key`; un segundo intento falla porque el reporte ya no está aceptado.
+      operationId: convertReport
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/ReportId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportConvertRequest'
+      responses:
+        '201':
+          description: Reporte convertido e inspección creada.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportConvertResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections:
+    get:
+      tags: [Inspections]
+      summary: Listar inspecciones autorizadas
+      description: |
+        Requiere `inspection.read.assigned` o `inspection.read.audit`. Un inspector ve sus
+        inspecciones asignadas y las que debe revisar; un admin con auditoría ve metadatos
+        de todas. Solo se filtra por `state`; no hay paginación ni otros filtros en la
+        implementación actual. Devuelve como máximo 100 inspecciones.
+      operationId: listInspections
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionState'
+      responses:
+        '200':
+          description: Lista de inspecciones.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InspectionSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Inspections]
+      summary: Crear una inspección planificada
+      description: |
+        Requiere `inspection.create`. El activo debe estar activo. `inspectorId` es opcional
+        y por defecto es el actor; `reviewerId` es obligatorio y debe ser otro inspector
+        activo. No admite `Idempotency-Key`.
+      operationId: createInspection
+      x-falconsync-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionCreate'
+      responses:
+        '201':
+          description: Inspección creada.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /inspectors:
+    get:
+      tags: [Inspections]
+      summary: Listar inspectores activos
+      description: |
+        Requiere `inspection.create` o `report.triage`. Devuelve hasta 100 inspectores
+        activos con `id` y `name`, ordenados por nombre.
+      operationId: listInspectors
+      x-falconsync-status: implemented
+      responses:
+        '200':
+          description: Inspectores disponibles para asignación.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InspectorOption'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /inspections/{id}:
+    get:
+      tags: [Inspections]
+      summary: Consultar una inspección
+      description: |
+        Requiere `inspection.read.assigned` como inspector o revisor asignado, o
+        `inspection.read.audit` para metadatos de auditoría. El detalle autorizado incluye
+        hallazgos, historial e intervenciones.
+      operationId: getInspection
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+      responses:
+        '200':
+          description: Detalle con hallazgos, historial e intervenciones.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /inspections/{id}/start:
+    post:
+      tags: [Inspections]
+      summary: Iniciar una inspección asignada
+      description: |
+        Requiere `inspection.execute` y `If-Match`. Solo el inspector asignado puede iniciar
+        una inspección en estado `planned`. No admite cuerpo.
+      operationId: startInspection
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Inspección en `in_progress`.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections/{id}/resume:
+    post:
+      tags: [Inspections]
+      summary: Reanudar una inspección devuelta
+      description: |
+        Requiere `inspection.execute` y `If-Match`. Solo el inspector asignado puede reanudar
+        una inspección en estado `returned`, que vuelve a `in_progress`. No admite cuerpo.
+      operationId: resumeInspection
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Inspección en `in_progress`.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections/{id}/findings:
+    post:
+      tags: [Inspections]
+      summary: Añadir un hallazgo propuesto
+      description: |
+        Requiere `finding.propose` y `If-Match`. Solo el inspector asignado puede añadir
+        hallazgos mientras la inspección está en `in_progress`. Devuelve la inspección
+        completa, no el hallazgo aislado.
+      operationId: addFinding
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindingCreate'
+      responses:
+        '201':
+          description: Hallazgo añadido a la inspección.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections/{id}/findings/{findingId}:
+    patch:
+      tags: [Inspections]
+      summary: Confirmar, descartar, reabrir o resolver un hallazgo
+      operationId: updateFinding
+      x-falconsync-status: planned
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+        - $ref: '#/components/parameters/FindingId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindingUpdateRequest'
+      responses:
+        '200':
+          description: Inspección con el hallazgo actualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections/{id}/submit:
+    post:
+      tags: [Inspections]
+      summary: Enviar una inspección a revisión
+      description: |
+        Requiere `inspection.execute` y `If-Match`. Exige al menos un hallazgo o
+        `noFindingsDeclared=true`.
+      operationId: submitInspection
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionSubmitRequest'
+      responses:
+        '200':
+          description: Inspección en `submitted`.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections/{id}/review:
+    post:
+      tags: [Inspections]
+      summary: Revisar una inspección
+      description: |
+        Requiere `inspection.review` y `If-Match`. El revisor asignado no puede ser el
+        inspector. `decision=return` exige `notes` y devuelve la inspección a `returned`.
+        `decision=approve` exige `result` y una severidad confirmada para cada hallazgo
+        propuesto en `findings` (mapa `findingId` → severidad).
+      operationId: reviewInspection
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionReviewRequest'
+      responses:
+        '200':
+          description: Inspección revisada o devuelta.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections/{id}/close:
+    post:
+      tags: [Inspections]
+      summary: Cerrar una inspección revisada
+      description: |
+        Requiere `inspection.close` y `If-Match`. Solo el revisor puede cerrar una inspección
+        en `reviewed`. Todo hallazgo con `requiresIntervention=true` debe tener una
+        intervención `verified`; si hay hallazgos sin intervención sin resolver, se exige
+        `justification`. Actualiza la proyección pública de conservación del POI vinculado.
+      operationId: closeInspection
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectionCloseRequest'
+      responses:
+        '200':
+          description: Inspección cerrada y proyección actualizada.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Inspection'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /inspections/{id}/interventions:
+    post:
+      tags: [Interventions]
+      summary: Proponer una intervención
+      description: |
+        Requiere `intervention.propose`. El actor debe ser el inspector o el revisor de la
+        inspección, y la inspección debe estar `reviewed` o `closed`. Los `findingIds` deben
+        pertenecer a la inspección. La evidencia se adjunta después con `POST /evidence` y
+        `ownerType=Intervention`. Devuelve la intervención creada.
+      operationId: createIntervention
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InspectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterventionCreate'
+      responses:
+        '201':
+          description: Intervención propuesta.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Intervention'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /interventions/{id}:
+    patch:
+      tags: [Interventions]
+      summary: Aprobar, rechazar, iniciar, completar o verificar una intervención
+      description: |
+        Requiere `If-Match` y alguna de `intervention.propose` o `intervention.verify` según
+        corresponda. Acciones: `approve`, `reject`, `start`, `complete`, `verify`. La
+        aprobación exige un actor distinto del proponente; el rechazo exige `reason`; solo
+        el inspector asignado puede iniciar; solo el ejecutor puede completar y no puede
+        verificarse a sí mismo. Completar y verificar exigen evidencia adjunta.
+      operationId: transitionIntervention
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/InterventionId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterventionTransitionRequest'
+      responses:
+        '200':
+          description: Intervención actualizada.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Intervention'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /evidence:
+    post:
+      tags: [Evidence]
+      summary: Subir evidencia privada
+      description: |
+        Carga multipart. Requiere `evidence.upload`. El archivo se valida por firma binaria,
+        se decodifica, se le extraen fecha/GPS, se elimina EXIF y se calcula SHA-256. El
+        `purpose` es obligatorio. La respuesta es `202`; el estado de análisis es
+        `available` cuando la configuración local permite evidencia sin escanear, o
+        `pending_scan` cuando se habilita el análisis. En producción, sin motor antimalware,
+        responde `503 EVIDENCE_SCAN_UNAVAILABLE`. `Idempotency-Key` es opcional: un reintento
+        con la misma clave, archivo y propietario devuelve la evidencia existente.
+      operationId: uploadEvidence
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EvidenceUpload'
+      responses:
+        '202':
+          description: Evidencia aceptada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Evidence'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    get:
+      tags: [Evidence]
+      summary: Listar evidencia autorizada de un propietario
+      description: |
+        Requiere `evidence.read.assigned` y autorización por recurso sobre `ownerType` y
+        `ownerId`. Si se indica `findingId`, solo devuelve la evidencia de ese hallazgo.
+        `storageKey` e `idempotencyKey` nunca se exponen.
+      operationId: listEvidence
+      x-falconsync-status: implemented
+      parameters:
+        - name: ownerType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [Report, Inspection, Intervention]
+        - name: ownerId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: findingId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Evidencia autorizada, paginada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceListResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /evidence/{id}:
+    get:
+      tags: [Evidence]
+      summary: Descargar evidencia autorizada
+      description: |
+        Autoriza por `ownerType` + `ownerId`, verifica el hash y registra el acceso antes de
+        transmitir. Nunca se sirve desde `/api/uploads`. El binario no se cachea. `purpose`
+        es obligatorio y se registra en `EvidenceAccessLog`. El rol de auditoría solo puede
+        consultar metadatos y accesos, no descargar.
+      operationId: downloadEvidence
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/EvidenceId'
+        - name: purpose
+          in: query
+          required: true
+          description: Motivo del acceso; se registra en `EvidenceAccessLog`.
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 300
+      responses:
+        '200':
+          description: Binario privado.
+          headers:
+            Cache-Control:
+              description: Siempre `private, no-store`.
+              schema:
+                type: string
+                example: private, no-store
+            Content-Disposition:
+              description: Nombre seguro para descarga.
+              schema:
+                type: string
+            X-Content-Type-Options:
+              description: Siempre `nosniff`.
+              schema:
+                type: string
+                example: nosniff
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Listar notificaciones propias
+      description: Devuelve notificaciones posteriores al cursor, en orden estable.
+      operationId: listNotifications
+      x-falconsync-status: planned
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: unreadOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Notificaciones paginadas por cursor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationList'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /notifications/{id}/read:
+    post:
+      tags: [Notifications]
+      summary: Marcar una notificación como leída
+      operationId: markNotificationRead
+      x-falconsync-status: planned
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '204':
+          description: Notificación marcada como leída.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /realtime/ticket:
+    post:
+      tags: [Realtime]
+      summary: Emitir un ticket de tiempo real
+      description: |
+        Ticket JWT de 60 s, un solo uso, con `scope=realtime`, `jti`, `sub` y `tokenVersion`.
+        No se acepta en query string.
+      operationId: createRealtimeTicket
+      x-falconsync-status: planned
+      responses:
+        '201':
+          description: Ticket emitido.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RealtimeTicket'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /assistant/tourist/query:
+    post:
+      tags: [Assistant]
+      summary: Consultar a Chivito, guía turístico
+      description: |
+        Público con rate limit. Usa fuentes curadas A–D según su política; las fuentes E
+        no sustentan afirmaciones. Responde con citas validadas o `abstained=true`. No ejecuta
+        acciones ni persiste la consulta.
+      operationId: queryTouristAssistant
+      x-falconsync-status: implemented
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssistantQuery'
+      responses:
+        '200':
+          description: Respuesta con citas o abstención.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AssistantAnswer'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /assistant/status:
+    get:
+      tags: [Assistant]
+      summary: Consultar disponibilidad de los asistentes
+      description: Estado de habilitación y disponibilidad por ámbito, sin datos de fuentes.
+      operationId: getAssistantStatus
+      x-falconsync-status: implemented
+      security: []
+      responses:
+        '200':
+          description: Estado actual del servicio RAG.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AssistantStatus'
+  /assistant/inspection/query:
+    post:
+      tags: [Assistant]
+      summary: Consultar el asistente técnico
+      description: |
+        Solo inspector o historiador con `assistant.inspection`. Usa fuentes técnicas A/B/C;
+        no consulta datos de activos o inspecciones ni usa redes sociales. Persiste la
+        conversación por 90 días. Permanece deshabilitado hasta que exista corpus y evaluación
+        técnica aprobados.
+      operationId: queryInspectionAssistant
+      x-falconsync-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssistantQuery'
+      responses:
+        '200':
+          description: Respuesta técnica con citas o abstención.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AssistantAnswer'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /channels/telegram:
+    get:
+      tags: [Channels]
+      summary: Consultar el vínculo de Telegram
+      description: Devuelve si la cuenta autenticada tiene un vínculo activo, sin exponer el ID de Telegram.
+      operationId: getTelegramLink
+      x-falconsync-status: implemented
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estado del vínculo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramLinkStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags: [Channels]
+      summary: Revocar el vínculo de Telegram
+      description: Elimina el vínculo activo. La auditoría conserva el evento.
+      operationId: unlinkTelegram
+      x-falconsync-status: implemented
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Vínculo revocado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramLinkStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /channels/telegram/link-code:
+    post:
+      tags: [Channels]
+      summary: Generar un código de vinculación de Telegram
+      description: |
+        Genera un código de un solo uso, válido 10 minutos por defecto. Solo se guarda su
+        hash. El código se muestra una vez y se envía al bot con `/vincular CODIGO`.
+      operationId: createTelegramLinkCode
+      x-falconsync-status: implemented
+      security:
+        - bearerAuth: []
+      responses:
+        '201':
+          description: Código generado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelegramLinkCodeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /panoramas:
+    get:
+      tags: [Panoramas]
+      summary: Listar panoramas públicos
+      description: |
+        Solo devuelve panoramas `published` con `visibility=public` y un POI destino
+        publicado. Los panoramas de inspección responden como inexistentes. El listado se
+        ordena por fecha de publicación descendente.
+      operationId: listPanoramas
+      x-falconsync-status: implemented
+      security: []
+      parameters:
+        - name: locationId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: assetId
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Panoramas publicados, paginados.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PanoramaSummary'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /panoramas/{id}:
+    get:
+      tags: [Panoramas]
+      summary: Consultar una escena 360°
+      description: |
+        Devuelve metadatos, hotspots y fallback de una visita `published` y `public`. Cualquier
+        otro estado o visibilidad responde `404`.
+      operationId: getPanorama
+      x-falconsync-status: implemented
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Escena, hotspots, créditos y fallback.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Panorama'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /panoramas/{id}/image:
+    get:
+      tags: [Panoramas]
+      summary: Descargar el derivado público de la panorámica
+      description: |
+        Transmite el derivado equirectangular `image/webp` verificado por checksum. Solo
+        existe para panoramas `published` y `public`; el original nunca se sirve. Responde
+        `503 PANORAMA_INTEGRITY_ERROR` si el archivo no coincide con su checksum.
+      operationId: getPanoramaImage
+      x-falconsync-status: implemented
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Derivado equirectangular.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /panoramas/{id}/thumbnail:
+    get:
+      tags: [Panoramas]
+      summary: Descargar la miniatura pública
+      description: Miniatura `image/webp` de 640×320 con la misma verificación de integridad.
+      operationId: getPanoramaThumbnail
+      x-falconsync-status: implemented
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Miniatura de la visita.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/panoramas:
+    get:
+      tags: [Admin]
+      summary: Listar panoramas para gestión o curaduría
+      description: |
+        Requiere `panorama.manage` o `panorama.publish`. Administración ve todos los
+        panoramas; el historiador solo ve `visibility=public`. Los filtros se combinan.
+      operationId: listAdminPanoramas
+      x-falconsync-status: implemented
+      parameters:
+        - name: q
+          in: query
+          required: false
+          description: Búsqueda literal por título, sin distinguir mayúsculas.
+          schema:
+            type: string
+            maxLength: 120
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [draft, approved, published, archived]
+        - name: visibility
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [public, inspection]
+        - name: locationId
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Panoramas visibles para el actor, paginados.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminPanoramaSummary'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    post:
+      tags: [Admin]
+      summary: Crear un panorama
+      description: |
+        Carga multipart con `panorama.manage`. Valida la firma, el tamaño y la relación 2:1,
+        elimina EXIF, calcula checksums y genera derivado y miniatura con `sharp`. El panorama
+        nace en `draft`; la respuesta incluye `ETag` con la versión. Los campos booleanos se
+        envían como `true`/`false` y `hotspots` como JSON serializado.
+      operationId: createPanorama
+      x-falconsync-status: implemented
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PanoramaCreate'
+      responses:
+        '201':
+          description: Panorama creado en borrador.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /admin/panoramas/{id}:
+    get:
+      tags: [Admin]
+      summary: Consultar un panorama para gestión o curaduría
+      description: |
+        Requiere `panorama.manage` o `panorama.publish`. El historiador solo puede consultar
+        panoramas públicos; un panorama de inspección responde `404`. Devuelve `ETag` con la
+        versión actual.
+      operationId: getAdminPanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Detalle completo del panorama.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Admin]
+      summary: Editar la configuración técnica o editorial
+      description: |
+        Requiere `panorama.manage` y `If-Match`. No reemplaza la imagen original ni los
+        derivados; para cambiar la imagen se crea otro panorama. Un panorama archivado no se
+        edita. Incrementa la versión y devuelve el nuevo `ETag`.
+      operationId: updatePanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PanoramaUpdate'
+      responses:
+        '200':
+          description: Panorama actualizado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /admin/panoramas/{id}/image:
+    get:
+      tags: [Admin]
+      summary: Descargar el derivado privado de gestión
+      description: |
+        Requiere `panorama.manage` o `panorama.publish` y responde `private, no-store`.
+        El historiador solo accede a panoramas públicos. El binario se entrega autenticado;
+        la SPA lo convierte en `blob:` para mostrarlo.
+      operationId: getAdminPanoramaImage
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Derivado equirectangular autenticado.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/panoramas/{id}/thumbnail:
+    get:
+      tags: [Admin]
+      summary: Descargar la miniatura privada de gestión
+      operationId: getAdminPanoramaThumbnail
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+      responses:
+        '200':
+          description: Miniatura autenticada.
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/panoramas/{id}/approve:
+    post:
+      tags: [Admin]
+      summary: Aprobar un panorama en borrador
+      description: |
+        Requiere `If-Match`. En un panorama público exige `panorama.publish`; en uno de
+        inspección, `panorama.manage`. Solo se aprueba desde `draft` y con derechos
+        documentados; en caso contrario responde `409 RIGHTS_INCOMPLETE`.
+      operationId: approvePanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Panorama aprobado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /admin/panoramas/{id}/publish:
+    post:
+      tags: [Admin]
+      summary: Publicar un panorama aprobado
+      description: |
+        Requiere `If-Match`. En un panorama público exige `panorama.publish`; en uno de
+        inspección, `panorama.manage`. Solo se publica desde `approved`, con derechos,
+        fallback completo y destino publicado; si falta algo responde
+        `409 PANORAMA_NOT_READY`.
+      operationId: publishPanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Panorama publicado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /admin/panoramas/{id}/archive:
+    post:
+      tags: [Admin]
+      summary: Archivar un panorama
+      description: |
+        Requiere `If-Match`. En un panorama público exige `panorama.publish`; en uno de
+        inspección, `panorama.manage`. Un panorama archivado deja de servirse y no se edita.
+      operationId: archivePanorama
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/PanoramaId'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Panorama archivado.
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AdminPanorama'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+  /sources:
+    get:
+      tags: [Sources]
+      summary: Consultar el registro de fuentes RAG
+      description: |
+        Solo lectura para `source.read` (historiador, inspector y admin). Devuelve metadatos;
+        nunca `storageKey` ni texto completo de fuentes restringidas.
+      operationId: listSources
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [draft, active, superseded, retracted]
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [A, B, C, D, E]
+        - name: usagePolicy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [final, pointer, context]
+        - name: accessLevel
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [public, internal, restricted]
+      responses:
+        '200':
+          description: Fuentes registradas en solo lectura.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SourceSummary'
+                  meta:
+                    $ref: '#/components/schemas/PageMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Listar cuentas
+      description: |
+        Solo para `admin`. Filtra por texto (`q` en nombre, correo o usuario), rol y estado.
+        Devuelve `totalPages` en `meta`, no `hasMore`.
+      operationId: listAdminUsers
+      x-falconsync-status: implemented
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [user, moderator, historian, inspector, admin]
+        - name: active
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ['true', 'false']
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Cuentas paginadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserListResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /admin/evidence/{id}/access-log:
+    get:
+      tags: [Admin]
+      summary: Consultar el registro de acceso a una evidencia
+      description: |
+        Solo para `admin` con `audit.read`. Devuelve metadatos de acceso, no el binario ni
+        una URL de descarga. El registro es append-only.
+      operationId: listEvidenceAccessLog
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/EvidenceId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Accesos registrados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceAccessLogListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /admin/users/{id}/role:
+    patch:
+      tags: [Admin]
+      summary: Cambiar el rol de una cuenta
+      description: |
+        Solo para `admin`. Exige `currentPassword`, revoca sesiones, incrementa
+        `tokenVersion` y registra auditoría obligatoria. Protege al último admin activo y la
+        propia cuenta. Los roles asignables son `user`, `historian`, `inspector` y `admin`.
+      operationId: updateUserRole
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoleUpdateRequest'
+      responses:
+        '200':
+          description: Rol actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMutationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/users/{id}/status:
+    patch:
+      tags: [Admin]
+      summary: Activar o desactivar una cuenta
+      description: |
+        Solo para `admin`. Exige `currentPassword`, revoca sesiones y audita. Protege al
+        último admin activo y la propia cuenta.
+      operationId: updateUserStatus
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserStatusUpdateRequest'
+      responses:
+        '200':
+          description: Estado actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMutationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /admin/users/{id}/revoke-sessions:
+    post:
+      tags: [Admin]
+      summary: Revocar las sesiones de una cuenta
+      description: Solo para `admin`. Exige `currentPassword` y auditoría obligatoria.
+      operationId: revokeUserSessions
+      x-falconsync-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeSessionsRequest'
+      responses:
+        '200':
+          description: Sesiones revocadas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeSessionsResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: |
+        Clave única por actor para reintentos seguros de `POST /evidence`. Opcional; si se
+        reutiliza con otro archivo u otro propietario, responde `409 IDEMPOTENCY_CONFLICT`.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 120
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: ETag de la versión actual, por ejemplo `"3"`.
+      schema:
+        type: string
+        pattern: '^"[0-9]+"$'
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Último cursor confirmado (`v1:<epochMillis>:<eventId>`).
+      schema:
+        type: string
+        maxLength: 120
+    ReportQueueState:
+      name: state
+      in: query
+      required: false
+      description: Si se omite o no es válido, se devuelven los tres estados de la cola.
+      schema:
+        type: string
+        enum: [received, triaged, accepted]
+    InspectionState:
+      name: state
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [planned, in_progress, submitted, returned, reviewed, closed, cancelled]
+    HeritageAssetId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    ReportId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    InspectionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    FindingId:
+      name: findingId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    InterventionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    EvidenceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    NotificationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    PanoramaId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  headers:
+    ETag:
+      description: >-
+        Identificador de la representación. En las transiciones críticas, `If-Match`
+        usa la versión numérica del recurso. En `GET /inspections/{id}` se calcula
+        sobre el cuerpo completo porque incluye intervenciones y su evidencia, que
+        cambian sin incrementar la versión de la inspección.
+      schema:
+        type: string
+        example: '"3"'
+  responses:
+    ValidationError:
+      description: Datos inválidos o faltantes.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validation:
+              value:
+                error:
+                  code: VALIDATION_ERROR
+                  message: Los datos enviados no son válidos
+                  details:
+                    - La descripción es obligatoria
+    Unauthorized:
+      description: Sesión ausente, inválida o revocada.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            authentication:
+              value:
+                error:
+                  code: AUTHENTICATION_REQUIRED
+                  message: Debes iniciar sesión para continuar
+            revoked:
+              value:
+                error:
+                  code: SESSION_REVOKED
+                  message: La sesión fue revocada. Inicia sesión de nuevo
+    Forbidden:
+      description: Capacidad insuficiente o recurso no autorizado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden:
+              value:
+                error:
+                  code: FORBIDDEN
+                  message: No tienes permisos para realizar esta acción
+            selfReview:
+              value:
+                error:
+                  code: SELF_REVIEW_FORBIDDEN
+                  message: No puedes revisar tu propia inspección
+    NotFound:
+      description: Recurso inexistente o no visible para el actor.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            notFound:
+              value:
+                error:
+                  code: NOT_FOUND
+                  message: Recurso no encontrado
+    Conflict:
+      description: Conflicto de estado, versión, idempotencia o regla de negocio.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalidTransition:
+              value:
+                error:
+                  code: INVALID_TRANSITION
+                  message: La transición solicitada no es válida
+            versionConflict:
+              value:
+                error:
+                  code: VERSION_CONFLICT
+                  message: El recurso cambió; recarga e intenta de nuevo
+            idempotencyConflict:
+              value:
+                error:
+                  code: IDEMPOTENCY_CONFLICT
+                  message: La clave de idempotencia se usó con otra evidencia
+            reportNotAccepted:
+              value:
+                error:
+                  code: REPORT_NOT_ACCEPTED
+                  message: Solo se convierte un reporte aceptado
+            closure:
+              value:
+                error:
+                  code: CLOSURE_REQUIRES_VERIFIED_INTERVENTION
+                  message: Hay hallazgos que requieren una intervención verificada
+    PreconditionRequired:
+      description: Falta `If-Match` en una transición crítica.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            precondition:
+              value:
+                error:
+                  code: VERSION_REQUIRED
+                  message: Debes enviar la versión actual en la cabecera If-Match
+    PayloadTooLarge:
+      description: El archivo supera el límite permitido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            tooLarge:
+              value:
+                error:
+                  code: EVIDENCE_TOO_LARGE
+                  message: La evidencia supera el tamaño máximo permitido
+    UnsupportedMediaType:
+      description: Firma o MIME no permitido.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            media:
+              value:
+                error:
+                  code: UNSUPPORTED_MEDIA_TYPE
+                  message: El archivo debe ser JPEG, PNG, WebP o PDF válido
+    TooManyRequests:
+      description: Límite de frecuencia o cuota.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            rate:
+              value:
+                error:
+                  code: RATE_LIMITED
+                  message: Demasiadas solicitudes; espera antes de reintentar
+    ServiceUnavailable:
+      description: Dependencia no disponible o control de seguridad no desplegado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            scan:
+              value:
+                error:
+                  code: EVIDENCE_SCAN_UNAVAILABLE
+                  message: La subida de evidencia está desactivada hasta habilitar el análisis antimalware
+            transactions:
+              value:
+                error:
+                  code: TRANSACTIONS_REQUIRED
+                  message: La conservación requiere MongoDB configurado como replica set
+            audit:
+              value:
+                error:
+                  code: AUDIT_REQUIRED
+                  message: No se pudo registrar la auditoría; el cambio fue revertido
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+            details:
+              oneOf:
+                - type: array
+                  items:
+                    type: string
+                - type: object
+                  additionalProperties: true
+    PageMeta:
+      type: object
+      required: [page, limit, total, hasMore]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        hasMore:
+          type: boolean
+    AdminUserPageMeta:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+    AdminUser:
+      type: object
+      required: [id, name, surname, username, email, role, isActive, createdAt, lastLoginAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        username:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [user, moderator, historian, inspector, admin]
+        isActive:
+          type: boolean
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    AdminUserListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUser'
+        meta:
+          $ref: '#/components/schemas/AdminUserPageMeta'
+    InspectorOption:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    GeoPoint:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Point]
+        coordinates:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: number
+          description: '[longitud, latitud]'
+    Polygon:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Polygon]
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: number
+    Geometry:
+      oneOf:
+        - $ref: '#/components/schemas/GeoPoint'
+        - $ref: '#/components/schemas/Polygon'
+    HeritageAssetSummary:
+      type: object
+      required: [id, code, name, type, unescoStatus, status]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [building, monument, urban_space, archaeological_site, museum, natural_site, other]
+        unescoStatus:
+          type: string
+          enum: [inscribed, buffer_zone, not_listed, unknown]
+        protectionLevel:
+          type: string
+          enum: [national, state, municipal, none, unknown]
+        status:
+          type: string
+          enum: [draft, active, archived]
+        locationId:
+          type: string
+          nullable: true
+    HeritageAsset:
+      allOf:
+        - $ref: '#/components/schemas/HeritageAssetSummary'
+        - type: object
+          properties:
+            address:
+              type: string
+            geometry:
+              $ref: '#/components/schemas/Geometry'
+            description:
+              type: string
+            sourceRefs:
+              type: array
+              items:
+                type: string
+            createdBy:
+              type: string
+            updatedBy:
+              type: string
+              nullable: true
+            archivedAt:
+              type: string
+              format: date-time
+              nullable: true
+            deletedAt:
+              type: string
+              format: date-time
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    HeritageAssetCreate:
+      type: object
+      required: [code, name, type]
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Z0-9][A-Z0-9-]{2,39}$'
+        name:
+          type: string
+          minLength: 2
+          maxLength: 160
+        type:
+          type: string
+          enum: [building, monument, urban_space, archaeological_site, museum, natural_site, other]
+        locationId:
+          type: string
+          nullable: true
+        unescoStatus:
+          type: string
+          enum: [inscribed, buffer_zone, not_listed, unknown]
+          default: unknown
+        protectionLevel:
+          type: string
+          enum: [national, state, municipal, none, unknown]
+          default: unknown
+        address:
+          type: string
+          maxLength: 240
+        geometry:
+          $ref: '#/components/schemas/Geometry'
+        description:
+          type: string
+          maxLength: 5000
+        sourceRefs:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 500
+        notes:
+          type: string
+          maxLength: 4000
+        status:
+          type: string
+          enum: [draft, active, archived]
+          default: draft
+    HeritageAssetUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 160
+        type:
+          type: string
+          enum: [building, monument, urban_space, archaeological_site, museum, natural_site, other]
+        locationId:
+          type: string
+          nullable: true
+        unescoStatus:
+          type: string
+          enum: [inscribed, buffer_zone, not_listed, unknown]
+        protectionLevel:
+          type: string
+          enum: [national, state, municipal, none, unknown]
+        address:
+          type: string
+          maxLength: 240
+        geometry:
+          $ref: '#/components/schemas/Geometry'
+        description:
+          type: string
+          maxLength: 5000
+        sourceRefs:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 500
+        notes:
+          type: string
+          maxLength: 4000
+        status:
+          type: string
+          enum: [draft, active, archived]
+    ReportSummary:
+      type: object
+      required: [id, category, state, capturedAt, version]
+      properties:
+        id:
+          type: string
+        category:
+          type: string
+          enum: [structural, moisture, cracks, material_loss, vandalism, vegetation, fire, collapse_risk, other]
+        description:
+          type: string
+          description: Puede omitirse en la vista de auditoría.
+        state:
+          type: string
+          enum: [received, triaged, accepted, rejected, converted, closed]
+        capturedAt:
+          type: string
+          format: date-time
+        heritageAssetId:
+          type: string
+          nullable: true
+        locationId:
+          type: string
+          nullable: true
+        inspectionId:
+          type: string
+          nullable: true
+        sourceChannel:
+          type: string
+          enum: [web, telegram]
+          default: web
+          description: Canal por el que se creó el reporte. `sourceActionKey` nunca se expone.
+        version:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Report:
+      allOf:
+        - $ref: '#/components/schemas/ReportSummary'
+        - type: object
+          properties:
+            reporterId:
+              type: string
+              description: Puede omitirse en la vista de auditoría.
+            gps:
+              type: object
+              nullable: true
+              allOf:
+                - $ref: '#/components/schemas/GeoPoint'
+            accuracyMeters:
+              type: number
+              nullable: true
+            triage:
+              type: object
+              nullable: true
+              properties:
+                decision:
+                  type: string
+                  enum: [accept, reject, close]
+                  nullable: true
+                triagedBy:
+                  type: string
+                  nullable: true
+                triagedAt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                notes:
+                  type: string
+                  description: No se expone en las vistas públicas.
+            rejectionReason:
+              type: string
+              nullable: true
+            evidenceIds:
+              type: array
+              items:
+                type: string
+    ReportCreate:
+      type: object
+      required: [category, description]
+      anyOf:
+        - required: [heritageAssetId]
+        - required: [locationId]
+      properties:
+        heritageAssetId:
+          type: string
+        locationId:
+          type: string
+        category:
+          type: string
+          enum: [structural, moisture, cracks, material_loss, vandalism, vegetation, fire, collapse_risk, other]
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        capturedAt:
+          type: string
+          format: date-time
+          description: Si se omite, se usa la fecha actual del servidor.
+        gps:
+          $ref: '#/components/schemas/GeoPoint'
+        accuracyMeters:
+          type: number
+          minimum: 0
+          maximum: 10000
+    ReportTriageRequest:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: [accept, reject, close]
+          description: Si se omite, el reporte solo pasa de `received` a `triaged`.
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Obligatorio para `reject` y `close`.
+        notes:
+          type: string
+          maxLength: 500
+    ReportConvertRequest:
+      type: object
+      required: [scope, reviewerId]
+      properties:
+        type:
+          type: string
+          enum: [routine, follow_up, emergency, post_intervention]
+          default: follow_up
+        scheduledAt:
+          type: string
+          format: date-time
+        scope:
+          type: string
+          minLength: 10
+          maxLength: 4000
+        inspectorId:
+          type: string
+          description: Si se omite, se asigna al inspector que convierte.
+        reviewerId:
+          type: string
+          description: Inspector activo distinto del inspector asignado.
+        assetId:
+          type: string
+          description: Solo si el reporte aún no está vinculado a un activo.
+    ReportConvertResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [report, inspection]
+          properties:
+            report:
+              $ref: '#/components/schemas/Report'
+            inspection:
+              $ref: '#/components/schemas/InspectionSummary'
+    ReportListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportSummary'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    InspectionSummary:
+      type: object
+      required: [id, assetId, inspectorId, type, state, version]
+      properties:
+        id:
+          type: string
+        assetId:
+          type: string
+        reportId:
+          type: string
+          nullable: true
+        inspectorId:
+          type: string
+        reviewerId:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [routine, follow_up, emergency, post_intervention]
+        state:
+          type: string
+          enum: [planned, in_progress, submitted, returned, reviewed, closed, cancelled]
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        submittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+        result:
+          type: string
+          enum: [good, fair, poor]
+          nullable: true
+        version:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    InspectionHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        eventId:
+          type: string
+        eventType:
+          type: string
+        actorId:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        fromState:
+          type: string
+          nullable: true
+        toState:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        payload:
+          type: object
+          additionalProperties: true
+        correlationId:
+          type: string
+          nullable: true
+    Inspection:
+      allOf:
+        - $ref: '#/components/schemas/InspectionSummary'
+        - type: object
+          properties:
+            scope:
+              type: string
+            startedAt:
+              type: string
+              format: date-time
+              nullable: true
+            returnedAt:
+              type: string
+              format: date-time
+              nullable: true
+            reviewNotes:
+              type: string
+              nullable: true
+            noFindingsDeclared:
+              type: boolean
+            findings:
+              type: array
+              items:
+                $ref: '#/components/schemas/Finding'
+            evidenceIds:
+              type: array
+              items:
+                type: string
+            history:
+              type: array
+              items:
+                $ref: '#/components/schemas/InspectionHistoryEntry'
+            interventions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Intervention'
+            closureJustification:
+              type: string
+              nullable: true
+            cancellationReason:
+              type: string
+              nullable: true
+            createdBy:
+              type: string
+            updatedBy:
+              type: string
+              nullable: true
+    InspectionCreate:
+      type: object
+      required: [assetId, type, scope, reviewerId]
+      properties:
+        assetId:
+          type: string
+        inspectorId:
+          type: string
+          description: Si se omite, se asigna al actor que crea la inspección.
+        reviewerId:
+          type: string
+          description: Inspector activo distinto del inspector asignado.
+        type:
+          type: string
+          enum: [routine, follow_up, emergency, post_intervention]
+        scope:
+          type: string
+          minLength: 10
+          maxLength: 4000
+        scheduledAt:
+          type: string
+          format: date-time
+    InspectionSubmitRequest:
+      type: object
+      properties:
+        noFindingsDeclared:
+          type: boolean
+          description: Obligatorio en `true` si la inspección no tiene hallazgos.
+    InspectionReviewRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approve, return]
+        notes:
+          type: string
+          minLength: 3
+          maxLength: 2000
+          description: Obligatorio para `decision=return`; se guarda como `reviewNotes`.
+        result:
+          type: string
+          enum: [good, fair, poor]
+          description: Obligatorio para `decision=approve`.
+        findings:
+          type: object
+          description: Mapa `findingId` → severidad confirmada; obligatorio para cada hallazgo propuesto al aprobar.
+          additionalProperties:
+            type: string
+            enum: [low, medium, high, critical]
+    InspectionCloseRequest:
+      type: object
+      properties:
+        justification:
+          type: string
+          maxLength: 2000
+          description: Obligatorio si hay hallazgos sin intervención sin resolver.
+    Finding:
+      type: object
+      required: [findingId, category, description, severityProposed, requiresIntervention, state]
+      properties:
+        findingId:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum: [structural, moisture, cracks, material_loss, vandalism, vegetation, fire, collapse_risk, other]
+        description:
+          type: string
+        severityProposed:
+          type: string
+          enum: [low, medium, high, critical]
+        severityConfirmed:
+          type: string
+          enum: [low, medium, high, critical]
+          nullable: true
+        requiresIntervention:
+          type: boolean
+        state:
+          type: string
+          enum: [proposed, confirmed, discarded, reopened, resolved]
+        evidenceIds:
+          type: array
+          items:
+            type: string
+        proposedBy:
+          type: string
+        confirmedBy:
+          type: string
+          nullable: true
+        confirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+    FindingCreate:
+      type: object
+      required: [category, description, severityProposed, requiresIntervention]
+      properties:
+        category:
+          type: string
+          enum: [structural, moisture, cracks, material_loss, vandalism, vegetation, fire, collapse_risk, other]
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        severityProposed:
+          type: string
+          enum: [low, medium, high, critical]
+        requiresIntervention:
+          type: boolean
+    FindingUpdateRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [confirm, discard, reopen, resolve]
+        severityConfirmed:
+          type: string
+          enum: [low, medium, high, critical]
+        reason:
+          type: string
+          maxLength: 500
+    Intervention:
+      type: object
+      required: [id, inspectionId, findingIds, type, state, version]
+      properties:
+        id:
+          type: string
+        inspectionId:
+          type: string
+        findingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        type:
+          type: string
+          enum: [repair, stabilization, cleaning, restoration, monitoring, other]
+        description:
+          type: string
+        state:
+          type: string
+          enum: [proposed, approved, in_progress, completed, verified, rejected]
+        proposedBy:
+          type: string
+        approvedBy:
+          type: string
+          nullable: true
+        executorId:
+          type: string
+          nullable: true
+        verifierId:
+          type: string
+          nullable: true
+        rejectionReason:
+          type: string
+          nullable: true
+        approvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        evidenceIds:
+          type: array
+          items:
+            type: string
+        version:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    InterventionCreate:
+      type: object
+      required: [findingIds, type, description]
+      properties:
+        findingIds:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: string
+            format: uuid
+        type:
+          type: string
+          enum: [repair, stabilization, cleaning, restoration, monitoring, other]
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+    InterventionTransitionRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [approve, reject, start, complete, verify]
+        reason:
+          type: string
+          maxLength: 500
+          description: Obligatorio para `reject`.
+    Evidence:
+      type: object
+      required: [id, ownerType, ownerId, mimeType, bytes, sha256, uploadedBy, purpose, scanStatus]
+      properties:
+        id:
+          type: string
+        ownerType:
+          type: string
+          enum: [Report, Inspection, Intervention]
+        ownerId:
+          type: string
+        findingId:
+          type: string
+          format: uuid
+          nullable: true
+        mimeType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp, application/pdf]
+        bytes:
+          type: integer
+          minimum: 1
+        width:
+          type: integer
+          nullable: true
+        height:
+          type: integer
+          nullable: true
+        sha256:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        capturedAt:
+          type: string
+          format: date-time
+          nullable: true
+        gps:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/GeoPoint'
+        accuracyMeters:
+          type: number
+          nullable: true
+        uploadedBy:
+          type: string
+        purpose:
+          type: string
+        scanStatus:
+          type: string
+          enum: [uploaded, pending_scan, available, quarantined, superseded, deleted]
+        exifStripped:
+          type: boolean
+        retentionUntil:
+          type: string
+          format: date-time
+          nullable: true
+        legalHold:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    EvidenceListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    EvidenceUpload:
+      type: object
+      required: [file, ownerType, ownerId, purpose]
+      properties:
+        file:
+          type: string
+          format: binary
+        ownerType:
+          type: string
+          enum: [Report, Inspection, Intervention]
+        ownerId:
+          type: string
+        findingId:
+          type: string
+          format: uuid
+          description: Solo válido cuando `ownerType=Inspection`.
+        capturedAt:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        accuracyMeters:
+          type: number
+          minimum: 0
+          maximum: 10000
+        purpose:
+          type: string
+          minLength: 3
+          maxLength: 300
+    EvidenceAccessLog:
+      type: object
+      required: [id, evidenceId, actor, action, purpose, createdAt]
+      properties:
+        id:
+          type: string
+        evidenceId:
+          type: string
+        actor:
+          type: object
+          nullable: true
+          required: [id, name, email]
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+        action:
+          type: string
+          enum: [view, download, metadata, delete, legal_hold]
+        ip:
+          type: string
+          nullable: true
+        userAgent:
+          type: string
+          nullable: true
+        purpose:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    EvidenceAccessLogListResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceAccessLog'
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+    Notification:
+      type: object
+      required: [id, eventId, type, payload, cursor, createdAt]
+      properties:
+        id:
+          type: string
+        eventId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - report.created
+            - report.triaged
+            - report.converted
+            - inspection.assigned
+            - inspection.submitted
+            - inspection.returned
+            - inspection.reviewed
+            - inspection.closed
+            - intervention.verified
+            - evidence.available
+            - system
+        payload:
+          type: object
+          additionalProperties: true
+        cursor:
+          type: string
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    NotificationList:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        meta:
+          type: object
+          required: [hasMore]
+          properties:
+            nextCursor:
+              type: string
+              nullable: true
+            hasMore:
+              type: boolean
+    RealtimeTicket:
+      type: object
+      required: [ticket, expiresIn, socketPath]
+      properties:
+        ticket:
+          type: string
+        expiresIn:
+          type: integer
+          example: 60
+        socketPath:
+          type: string
+          example: /socket.io
+    AssistantQuery:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 3
+          maxLength: 2000
+        contextLocationId:
+          type: string
+          description: >
+            Lugar de la respuesta anterior. Es solo una pista de seguimiento: nunca filtra la
+            búsqueda. Solo se envía en el modo turista.
+        assetId:
+          type: string
+          deprecated: true
+          description: No admitido en v1; la consulta de datos de activos está desactivada.
+        inspectionId:
+          type: string
+          deprecated: true
+          description: No admitido en v1; el asistente no consulta datos de inspecciones.
+        locale:
+          type: string
+          enum: [es]
+          example: es
+        conversationId:
+          type: string
+          nullable: true
+          description: Solo asistente técnico autenticado; el turismo anónimo no persiste.
+    AssistantAnswer:
+      type: object
+      required:
+        - answerType
+        - answer
+        - abstained
+        - abstentionReason
+        - citations
+        - sources
+        - suggestions
+        - options
+        - poi
+        - corpusVersion
+      properties:
+        answerType:
+          type: string
+          enum: [extractive, structured, contextual, mixed, clarification, greeting, abstention]
+        answer:
+          type: string
+          description: Respuesta extractiva de 3–5 frases, saludo de bienvenida, mensaje de aclaración o mensaje único de abstención.
+        abstained:
+          type: boolean
+        abstentionReason:
+          type: string
+          nullable: true
+          enum:
+            - NO_EVIDENCE
+            - RIGHTS_RESTRICTED
+            - OUT_OF_SCOPE
+            - NO_CURRENT_STATUS
+            - AMBIGUOUS_POI
+        suggestions:
+          type: array
+          description: Tres preguntas que el asistente sí puede responder; vacío cuando la respuesta no es una abstención.
+          maxItems: 3
+          items:
+            type: string
+        options:
+          type: array
+          description: 'Lugares posibles cuando la pregunta es ambigua (`answerType: clarification`).'
+          items:
+            type: object
+            required: [id, title]
+            properties:
+              id:
+                type: string
+              title:
+                type: string
+        poi:
+          type: object
+          nullable: true
+          description: Lugar al que se refiere la respuesta; `null` cuando no se resolvió ninguno.
+          required: [id, slug, title]
+          properties:
+            id:
+              type: string
+            slug:
+              type: string
+            title:
+              type: string
+        citations:
+          type: array
+          maxItems: 3
+          description: Una cita por parte respondida en preguntas compuestas; máximo 2 en consultas simples y 3 cuando la pregunta tiene varias partes.
+          items:
+            $ref: '#/components/schemas/Citation'
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceRef'
+        confidenceLabel:
+          type: string
+          nullable: true
+          enum:
+            - Oficial UNESCO
+            - Oficial estatal
+            - Oficial local
+            - Histórico 2008
+            - Académico
+            - Referencia
+            - Externo
+            - No verificado
+            - Documentación del proyecto
+            - Tradición local
+        conversationId:
+          type: string
+          nullable: true
+        messageId:
+          type: string
+          nullable: true
+        latencyMs:
+          type: integer
+        corpusVersion:
+          type: string
+          example: '2026-11-20.1'
+    Citation:
+      type: object
+      required: [documentId, chunkId, sourceId, title, institution, kind, quote, sourceLevel, sourceLabel]
+      properties:
+        documentId:
+          type: string
+        chunkId:
+          type: string
+          description: Identificador legible del fragmento recuperado, por ejemplo `S-002#p1.inscripcion.01`.
+        sourceId:
+          type: string
+          pattern: '^S-\d{3}$'
+        title:
+          type: string
+        institution:
+          type: string
+        kind:
+          type: string
+          enum: [quote, fact, context]
+        page:
+          type: string
+          nullable: true
+        section:
+          type: string
+          nullable: true
+        quote:
+          type: string
+          description: Cita literal de máximo 25 palabras o valor del hecho estructurado.
+          maxLength: 300
+        claimType:
+          type: string
+          nullable: true
+          enum: [historical, normative, current_status, technical_guidance, tourism, tradition, context]
+        factKey:
+          type: string
+          nullable: true
+        factValue:
+          type: string
+          nullable: true
+        contradictionGroup:
+          type: string
+          nullable: true
+        validAsOf:
+          type: string
+          format: date-time
+          nullable: true
+        sourceLevel:
+          type: string
+          enum: [A, B, C, D, E]
+        sourceLabel:
+          type: string
+          enum:
+            - Oficial UNESCO
+            - Oficial estatal
+            - Oficial local
+            - Histórico 2008
+            - Académico
+            - Referencia
+            - Externo
+            - No verificado
+            - Documentación del proyecto
+            - Tradición local
+        url:
+          type: string
+          nullable: true
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+    AssistantStatus:
+      type: object
+      required: [corpusVersion, tourist, technical]
+      properties:
+        corpusVersion:
+          type: string
+          nullable: true
+        tourist:
+          $ref: '#/components/schemas/AssistantScopeStatus'
+        technical:
+          $ref: '#/components/schemas/AssistantScopeStatus'
+    AssistantScopeStatus:
+      type: object
+      required: [enabled, available]
+      properties:
+        enabled:
+          type: boolean
+        available:
+          type: boolean
+    SourceRef:
+      type: object
+      required: [id, title, institution, level, label]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        institution:
+          type: string
+        level:
+          type: string
+          enum: [A, B, C, D, E]
+        label:
+          type: string
+        url:
+          type: string
+          nullable: true
+        retrievedAt:
+          type: string
+          format: date-time
+          nullable: true
+    PanoramaSummary:
+      type: object
+      required: [id, title, projection, credits, width, height]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        locationId:
+          type: string
+          nullable: true
+        assetId:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        projection:
+          type: string
+          enum: [equirectangular]
+        capturedAt:
+          type: string
+          format: date-time
+          nullable: true
+        credits:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        location:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaLocationRef'
+          nullable: true
+        asset:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaAssetRef'
+          nullable: true
+    PanoramaLocationRef:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        slug:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+    PanoramaAssetRef:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+    Panorama:
+      allOf:
+        - $ref: '#/components/schemas/PanoramaSummary'
+        - type: object
+          required: [description, imageUrl, hotspots, fallback, license, author]
+          properties:
+            description:
+              type: string
+            imageUrl:
+              type: string
+            hotspots:
+              type: array
+              items:
+                $ref: '#/components/schemas/Hotspot'
+            fallback:
+              $ref: '#/components/schemas/PanoramaFallback'
+            license:
+              type: string
+            licenseUrl:
+              type: string
+              nullable: true
+            author:
+              type: string
+            status:
+              type: string
+              enum: [published]
+            visibility:
+              type: string
+              enum: [public]
+    Hotspot:
+      type: object
+      required: [hotspotId, label, type, yaw, pitch, ariaLabel]
+      properties:
+        hotspotId:
+          type: string
+          format: uuid
+        label:
+          type: string
+        type:
+          type: string
+          enum: [scene, location, info]
+        yaw:
+          type: number
+        pitch:
+          type: number
+        targetPanoramaId:
+          type: string
+          nullable: true
+        targetPanoramaTitle:
+          type: string
+          nullable: true
+        targetLocationId:
+          type: string
+          nullable: true
+        targetLocationSlug:
+          type: string
+          nullable: true
+        targetUrl:
+          type: string
+          nullable: true
+        ariaLabel:
+          type: string
+    PanoramaFallback:
+      type: object
+      required: [imageUrl, alt, description]
+      properties:
+        imageUrl:
+          type: string
+        alt:
+          type: string
+        description:
+          type: string
+        transcript:
+          type: string
+          nullable: true
+    AdminPanoramaSummary:
+      type: object
+      required:
+        - id
+        - title
+        - projection
+        - credits
+        - width
+        - height
+        - status
+        - visibility
+        - version
+        - hasDerivative
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        locationId:
+          type: string
+          nullable: true
+        assetId:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        projection:
+          type: string
+          enum: [equirectangular]
+        capturedAt:
+          type: string
+          format: date-time
+          nullable: true
+        credits:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        status:
+          type: string
+          enum: [draft, approved, published, archived]
+        visibility:
+          type: string
+          enum: [public, inspection]
+        version:
+          type: integer
+        hasDerivative:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        location:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaLocationRef'
+          nullable: true
+        asset:
+          allOf:
+            - $ref: '#/components/schemas/PanoramaAssetRef'
+          nullable: true
+    AdminPanorama:
+      allOf:
+        - $ref: '#/components/schemas/AdminPanoramaSummary'
+        - type: object
+          required:
+            - description
+            - imageUrl
+            - hotspots
+            - license
+            - author
+            - credit
+            - rightsDocumented
+            - permitDocumented
+            - peopleBlurred
+            - consentDocumented
+            - checksum
+            - bytes
+            - createdBy
+            - updatedBy
+          properties:
+            description:
+              type: string
+            imageUrl:
+              type: string
+              nullable: true
+            hotspots:
+              type: array
+              items:
+                $ref: '#/components/schemas/Hotspot'
+            fallbackAlt:
+              type: string
+            fallbackDescription:
+              type: string
+            transcript:
+              type: string
+              nullable: true
+            license:
+              type: string
+            licenseUrl:
+              type: string
+              nullable: true
+            author:
+              type: string
+            credit:
+              type: string
+            rightsDocumented:
+              type: boolean
+            permitDocumented:
+              type: boolean
+            rightsNotes:
+              type: string
+              nullable: true
+            peopleBlurred:
+              type: boolean
+            consentDocumented:
+              type: boolean
+            consentNotes:
+              type: string
+              nullable: true
+            checksum:
+              type: string
+            derivativeChecksum:
+              type: string
+              nullable: true
+            thumbnailChecksum:
+              type: string
+              nullable: true
+            bytes:
+              type: integer
+            derivativeBytes:
+              type: integer
+              nullable: true
+            approvedAt:
+              type: string
+              format: date-time
+              nullable: true
+            publishedAt:
+              type: string
+              format: date-time
+              nullable: true
+            archivedAt:
+              type: string
+              format: date-time
+              nullable: true
+            createdBy:
+              type: string
+              nullable: true
+            updatedBy:
+              type: string
+              nullable: true
+    PanoramaCreate:
+      type: object
+      required: [title, author, license, credit, image]
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        locationId:
+          type: string
+          description: POI publicado; obligatorio si no se envía `assetId`.
+        assetId:
+          type: string
+          description: Activo activo; obligatorio si no se envía `locationId`.
+        visibility:
+          type: string
+          enum: [public, inspection]
+          default: public
+        capturedAt:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: string
+          maxLength: 160
+        license:
+          type: string
+          maxLength: 200
+        licenseUrl:
+          type: string
+          format: uri
+          nullable: true
+        credit:
+          type: string
+          maxLength: 300
+        rightsDocumented:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        permitDocumented:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        rightsNotes:
+          type: string
+          maxLength: 500
+        peopleBlurred:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        consentDocumented:
+          type: string
+          enum: ['true', 'false']
+          default: 'false'
+        consentNotes:
+          type: string
+          maxLength: 500
+        fallbackAlt:
+          type: string
+          maxLength: 200
+        fallbackDescription:
+          type: string
+          maxLength: 2000
+        transcript:
+          type: string
+          maxLength: 10000
+        hotspots:
+          type: string
+          description: Array JSON serializado de `PanoramaHotspotInput`.
+        image:
+          type: string
+          format: binary
+          description: JPEG, PNG o WebP equirectangular 2:1 de hasta 40 MB.
+    PanoramaUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          maxLength: 160
+        description:
+          type: string
+          maxLength: 2000
+        locationId:
+          type: string
+          nullable: true
+        assetId:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [public, inspection]
+        capturedAt:
+          type: string
+          format: date
+          nullable: true
+        author:
+          type: string
+          maxLength: 160
+        license:
+          type: string
+          maxLength: 200
+        licenseUrl:
+          type: string
+          format: uri
+          nullable: true
+        credit:
+          type: string
+          maxLength: 300
+        rightsDocumented:
+          type: boolean
+        permitDocumented:
+          type: boolean
+        rightsNotes:
+          type: string
+          maxLength: 500
+          nullable: true
+        peopleBlurred:
+          type: boolean
+        consentDocumented:
+          type: boolean
+        consentNotes:
+          type: string
+          maxLength: 500
+          nullable: true
+        fallbackAlt:
+          type: string
+          maxLength: 200
+        fallbackDescription:
+          type: string
+          maxLength: 2000
+        transcript:
+          type: string
+          maxLength: 10000
+          nullable: true
+        hotspots:
+          type: array
+          items:
+            $ref: '#/components/schemas/PanoramaHotspotInput'
+    PanoramaHotspotInput:
+      type: object
+      required: [label, type, yaw, pitch, ariaLabel]
+      properties:
+        hotspotId:
+          type: string
+          format: uuid
+          description: Si se omite, el servidor genera un UUID.
+        label:
+          type: string
+          maxLength: 80
+        type:
+          type: string
+          enum: [scene, location, info]
+        yaw:
+          type: number
+          minimum: -180
+          maximum: 180
+        pitch:
+          type: number
+          minimum: -85
+          maximum: 85
+        targetPanoramaId:
+          type: string
+          nullable: true
+        targetLocationId:
+          type: string
+          nullable: true
+        targetUrl:
+          type: string
+          maxLength: 500
+          nullable: true
+        ariaLabel:
+          type: string
+          maxLength: 120
+    SourceSummary:
+      type: object
+      required: [id, sourceId, title, institution, version, level, sourceLabel, usagePolicy, indexingPolicy, license, rights, accessLevel, status]
+      properties:
+        id:
+          type: string
+        sourceId:
+          type: string
+          pattern: '^S-\d{3}$'
+          example: S-002
+        title:
+          type: string
+        institution:
+          type: string
+        version:
+          type: string
+        publicationDate:
+          type: string
+          format: date-time
+          nullable: true
+        retrievedAt:
+          type: string
+          format: date-time
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        level:
+          type: string
+          enum: [A, B, C, D, E]
+        sourceLabel:
+          type: string
+          enum: [Oficial UNESCO, Oficial estatal, Oficial local, Histórico 2008, Académico, Referencia, Externo, No verificado, Documentación del proyecto, Tradición local]
+        usagePolicy:
+          type: string
+          enum: [final, pointer, context]
+        indexingPolicy:
+          type: string
+          enum: [full_text, short_quotes_only]
+        credibilityNotes:
+          type: string
+        license:
+          type: string
+        rights:
+          type: string
+        rightsVerified:
+          type: boolean
+        accessLevel:
+          type: string
+          enum: [public, internal, restricted]
+        language:
+          type: string
+          example: es
+        topics:
+          type: array
+          items:
+            type: string
+        poiSlugs:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, active, superseded, retracted]
+        statusReason:
+          type: string
+          nullable: true
+        supersedes:
+          type: string
+          nullable: true
+    UserRoleUpdateRequest:
+      type: object
+      required: [role, currentPassword]
+      properties:
+        role:
+          type: string
+          enum: [user, historian, inspector, admin]
+        currentPassword:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 128
+    UserStatusUpdateRequest:
+      type: object
+      required: [isActive, currentPassword]
+      properties:
+        isActive:
+          type: boolean
+        currentPassword:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 128
+    RevokeSessionsRequest:
+      type: object
+      required: [currentPassword]
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 128
+    UserMutationResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/AdminUser'
+        meta:
+          type: object
+          required: [changed, sessionsRevoked]
+          properties:
+            changed:
+              type: boolean
+            sessionsRevoked:
+              type: boolean
+    RevokeSessionsResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id, sessionsRevoked]
+          properties:
+            id:
+              type: string
+            sessionsRevoked:
+              type: boolean
+              example: true
+    TelegramLinkStatus:
+      type: object
+      required: [linked, channel]
+      properties:
+        linked:
+          type: boolean
+        channel:
+          type: string
+          enum: [telegram]
+        linkedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+    TelegramLinkStatusResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/TelegramLinkStatus'
+    TelegramLinkCode:
+      type: object
+      required: [code, expiresAt, ttlMinutes]
+      properties:
+        code:
+          type: string
+          pattern: '^[A-HJ-NP-Z2-9]{8}$'
+          example: ABCD2345
+        expiresAt:
+          type: string
+          format: date-time
+        ttlMinutes:
+          type: integer
+          minimum: 1
+          example: 10
+    TelegramLinkCodeResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/TelegramLinkCode'

@@ -1,0 +1,100 @@
+{
+  "corpusVersion": "2026-11-22.1",
+  "date": "2026-11-24",
+  "environment": "MongoDB replica set local falconsyncTest en 127.0.0.1:27018, base temporal falconsync_rag_eval",
+  "dataset": "projects/backend/corpus/evaluation/rag-golden-v3.json",
+  "report": "projects/backend/corpus/evaluation/rag-golden-v3-report.json",
+  "sampleSize": 125,
+  "embeddingModel": "Xenova/paraphrase-multilingual-MiniLM-L12-v2@q8",
+  "minSimilarity": 0.6,
+  "metrics": {
+    "poiAccuracy": 1,
+    "clarificationAccuracy": 1,
+    "abstentionAccuracy": 1,
+    "sourceHit": 1,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "invalidCitations": 0,
+    "latencyP50Ms": 18,
+    "latencyP95Ms": 45
+  },
+  "unmetTargets": [],
+  "failures": 0,
+  "scope": {
+    "tourist": "enabled",
+    "technical": "disabled"
+  },
+  "sources": [
+    "S-002",
+    "S-003",
+    "S-020",
+    "S-021",
+    "S-022",
+    "S-024",
+    "S-025",
+    "S-026",
+    "S-027",
+    "S-028",
+    "S-029",
+    "S-030",
+    "S-031",
+    "S-032"
+  ],
+  "declaredAsDraft": [],
+  "excludedSources": ["S-005", "S-023"],
+  "caseComposition": {
+    "v2CarriedOver": 59,
+    "datasetQuestions": 50,
+    "paraphrase": 10,
+    "compound": 6,
+    "total": 125
+  },
+  "v2Regression": {
+    "dataset": "projects/backend/corpus/evaluation/rag-golden-v2.json",
+    "report": "projects/backend/corpus/evaluation/rag-golden-v2-report.json",
+    "command": "npm --prefix projects/backend run rag:evaluate -- --dataset corpus/evaluation/rag-golden-v2.json --report corpus/evaluation/rag-golden-v2-report.json --sources S-002,S-003,S-020,S-021,S-022",
+    "corpus": "las cinco fuentes originales (aisla cambios de código de los del corpus)",
+    "sampleSize": 59,
+    "failures": 0,
+    "latencyP95Ms": 41,
+    "note": "Ejecutar la regresión v2 sin --sources contra el corpus completo produce un fallo esperado: oos-07 («¿Qué ruta debo seguir para recorrer el casco histórico?») ahora responde porque S-028 aporta rutas; el caso quedó ajustado en el conjunto v3 y así queda documentado en sus notas."
+  },
+  "categoryBreakdown": {
+    "poi_overview": "23/23",
+    "out_of_scope": "9/9",
+    "product": "7/7",
+    "heritage": "6/6",
+    "compound": "6/6",
+    "dataset_logistica": "10/10",
+    "dataset_atractivos": "10/10",
+    "dataset_normativa": "10/10",
+    "dataset_cultura": "10/10",
+    "dataset_robustez": "10/10",
+    "paraphrase": "10/10",
+    "adversarial": "3/3",
+    "ambiguity": "2/2",
+    "follow_up": "3/3",
+    "poi_detail": "2/2",
+    "poi_paraphrase": "2/2",
+    "multi_source": "1/1",
+    "hueque_unpublished": "1/1"
+  },
+  "dataset50Summary": {
+    "answers": 39,
+    "abstentions": 10,
+    "clarifications": 1,
+    "abstentionQuestions": ["p-04", "p-10", "p-24", "p-25", "p-29", "p-32", "p-37", "p-38", "p-44", "p-47"],
+    "clarificationQuestions": ["p-20"],
+    "note": "Las abstenciones son honestas por falta de evidencia (seguridad, hidratación, drones, sanciones, dónde comer, normas del parque, mascotas) o por falta de fuente vigente de precio (p-44). p-20 pide aclaración por POI ambiguo. Las 50 preguntas quedan congeladas en rag-golden-v3.json con sus categorías dataset_*."
+  },
+  "sourceAttribution": "Las respuestas incluyen institución, título, etiqueta, enlace oficial o enlace interno y localizador cuando corresponde.",
+  "limitations": [
+    "El asistente técnico no está activado; S-005 y S-023 siguen en borrador.",
+    "Los horarios solo se responden donde hay fuente publicada: MUCOR (S-030, cuenta oficial) y misas de la Catedral (S-031); el resto responde «Sin horarios confirmados».",
+    "S-030 y S-031 son nivel C/A sin licencia abierta: citas breves con atribución y enlace, con la advertencia de confirmar antes de la visita.",
+    "S-026 a S-029 y S-032 son nivel D (Wikipedia/Wikivoyage): resúmenes propios ≤25 palabras con atribución y enlace; nunca única autoridad de un hecho normativo o de estado actual.",
+    "Tres preguntas del dataset responden con contenido relacionado pero no exacto: p-05 (guías certificados → inscripción UNESCO), p-18 (Casa del Tesoro → ficha de Casa del Sol por similitud de nombre) y p-48 (estacionamiento → llegada en carro). Citan fuentes reales sin inventar, pero no cierran la pregunta; mejorarlas exige fuentes nuevas (guías, estacionamiento, Casa del Tesoro) y un ciclo de congelado posterior.",
+    "El conjunto tiene 125 casos frente al mínimo editorial de 60 de FUENTES-RAG §9.1."
+  ]
+}

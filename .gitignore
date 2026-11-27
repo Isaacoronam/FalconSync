@@ -4,6 +4,10 @@ dist/
 .angular/
 coverage/
 *.tsbuildinfo
+playwright-report/
+test-results/
+blob-report/
+/knowledge/
 
 # Variables de entorno y secretos
 .env
@@ -11,8 +15,18 @@ coverage/
 !.env.example
 !**/.env.example
 
-# Medios subidos por usuarios (futuro)
-uploads/
+# Medios subidos y documentos privados del backend (runtime; solo se versionan los .gitkeep)
+projects/backend/uploads/**
+!projects/backend/uploads/**/
+!projects/backend/uploads/**/.gitkeep
+projects/backend/models/
+
+# QR de check-in generados localmente (contienen tokens)
+projects/backend/assets/qr-codes/
+
+# Logs de ejecución del backend (PM2 y otros)
+projects/backend/logs/*
+!projects/backend/logs/.gitkeep
 
 # Logs y archivos del sistema
 *.log

@@ -1,0 +1,6 @@
+{
+  "name": "falcon-sync-mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Esqueleto de la futura app Android de campo de FalconSync. Stack por definir; no es una aplicación compilable."
+}

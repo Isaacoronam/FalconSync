@@ -1,0 +1,366 @@
+<section class="conservation-page" aria-labelledby="inspections-title">
+  <header class="conservation-header">
+    <div>
+      <p class="conservation-eyebrow">Conservación · Inspecciones</p>
+      <h1 id="inspections-title" class="conservation-title">Consola de inspecciones</h1>
+      <p class="conservation-lead">
+        Revisa la cola de triaje, registra activos patrimoniales y asigna inspecciones a inspectores
+        y revisores distintos. Cada cambio queda trazado.
+      </p>
+    </div>
+
+    <div class="conservation-actions">
+      <a class="button button--ghost" routerLink="/reportes">Mis reportes</a>
+      <button class="button button--ghost" type="button" (click)="loadInspections()">
+        Actualizar
+      </button>
+    </div>
+  </header>
+
+  @if (auth.canTriageReports()) {
+    <section class="conservation-panel" aria-labelledby="triage-queue-title">
+      <div class="conservation-panel__header">
+        <div>
+          <h2 id="triage-queue-title">Cola de triaje</h2>
+          <p class="conservation-panel__hint">
+            {{ queueTotal() }} reporte(s) pendientes de decisión o conversión.
+          </p>
+        </div>
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          [disabled]="queueLoading()"
+          (click)="loadQueue()"
+        >
+          {{ queueLoading() ? 'Cargando…' : 'Refrescar cola' }}
+        </button>
+      </div>
+
+      @if (queueError()) {
+        <div class="conservation-alert" role="alert">
+          <p>{{ queueError() }}</p>
+        </div>
+      }
+
+      @if (queueLoading() && queueReports().length === 0) {
+        <app-page-skeleton variant="table" label="Cargando la cola de triaje…" [rows]="4" />
+      } @else if (queueReports().length === 0) {
+        <div class="conservation-empty">
+          <p>No hay reportes pendientes de triaje.</p>
+          <p>Los nuevos reportes aparecerán aquí en orden de llegada.</p>
+        </div>
+      } @else {
+        <ul class="conservation-card-list">
+          @for (report of queueReports(); track report.id) {
+            <li class="conservation-card">
+              <div class="conservation-card__header">
+                <div>
+                  <h3 class="conservation-card__title">{{ reportTarget(report) }}</h3>
+                  <p class="conservation-card__meta">
+                    {{ report.sourceChannel === 'telegram' ? 'Telegram' : 'Web' }} ·
+                    {{ report.capturedAt | date: 'dd/MM/yyyy HH:mm' }} ·
+                    {{ report.evidenceIds.length }} evidencia(s) · Reporte {{ shortId(report.id) }}
+                  </p>
+                </div>
+                <span [class]="stateClass(report.state)">
+                  {{ reportStateLabels[report.state] }}
+                </span>
+              </div>
+              <p class="conservation-card__body">{{ report.description }}</p>
+              <div class="conservation-actions">
+                <a
+                  class="button button--ghost button--small"
+                  [routerLink]="['/reportes', report.id]"
+                >
+                  Tramitar reporte
+                </a>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <div class="conservation-grid">
+    <section class="conservation-panel" aria-labelledby="asset-create-title">
+      <div class="conservation-panel__header">
+        <div>
+          <h2 id="asset-create-title">Nuevo activo patrimonial</h2>
+          <p class="conservation-panel__hint">
+            Un activo activo requiere geometría. Puedes tomar las coordenadas del POI.
+          </p>
+        </div>
+      </div>
+
+      @if (assetError()) {
+        <div class="conservation-alert" role="alert">
+          <p>{{ assetError() }}</p>
+        </div>
+      }
+
+      @if (assetNotice()) {
+        <p class="conservation-success" role="status">{{ assetNotice() }}</p>
+      }
+
+      <form class="conservation-form" [formGroup]="assetForm" (ngSubmit)="createAsset()" novalidate>
+        <div class="conservation-form conservation-form--inline">
+          <div class="conservation-field">
+            <label for="asset-code">Código</label>
+            <input id="asset-code" formControlName="code" maxlength="40" placeholder="CORO-001" />
+            <small>3 a 40 caracteres: letras, números y guiones.</small>
+          </div>
+          <div class="conservation-field">
+            <label for="asset-type">Tipo</label>
+            <select id="asset-type" formControlName="type">
+              @for (type of assetTypes; track type) {
+                <option [value]="type">{{ assetTypeLabels[type] }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="conservation-field">
+          <label for="asset-name">Nombre</label>
+          <input id="asset-name" formControlName="name" maxlength="160" />
+        </div>
+
+        <div class="conservation-field">
+          <label for="asset-location">Punto de interés (opcional)</label>
+          <select
+            id="asset-location"
+            formControlName="locationId"
+            (change)="useLocationCoordinates()"
+          >
+            <option value="">Sin POI vinculado</option>
+            @for (location of locations(); track location.id) {
+              <option [value]="location.id">{{ location.title }}</option>
+            }
+          </select>
+          <small>Al seleccionar un POI se copian sus coordenadas; puedes ajustarlas.</small>
+        </div>
+
+        <div class="conservation-form conservation-form--inline">
+          <div class="conservation-field">
+            <label for="asset-latitude">Latitud</label>
+            <input id="asset-latitude" type="number" step="any" formControlName="latitude" />
+          </div>
+          <div class="conservation-field">
+            <label for="asset-longitude">Longitud</label>
+            <input id="asset-longitude" type="number" step="any" formControlName="longitude" />
+          </div>
+        </div>
+
+        <div class="conservation-field">
+          <label for="asset-address">Dirección (opcional)</label>
+          <input id="asset-address" formControlName="address" maxlength="240" />
+        </div>
+
+        <div class="conservation-field">
+          <label for="asset-description">Descripción (opcional)</label>
+          <textarea
+            id="asset-description"
+            formControlName="description"
+            rows="3"
+            maxlength="5000"
+          ></textarea>
+        </div>
+
+        <div class="conservation-actions">
+          <button
+            class="button button--primary"
+            type="submit"
+            [disabled]="busy() === 'asset' || !auth.canManageAssets()"
+          >
+            {{ busy() === 'asset' ? 'Registrando…' : 'Registrar activo' }}
+          </button>
+        </div>
+
+        @if (!auth.canManageAssets()) {
+          <p class="conservation-state">Tu rol no permite registrar activos.</p>
+        }
+      </form>
+    </section>
+
+    <section class="conservation-panel" aria-labelledby="inspection-create-title">
+      <div class="conservation-panel__header">
+        <div>
+          <h2 id="inspection-create-title">Nueva inspección</h2>
+          <p class="conservation-panel__hint">
+            El inspector ejecuta; el revisor confirma severidades y cierra.
+          </p>
+        </div>
+      </div>
+
+      @if (inspectionError()) {
+        <div class="conservation-alert" role="alert">
+          <p>{{ inspectionError() }}</p>
+        </div>
+      }
+
+      <form
+        class="conservation-form"
+        [formGroup]="inspectionForm"
+        (ngSubmit)="createInspection()"
+        novalidate
+      >
+        <div class="conservation-field">
+          <label for="inspection-asset">Activo patrimonial</label>
+          <select id="inspection-asset" formControlName="assetId">
+            <option value="">Selecciona un activo</option>
+            @for (asset of assets(); track asset.id) {
+              <option [value]="asset.id">{{ asset.name }} ({{ asset.code }})</option>
+            }
+          </select>
+          @if (assets().length === 0) {
+            <small>No hay activos activos. Registra uno en el panel izquierdo.</small>
+          }
+        </div>
+
+        <div class="conservation-form conservation-form--inline">
+          <div class="conservation-field">
+            <label for="inspection-inspector">Inspector</label>
+            <select id="inspection-inspector" formControlName="inspectorId">
+              @for (inspector of inspectors(); track inspector.id) {
+                <option [value]="inspector.id">{{ inspector.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="conservation-field">
+            <label for="inspection-reviewer">Revisor</label>
+            <select id="inspection-reviewer" formControlName="reviewerId">
+              <option value="">Selecciona un revisor</option>
+              @for (inspector of reviewers(); track inspector.id) {
+                <option [value]="inspector.id">{{ inspector.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="conservation-form conservation-form--inline">
+          <div class="conservation-field">
+            <label for="inspection-type">Tipo</label>
+            <select id="inspection-type" formControlName="type">
+              @for (type of inspectionTypes; track type) {
+                <option [value]="type">{{ inspectionTypeLabels[type] }}</option>
+              }
+            </select>
+          </div>
+          <div class="conservation-field">
+            <label for="inspection-scheduled">Fecha prevista (opcional)</label>
+            <input id="inspection-scheduled" type="datetime-local" formControlName="scheduledAt" />
+          </div>
+        </div>
+
+        <div class="conservation-field">
+          <label for="inspection-scope">Alcance</label>
+          <textarea
+            id="inspection-scope"
+            formControlName="scope"
+            rows="4"
+            maxlength="4000"
+            placeholder="Qué se inspeccionará, límites y criterios de aceptación."
+          ></textarea>
+        </div>
+
+        <div class="conservation-actions">
+          <button class="button button--primary" type="submit" [disabled]="busy() === 'inspection'">
+            {{ busy() === 'inspection' ? 'Creando…' : 'Crear inspección' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <section class="conservation-panel" aria-labelledby="inspection-list-title">
+    <div class="conservation-panel__header">
+      <div>
+        <h2 id="inspection-list-title">Inspecciones asignadas</h2>
+        <p class="conservation-panel__hint">
+          Solo ves inspecciones donde eres inspector o revisor.
+        </p>
+      </div>
+      <div class="conservation-field">
+        <label for="inspection-filter">Estado</label>
+        <select id="inspection-filter" [value]="filterState()" (change)="changeFilter($event)">
+          <option value="">Todos</option>
+          @for (state of inspectionStates; track state) {
+            <option [value]="state">{{ inspectionStateLabels[state] }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="conservation-alert" role="alert">
+        <p>{{ error() }}</p>
+        <button
+          class="button button--ghost button--small"
+          type="button"
+          (click)="loadInspections()"
+        >
+          Reintentar
+        </button>
+      </div>
+    }
+
+    @if (loading() && inspections().length === 0) {
+      <app-page-skeleton variant="table" label="Cargando inspecciones…" [rows]="6" />
+    } @else if (inspections().length === 0) {
+      <div class="conservation-empty">
+        <p>No hay inspecciones con este filtro.</p>
+        <p>Crea una nueva inspección o convierte un reporte aceptado.</p>
+      </div>
+    } @else {
+      <div class="conservation-table-wrap">
+        <table class="conservation-table">
+          <thead>
+            <tr>
+              <th scope="col">Activo</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Inspector</th>
+              <th scope="col">Revisor</th>
+              <th scope="col">Actualizada</th>
+              <th scope="col"><span class="conservation-visually-hidden">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (inspection of inspections(); track inspection.id) {
+              <tr>
+                <td data-label="Activo">
+                  <span class="conservation-table__title">{{ assetName(inspection.assetId) }}</span>
+                  <span class="conservation-table__meta">
+                    #{{ shortId(inspection.id) }}
+                    @if (inspection.reportId) {
+                      · Reporte {{ shortId(inspection.reportId) }}
+                    }
+                  </span>
+                </td>
+                <td data-label="Tipo">{{ inspectionTypeLabels[inspection.type] }}</td>
+                <td data-label="Estado">
+                  <span [class]="stateClass(inspection.state)">
+                    {{ inspectionStateLabels[inspection.state] }}
+                  </span>
+                </td>
+                <td data-label="Inspector">{{ inspectorName(inspection.inspectorId) }}</td>
+                <td data-label="Revisor">{{ inspectorName(inspection.reviewerId) }}</td>
+                <td data-label="Actualizada">
+                  {{ inspection.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+                </td>
+                <td data-label="Acciones">
+                  <a
+                    class="button button--ghost button--small"
+                    [routerLink]="['/inspecciones', inspection.id]"
+                  >
+                    Abrir
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>

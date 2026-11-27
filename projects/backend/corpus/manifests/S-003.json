@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-003",
+    "title": "Coro y su Puerto en la Lista del Patrimonio Mundial en Peligro",
+    "institution": "Centro del Patrimonio Mundial de la UNESCO",
+    "version": "Lista consultada el 2026-11-22",
+    "retrievedAt": "2026-11-22T00:00:00.000Z",
+    "verifiedAt": "2026-11-22T00:00:00.000Z",
+    "publicationDate": "2026-11-22T00:00:00.000Z",
+    "url": "https://whc.unesco.org/es/list/658/",
+    "level": "A",
+    "sourceLabel": "Oficial UNESCO",
+    "usagePolicy": "final",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Fuente oficial vigente. Permite informar el estado del bien en la Lista del Patrimonio Mundial en Peligro con atribución a UNESCO.",
+    "license": "Consulta, cita breve y atribución según las condiciones aplicables a la ficha oficial UNESCO.",
+    "rights": "Uso aprobado para respuestas RAG con atribución visible al sitio oficial de UNESCO.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-22T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "Lista del Patrimonio Mundial en Peligro",
+      "estado patrimonial",
+      "Coro"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-003#peligro.estado-actual",
+      "ordinal": 0,
+      "page": "Ficha 658",
+      "section": "Lista del Patrimonio Mundial en Peligro",
+      "claimType": "current_status",
+      "factKey": "unesco.danger_list.status",
+      "factValue": "en la Lista del Patrimonio Mundial en Peligro",
+      "validAsOf": "2026-11-22T00:00:00.000Z",
+      "text": "Coro y su puerto continúan en la Lista del Patrimonio Mundial en Peligro.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Lista del Patrimonio Mundial en Peligro",
+        "estado actual"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuál es el estado actual de Coro en la UNESCO?",
+        "¿Coro sigue en la Lista del Patrimonio Mundial en Peligro?",
+        "¿Está Coro también en peligro en la UNESCO?"
+      ]
+    }
+  ]
+}

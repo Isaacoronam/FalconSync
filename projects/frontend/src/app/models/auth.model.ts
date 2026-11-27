@@ -1,0 +1,54 @@
+export type UserRole =
+  | 'user'
+  | 'moderator'
+  | 'historian'
+  | 'inspector'
+  | 'admin';
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  surname?: string | null;
+  username?: string | null;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+  mustChangePassword: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthSessionResponse {
+  data: {
+    user: AuthUser;
+    accessToken: string;
+    tokenType: 'Bearer';
+    expiresIn: number;
+  };
+}
+
+export interface AuthMeResponse {
+  data: {
+    user: AuthUser;
+  };
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface RegisterPayload {
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+

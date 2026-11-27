@@ -2,6 +2,27 @@
 
 Estas instrucciones aplican a los agentes que trabajen en este repositorio.
 
+## Organización del repositorio
+
+La estructura es obligatoria. Su justificación y sus excepciones están en `memory/architecture_decisions.md`.
+
+```text
+/
+├── AGENTS.md                 # Normas de ejecución y organización
+├── context/                  # Contexto del sistema, reglas de negocio (con matriz RBAC) y contratos HTTP
+├── memory/                   # Decisiones arquitectónicas y soluciones verificadas
+├── skills/                   # Índice de skills; las ejecutables permanecen en .opencode/skills/
+└── projects/
+    ├── backend/              # API Express y MongoDB
+    ├── frontend/             # SPA Angular
+    └── mobile/               # Esqueleto de la futura app Android de campo; no compilable
+```
+
+- `projects/backend/`: `api/<módulo>/` agrupa rutas y controladores HTTP; `microservices/` contiene la capa de servicios; `databases/` contiene la conexión y los modelos Mongoose. Además: `middlewares/`, `helpers/`, `seeders/`, `scripts/`, `bin/server.js` (arranque), `index.js` (aplicación Express), `uploads/`, `assets/`, `logs/` y `public/`. Los datos de ejecución (`uploads/`, `assets/qr-codes/`, `logs/`) no se versionan.
+- `projects/frontend/src/app/`: `pages/` (vistas enrutadas), `components/` (componentes reutilizables), `services/` (clientes HTTP, guards, interceptores, validadores y utilidades) y `models/` (contratos TypeScript). Los recursos estáticos viven en `src/assets/`.
+- `projects/mobile/src/`: `screens/`, `components/`, `services/` y `models/`.
+- `docs/`: documentación técnica y funcional ampliada.
+
 ## 1. Contexto académico y alcance
 
 El marco académico disponible corresponde a las Unidades 2 a 7 de la materia Implantación de Sistemas:
@@ -19,6 +40,12 @@ La fuente de verdad académica será `.opencode/knowledge/`. Antes de afirmar qu
 1. contenido confirmado en el material de la asignatura;
 2. evidencia encontrada en el propio proyecto;
 3. buenas prácticas o conocimiento general de ingeniería.
+
+Los originales de las Unidades 2–7 están en `.opencode/knowledge/fuentes/` y sus
+transcripciones están en `.opencode/knowledge/unidad-02.md` a `unidad-07.md`. Consulta la
+transcripción y, si necesitas verificar un detalle, el original correspondiente. Si no
+puedes consultar ninguno, declara que no verificaste el material y no le atribuyas
+conclusiones académicas.
 
 ## 2. Método de trabajo
 
@@ -74,6 +101,8 @@ Responde en español salvo que el usuario solicite otro idioma.
 ## 6. Uso de skills del proyecto
 
 OpenCode descubre las skills locales en `.opencode/skills/<nombre>/SKILL.md` y las carga bajo demanda mediante su herramienta nativa `skill`.
+Los agentes de `.opencode/agents/` restringen `permission.skill` a una lista explícita de
+skills pertinentes; cualquier otra skill debe quedar denegada para ese agente.
 
 - Antes de una tarea especializada, identifica si existe una skill pertinente y cárgala solo si aporta valor.
 - No cargues todas las skills indiscriminadamente.

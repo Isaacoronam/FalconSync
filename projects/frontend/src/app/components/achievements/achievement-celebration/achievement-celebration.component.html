@@ -1,0 +1,47 @@
+<div class="celebration-backdrop" (click)="onBackdrop($event)">
+  <section
+    class="celebration"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    [attr.aria-describedby]="descriptionId"
+  >
+    <div class="celebration__confetti" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <img class="celebration__chivito" [src]="chivitoCelebration" alt="" width="376" height="214" />
+
+    <p class="celebration__eyebrow">Chivito · Guía turístico</p>
+    <h2 [id]="titleId">¡Felicidades! ¡Lo lograste!</h2>
+    <p [id]="descriptionId" class="celebration__lead">
+      ¡Un lugar más descubierto en nuestro hermoso Falcón!
+    </p>
+
+    <div class="celebration__badge">
+      <img class="celebration__badge-image" [src]="badgeImage()" alt="" width="96" height="96" />
+      <div class="celebration__badge-copy">
+        <span class="celebration__badge-label">Nueva insignia</span>
+        <h3>{{ achievement().name }}</h3>
+        <p>{{ categoryLabel() }}</p>
+      </div>
+    </div>
+
+    <p class="celebration__place">
+      Lugar visitado: <strong>{{ locationTitle() ?? 'este lugar' }}</strong>
+    </p>
+
+    @if (achievement().description) {
+      <p class="celebration__description">{{ achievement().description }}</p>
+    }
+
+    <div class="celebration__actions">
+      <a class="button button--primary" routerLink="/perfil" (click)="close()">
+        Ver mis insignias
+      </a>
+      <button type="button" class="button button--ghost" data-autofocus (click)="close()">
+        Seguir explorando
+      </button>
+    </div>
+  </section>
+</div>

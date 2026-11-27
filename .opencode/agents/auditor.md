@@ -5,7 +5,13 @@ permission:
   edit: deny
   bash: deny
   task: deny
-  skill: allow
+  skill:
+    "*": deny
+    requesting-code-review: allow
+    verification-before-completion: allow
+    threat-modeling: allow
+    documentation-as-code: allow
+    deployment-readiness: allow
 ---
 
 # Auditor transversal

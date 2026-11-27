@@ -1,0 +1,193 @@
+<section class="conservation-page" aria-labelledby="reports-title">
+  <header class="conservation-header">
+    <div>
+      <p class="conservation-eyebrow">Conservación</p>
+      <h1 id="reports-title" class="conservation-title">Mis reportes</h1>
+      <p class="conservation-lead">
+        Registra daños observados en un punto de interés o activo patrimonial y sigue su triaje,
+        inspección e intervención. Solo tú y el equipo asignado pueden consultar el detalle.
+      </p>
+    </div>
+
+    @if (auth.canInspect()) {
+      <div class="conservation-actions">
+        <a class="button button--ghost" routerLink="/inspecciones">Ir a inspecciones</a>
+      </div>
+    }
+  </header>
+
+  <section class="conservation-panel" aria-labelledby="report-create-title">
+    <div class="conservation-panel__header">
+      <div>
+        <h2 id="report-create-title">Nuevo reporte</h2>
+        <p class="conservation-panel__hint">
+          Describe el daño con suficiente detalle. La evidencia se puede adjuntar después.
+        </p>
+      </div>
+    </div>
+
+    @if (formError()) {
+      <div class="conservation-alert" role="alert">
+        <p>{{ formError() }}</p>
+      </div>
+    }
+
+    <form class="conservation-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="conservation-form conservation-form--inline">
+        <div class="conservation-field">
+          <label for="report-target-type">¿Sobre qué reportas?</label>
+          <select id="report-target-type" formControlName="targetType">
+            <option value="location">Punto de interés</option>
+            <option value="asset">Activo patrimonial</option>
+          </select>
+        </div>
+
+        @if (form.controls.targetType.value === 'location') {
+          <div class="conservation-field">
+            <label for="report-location">Punto de interés</label>
+            <select id="report-location" formControlName="locationId">
+              <option value="">Selecciona un lugar</option>
+              @for (location of locations(); track location.id) {
+                <option [value]="location.id">{{ location.title }}</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div class="conservation-field">
+            <label for="report-asset">Activo patrimonial</label>
+            <select id="report-asset" formControlName="assetId">
+              <option value="">Selecciona un activo</option>
+              @for (asset of assets(); track asset.id) {
+                <option [value]="asset.id">{{ asset.name }} ({{ asset.code }})</option>
+              }
+            </select>
+            @if (assets().length === 0) {
+              <small>
+                No hay activos activos. Un inspector debe crearlos desde la consola de inspecciones.
+              </small>
+            }
+          </div>
+        }
+
+        <div class="conservation-field">
+          <label for="report-category">Categoría del daño</label>
+          <select id="report-category" formControlName="category">
+            @for (category of categories; track category) {
+              <option [value]="category">{{ categoryLabels[category] }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="conservation-field">
+        <label for="report-description">Descripción</label>
+        <textarea
+          id="report-description"
+          formControlName="description"
+          rows="4"
+          maxlength="2000"
+          placeholder="Ejemplo: humedad ascendente y pérdida de revoque en la fachada norte."
+        ></textarea>
+        <small>Entre 10 y 2000 caracteres.</small>
+      </div>
+
+      <div class="conservation-form conservation-form--inline">
+        <div class="conservation-field">
+          <label for="report-captured-at">Fecha de captura (opcional)</label>
+          <input id="report-captured-at" type="datetime-local" formControlName="capturedAt" />
+        </div>
+        <div class="conservation-field">
+          <label for="report-latitude">Latitud (opcional)</label>
+          <input id="report-latitude" type="number" step="any" formControlName="latitude" />
+        </div>
+        <div class="conservation-field">
+          <label for="report-longitude">Longitud (opcional)</label>
+          <input id="report-longitude" type="number" step="any" formControlName="longitude" />
+        </div>
+        <div class="conservation-field">
+          <label for="report-accuracy">Precisión en metros (opcional)</label>
+          <input
+            id="report-accuracy"
+            type="number"
+            min="0"
+            max="10000"
+            formControlName="accuracyMeters"
+          />
+        </div>
+      </div>
+
+      <div class="conservation-actions">
+        <button class="button button--primary" type="submit" [disabled]="submitting()">
+          {{ submitting() ? 'Enviando…' : 'Crear reporte' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="conservation-panel" aria-labelledby="report-list-title">
+    <div class="conservation-panel__header">
+      <div>
+        <h2 id="report-list-title">Historial</h2>
+        <p class="conservation-panel__hint">
+          {{ reports().length }} reporte(s) cargado(s) en esta vista.
+        </p>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="conservation-alert" role="alert">
+        <p>{{ error() }}</p>
+        <button class="button button--ghost button--small" type="button" (click)="loadReports(1)">
+          Reintentar
+        </button>
+      </div>
+    }
+
+    @if (loading() && reports().length === 0) {
+      <app-page-skeleton variant="cards" label="Cargando tus reportes…" [rows]="4" />
+    } @else if (reports().length === 0) {
+      <div class="conservation-empty">
+        <p>Aún no has creado reportes.</p>
+        <p>Usa el formulario de arriba para registrar el primero.</p>
+      </div>
+    } @else {
+      <ul class="conservation-card-list">
+        @for (report of reports(); track report.id) {
+          <li class="conservation-card">
+            <div class="conservation-card__header">
+              <div>
+                <h3 class="conservation-card__title">{{ targetLabel(report) }}</h3>
+                <p class="conservation-card__meta">
+                  {{ categoryLabels[report.category] }} ·
+                  {{ report.sourceChannel === 'telegram' ? 'Telegram' : 'Web' }} ·
+                  {{ report.capturedAt | date: 'dd/MM/yyyy HH:mm' }} ·
+                  {{ report.evidenceIds.length }} evidencia(s)
+                </p>
+              </div>
+              <span [class]="stateClass(report.state)">
+                {{ stateLabels[report.state] }}
+              </span>
+            </div>
+            <p class="conservation-card__body">{{ report.description }}</p>
+            <div class="conservation-actions">
+              <a class="button button--ghost button--small" [routerLink]="['/reportes', report.id]">
+                Ver detalle
+              </a>
+            </div>
+          </li>
+        }
+      </ul>
+
+      @if (hasMore()) {
+        <button
+          class="button button--ghost conservation-load-more"
+          type="button"
+          [disabled]="loading()"
+          (click)="loadReports(page() + 1)"
+        >
+          {{ loading() ? 'Cargando…' : 'Cargar más' }}
+        </button>
+      }
+    }
+  </section>
+</section>

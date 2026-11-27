@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-027",
+    "title": "La Vela de Coro — artículo enciclopédico",
+    "institution": "Wikipedia en español",
+    "version": "Artículo consultado el 2026-11-23",
+    "retrievedAt": "2026-11-23T00:00:00.000Z",
+    "verifiedAt": "2026-11-23T00:00:00.000Z",
+    "url": "https://es.wikipedia.org/wiki/La_Vela_de_Coro",
+    "level": "D",
+    "sourceLabel": "Externo",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Enciclopedia colaborativa con licencia CC BY-SA 4.0 verificable. Se usan resúmenes propios de hasta 25 palabras con enlace al artículo original; nivel D: el dato debe atribuirse y señalarse como no verificado de forma independiente. Incorporación instruida por el responsable del proyecto el 2026-11-23.",
+    "license": "CC BY-SA 4.0 (texto de Wikipedia en español).",
+    "rights": "Resumen propio con atribución a Wikipedia en español y enlace al artículo. No presentar como fuente oficial ni como verificación independiente.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-23T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "La Vela de Coro",
+      "fiestas",
+      "UNESCO",
+      "bandera"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-027#ubicacion",
+      "ordinal": 0,
+      "section": "Ubicación",
+      "claimType": "context",
+      "text": "La Vela de Coro es capital del municipio Colina, en estado Falcón, y forma una conurbación con Coro.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "La Vela de Coro",
+        "ubicación"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es La Vela de Coro?",
+        "¿Dónde queda La Vela de Coro?",
+        "¿La Vela está unida a Coro?"
+      ],
+      "checksum": "317C6EC590027D559A6B1E3A5240EA26C515FC71CBFE48BDDD692A659935D56B"
+    },
+    {
+      "chunkKey": "S-027#arquitectura-antillas",
+      "ordinal": 1,
+      "section": "Arquitectura",
+      "claimType": "historical",
+      "text": "Su casco histórico conserva casas del siglo XVII con arquitectura influenciada por las Antillas Neerlandesas.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "La Vela de Coro",
+        "arquitectura"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo es la arquitectura de La Vela?",
+        "¿Qué casas tiene La Vela de Coro?",
+        "¿Por qué las casas de La Vela son antillanas?"
+      ],
+      "checksum": "A63E280308F9E068E56DBF2B3DCD8F63449D856FC015BED41B7DC16CBE52881C"
+    },
+    {
+      "chunkKey": "S-027#locos",
+      "ordinal": 2,
+      "section": "Fiesta de Los Locos",
+      "claimType": "tradition",
+      "text": "La Fiesta de Los Locos se celebra cada 28 de diciembre, día de los Santos Inocentes, con trajes multicolor en La Vela.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Los Locos",
+        "fiesta",
+        "patrimonio inmaterial"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es la fiesta de Los Locos?",
+        "¿Cuándo es la fiesta de Los Locos?",
+        "¿Qué se celebra el 28 de diciembre en La Vela?"
+      ],
+      "checksum": "32A29759FF934DD73DAF0B7AF84409EB2633DDBAD7CAC4C031AD6521328165A4"
+    },
+    {
+      "chunkKey": "S-027#locainas",
+      "ordinal": 3,
+      "section": "Fiesta de Los Locos",
+      "claimType": "tradition",
+      "text": "Los Locos se agrupan en 'locainas' y recorren las calles hasta el monumento a la bandera, donde se premia el mejor traje.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Los Locos",
+        "tradiciones"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo se visten en la fiesta de Los Locos?",
+        "¿Quiénes son las locainas?",
+        "¿Qué pasa en el monumento a la bandera de La Vela?"
+      ],
+      "checksum": "55DB4E3D604F9BDB05238D09DC39B77C8B9747BC7C5807F749E18131BE28B165"
+    },
+    {
+      "chunkKey": "S-027#marcha-fe",
+      "ordinal": 4,
+      "section": "Marcha de la Fe",
+      "claimType": "tradition",
+      "text": "La Marcha de la Fe celebra a la Virgen de Guadalupe cada 12 de diciembre y reúne a unas 500.000 personas.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Marcha de la Fe",
+        "fiesta",
+        "patrimonio inmaterial"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es la Marcha de la Fe?",
+        "¿Cuándo es la Marcha de la Fe?",
+        "¿Qué se celebra el 12 de diciembre en La Vela?"
+      ],
+      "checksum": "AD355BE21AFB583C612AE4B8327A3A77511760859F3BB06CF22A45F109A92F3B"
+    },
+    {
+      "chunkKey": "S-027#unesco-1993",
+      "ordinal": 5,
+      "section": "Patrimonio de la Humanidad",
+      "claimType": "historical",
+      "text": "El 9 de diciembre de 1993, UNESCO declaró Patrimonio de la Humanidad a La Vela junto con Santa Ana de Coro.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "UNESCO",
+        "patrimonio"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuándo se declaró La Vela Patrimonio de la Humanidad?",
+        "¿Qué declaró la UNESCO en La Vela?",
+        "¿Por qué es patrimonio La Vela de Coro?"
+      ],
+      "checksum": "9896836FA6CF1A3E2CA315D8A6FD06F803085F33A55C05F0FBD3975678B41F31"
+    },
+    {
+      "chunkKey": "S-027#casco-holandes-espanol",
+      "ordinal": 6,
+      "section": "Patrimonio de la Humanidad",
+      "claimType": "historical",
+      "text": "El casco histórico combina estilos holandés y español con técnicas originarias de los indígenas americanos.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "arquitectura",
+        "UNESCO"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué estilos arquitectónicos tiene La Vela?",
+        "¿Por qué La Vela combina lo holandés y lo español?",
+        "¿Qué técnicas usaban los indígenas en la construcción?"
+      ],
+      "checksum": "72A08999D80F2D9EF05EBD411B120A108B15E8B539BBEA649EB0A0E77787421B"
+    },
+    {
+      "chunkKey": "S-027#paseo-miranda",
+      "ordinal": 7,
+      "section": "Paseo Generalísimo Francisco de Miranda",
+      "claimType": "historical",
+      "text": "El Paseo Generalísimo Francisco de Miranda se terminó en 2006, a orillas del mar, para conmemorar los 200 años de su arribo.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Paseo Miranda",
+        "bandera",
+        "La Vela de Coro"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es el Paseo Generalísimo Francisco de Miranda?",
+        "¿Cuándo se construyó el Paseo de Miranda en La Vela?",
+        "¿Qué celebra el Paseo de Miranda?"
+      ],
+      "checksum": "9AAC9E08F78AA651F2A9E05D8AD246F2699D0500199071BEB3678785043C7A67"
+    },
+    {
+      "chunkKey": "S-027#miranda-1806",
+      "ordinal": 8,
+      "section": "Historia",
+      "claimType": "historical",
+      "text": "El 3 de agosto de 1806, Francisco de Miranda desembarcó en La Vela con más de 300 expedicionarios y izaron la bandera tricolor.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "bandera",
+        "Miranda",
+        "historia"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Por qué es importante La Vela para la bandera de Venezuela?",
+        "¿Cuándo desembarcó Miranda en La Vela?",
+        "¿Qué pasó el 3 de agosto de 1806?",
+        "¿Por qué Coro es importante para la historia de la bandera de Venezuela?"
+      ],
+      "checksum": "7DE2A64014E4ADC2FDB14EADB94B254CDD6A3A28569F6A46621D5B19813A8435"
+    },
+    {
+      "chunkKey": "S-027#fortin-miranda",
+      "ordinal": 9,
+      "section": "Historia",
+      "claimType": "historical",
+      "text": "Miranda tomó el Fortín de La Vela, pero sin apoyo popular se reembarcó diez días después con rumbo a Aruba.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "Miranda",
+        "Fortín de La Vela",
+        "historia"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué hizo Miranda en La Vela?",
+        "¿Por qué se fue Miranda de Coro?",
+        "¿Qué es el Fortín de La Vela?"
+      ],
+      "checksum": "AB3019F132C9F80C11A3FEFF78CC105E0692869F03E29C8C533F064B7A7868B5"
+    },
+    {
+      "chunkKey": "S-027#poblacion",
+      "ordinal": 10,
+      "section": "Datos generales",
+      "claimType": "context",
+      "text": "La Vela tiene 34.680 habitantes (2020); a sus habitantes se les llama veleños y veleñas.",
+      "assistantScopes": [
+        "tourist"
+      ],
+      "topics": [
+        "La Vela de Coro",
+        "población"
+      ],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cuántos habitantes tiene La Vela de Coro?",
+        "¿Cómo se llaman los habitantes de La Vela?",
+        "¿Cuál es el gentilicio de La Vela?"
+      ],
+      "checksum": "29E6C78315EF793D4F7FDA8A7A14CE5E8163CC842515A8358BB56E1E770B2D53"
+    }
+  ]
+}

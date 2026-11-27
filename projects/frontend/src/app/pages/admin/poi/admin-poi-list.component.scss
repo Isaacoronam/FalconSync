@@ -1,0 +1,14 @@
+.admin-table__date {
+  min-width: 9.5rem;
+  white-space: nowrap;
+}
+
+.admin-actions__confirm {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  color: var(--terracotta-dark);
+  font-size: 0.74rem;
+  font-weight: 700;
+}

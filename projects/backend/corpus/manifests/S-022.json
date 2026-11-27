@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-022",
+    "title": "Preguntas frecuentes de FALCONSYNC y alcance de la guía (V3)",
+    "institution": "Proyecto FALCONSYNC",
+    "version": "V3 2026-11-26: mapa real y Ruta del Casco Histórico; parte de la V2 activada el 2026-11-23",
+    "retrievedAt": "2026-11-22T00:00:00.000Z",
+    "verifiedAt": "2026-11-23T00:00:00.000Z",
+    "level": "C",
+    "sourceLabel": "Documentación del proyecto",
+    "usagePolicy": "context",
+    "indexingPolicy": "full_text",
+    "credibilityNotes": "Redacción del proyecto sobre sus funciones y sobre el alcance de la guía. No es una fuente independiente. Activación instruida por el responsable del proyecto el 2026-11-23 y registrada con la verificación de derechos del historiador del proyecto.",
+    "license": "Contenido interno de FALCONSYNC; atribución al propio sistema.",
+    "rights": "Uso como contexto interno del proyecto. Nunca presentar como fuente independiente. Activación registrada el 2026-11-23 con verificación de derechos por el historiador del proyecto.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-23T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": ["FALCONSYNC", "uso de la guía"],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-022#faq.que-es",
+      "ordinal": 0,
+      "section": "Qué es FALCONSYNC",
+      "text": "FALCONSYNC es una plataforma digital para promover, gestionar y seguir el patrimonio turístico de Coro. Reúne un mapa interactivo, un catálogo de lugares, check-ins por geolocalización y visitas 360°.",
+      "assistantScopes": ["tourist"],
+      "topics": ["FALCONSYNC"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué es FALCONSYNC?",
+        "¿Para qué sirve FALCONSYNC?",
+        "¿Qué es esta aplicación?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.mapa",
+      "ordinal": 1,
+      "section": "Mapa interactivo",
+      "text": "El mapa interactivo muestra los lugares publicados de Coro y permite filtrar por categoría. La geolocalización se usa en el check-in cuando compartes tu ubicación.",
+      "assistantScopes": ["tourist"],
+      "topics": ["FALCONSYNC", "mapa"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué puedo ver en el mapa?",
+        "¿Cómo funciona el mapa?",
+        "¿Dónde veo los lugares en el mapa?",
+        "¿Cómo puedo ver el turismo de Coro?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.catalogo",
+      "ordinal": 2,
+      "section": "Catálogo de lugares",
+      "text": "El catálogo reúne los puntos de interés publicados, con su categoría y su dirección registrada.",
+      "assistantScopes": ["tourist"],
+      "topics": ["FALCONSYNC", "catálogo"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué lugares tiene FALCONSYNC?",
+        "¿Qué lugares puedo visitar en Coro?",
+        "¿Dónde puedo ver la lista de lugares?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.checkin",
+      "ordinal": 3,
+      "section": "Check-in",
+      "text": "El check-in se hace en el lugar. La aplicación comprueba que estés dentro de un radio del punto, que por defecto es de 50 metros y puede ser distinto en cada lugar. También puede usar un código QR del lugar.",
+      "assistantScopes": ["tourist"],
+      "topics": ["FALCONSYNC", "check-in"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Cómo hago check-in?",
+        "¿Qué es el check-in?",
+        "¿Cómo funciona el check-in con QR?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.visitas-360",
+      "ordinal": 4,
+      "section": "Visitas 360°",
+      "text": "Algunos lugares tienen visitas 360° que se pueden recorrer desde el navegador, con puntos de interés que se pueden explorar dentro de la panorámica.",
+      "assistantScopes": ["tourist"],
+      "topics": ["FALCONSYNC", "visitas 360°"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Hay visitas 360°?",
+        "¿Qué es una visita 360°?",
+        "¿Puedo ver lugares en 360 grados?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.insignias",
+      "ordinal": 5,
+      "section": "Insignias",
+      "text": "Las insignias se obtienen al completar visitas y participar en la aplicación. La aplicación también muestra métricas de actividad.",
+      "assistantScopes": ["tourist"],
+      "topics": ["FALCONSYNC", "insignias"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué son las insignias?",
+        "¿Cómo gano insignias?",
+        "¿Para qué sirven las insignias?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.alcance",
+      "ordinal": 6,
+      "section": "Alcance de la guía",
+      "text": "Esta guía responde preguntas sobre el patrimonio de Coro, los lugares publicados y FALCONSYNC, usando solo información registrada o verificada. No reemplaza una visita guiada.",
+      "assistantScopes": ["tourist"],
+      "topics": ["FALCONSYNC", "uso de la guía"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué puedes responder?",
+        "¿Qué tipo de preguntas puedo hacer?",
+        "¿Esta guía reemplaza una visita guiada?"
+      ]
+    },
+    {
+      "chunkKey": "S-022#faq.ruta-casco",
+      "ordinal": 7,
+      "section": "Ruta del Casco Histórico",
+      "text": "La Ruta del Casco Histórico de Coro es un recorrido peatonal recomendado de cinco paradas: Catedral de Coro, Casa de las Ventanas de Hierro, Casa del Sol, Plaza Bolívar y Arco de la Federación. Dura aproximadamente 120 minutos y es de dificultad fácil. Es una recomendación, no una ruta oficial ni una navegación paso a paso.",
+      "claimType": "tourism",
+      "assistantScopes": ["tourist"],
+      "topics": ["rutas", "recorrido", "casco histórico"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué rutas turísticas recomiendas en Coro?",
+        "¿Cuál es la Ruta del Casco Histórico de Coro?",
+        "¿Qué puedo visitar en dos horas en el casco histórico?",
+        "¿Qué recorridos peatonales hay?"
+      ]
+    }
+  ]
+}

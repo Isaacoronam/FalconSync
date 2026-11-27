@@ -1,0 +1,230 @@
+<section class="map-hero" aria-labelledby="map-title">
+  <div class="map-hero__copy">
+    <p class="map-hero__eyebrow">CoroMap · Geonodo histórico</p>
+    <h1 id="map-title">El patrimonio de Coro, <em>en su territorio</em></h1>
+    <p class="map-hero__lead">
+      Explora los hitos del casco histórico y su entorno natural. Cada punto reúne contexto
+      arquitectónico, periodo histórico y la fuente del dato cartográfico.
+    </p>
+  </div>
+
+  <div class="map-hero__stats" aria-label="Resumen del mapa">
+    <span class="map-hero__stat">
+      <strong>{{ total() }}</strong>
+      lugares registrados
+    </span>
+    <span class="map-hero__badge">Datos abiertos</span>
+  </div>
+</section>
+
+<section class="map-layout">
+  <aside class="map-panel" aria-label="Filtros y listado de lugares">
+    <div class="map-panel__section">
+      <h2>Explorar por categoría</h2>
+      <div class="filter-list" role="group" aria-label="Filtrar por categoría">
+        @for (category of categories; track category.value) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.filter-chip--active]="selectedCategory() === category.value"
+            [attr.aria-pressed]="selectedCategory() === category.value"
+            (click)="selectCategory(category.value)"
+          >
+            {{ category.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="map-panel__section map-panel__section--list">
+      <div class="map-panel__heading">
+        <h2>Puntos de interés</h2>
+        <span class="map-panel__count">{{ total() }}</span>
+      </div>
+
+      @if (loading()) {
+        <app-page-skeleton variant="list" label="Cargando lugares…" [rows]="5" />
+      } @else if (error()) {
+        <div class="state state--error">
+          <p>{{ error() }}</p>
+          <button type="button" class="state__retry" (click)="loadLocations()">Reintentar</button>
+        </div>
+      } @else if (!hasLocations()) {
+        <p class="state">No hay lugares para estos filtros.</p>
+      } @else {
+        <ul class="location-list">
+          @for (location of locations(); track location.id) {
+            <li>
+              <button type="button" class="location-card" (click)="focusLocation(location)">
+                <span class="location-card__media">
+                  <span
+                    class="location-card__dot"
+                    [class]="['location-card__dot', 'location-card__dot--' + location.category]"
+                    aria-hidden="true"
+                  ></span>
+                  @if (location.images.length) {
+                    <img
+                      class="location-card__thumb"
+                      [src]="location.images[0]"
+                      alt=""
+                      width="56"
+                      height="56"
+                      loading="lazy"
+                      (error)="hideBrokenThumbnail($event)"
+                    />
+                  }
+                </span>
+                <span class="location-card__body">
+                  <span class="location-card__title">{{ location.title }}</span>
+                  <span class="location-card__meta">
+                    {{ categoryLabel(location.category) }}
+                    @if (location.circuits.length) {
+                      · {{ circuitLabel(location.circuits[0]) }}
+                    }
+                    @if (location.historicalPeriod) {
+                      · {{ location.historicalPeriod }}
+                    }
+                  </span>
+                </span>
+                <svg
+                  class="location-card__arrow"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M5 12h13M13 6l6 6-6 6" />
+                </svg>
+              </button>
+              <a class="location-card__detail-link" [routerLink]="['/lugares', location.slug]">
+                Leer historia
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </aside>
+
+  <div class="map-stage" [class.map-stage--tour]="tourState() !== 'closed'">
+    <div
+      id="coro-map"
+      class="map-canvas"
+      role="application"
+      aria-label="Mapa interactivo del patrimonio de Coro"
+    ></div>
+
+    @if (tourState() !== 'closed') {
+      <section class="map-tour" aria-label="Visita 360° integrada al mapa">
+        <header class="map-tour__header">
+          <div>
+            <p class="map-tour__eyebrow">CoroMap · vista inmersiva</p>
+            <h2>
+              {{ activePanorama()?.title ?? tourLocation()?.title ?? 'Visita 360°' }}
+            </h2>
+          </div>
+          <button
+            type="button"
+            class="map-tour__close"
+            aria-label="Cerrar visor 360° y mostrar solo el mapa"
+            title="Cerrar el visor 360° y mostrar solo el mapa"
+            (click)="closeTour()"
+          >
+            Ver solo el mapa
+          </button>
+        </header>
+
+        @switch (tourState()) {
+          @case ('loading') {
+            <app-page-skeleton variant="list" label="Cargando escenas publicadas…" [rows]="2" />
+          }
+          @case ('empty') {
+            <div class="map-tour__state">
+              <h3>Este lugar aún no tiene una escena 360° publicada</h3>
+              <p>
+                El mapa sigue disponible. La escena aparecerá aquí cuando exista una panorámica real
+                con derechos verificados y aprobación editorial.
+              </p>
+            </div>
+          }
+          @case ('error') {
+            <div class="map-tour__state map-tour__state--error" role="alert">
+              <p>{{ tourError() }}</p>
+              @if (tourLocation(); as location) {
+                <button
+                  type="button"
+                  class="map-tour__retry"
+                  (click)="openLocationPanoramas(location)"
+                >
+                  Reintentar
+                </button>
+              }
+            </div>
+          }
+          @case ('choices') {
+            <div class="map-tour__choices">
+              <p>Elige una escena de este lugar:</p>
+              <ul>
+                @for (panorama of availablePanoramas(); track panorama.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="map-tour__choice"
+                      (click)="selectPanorama(panorama.id)"
+                    >
+                      <span>{{ panorama.title }}</span>
+                      <small>{{ panorama.credits }}</small>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+          @case ('active') {
+            @if (activePanorama(); as scene) {
+              @for (viewerScene of [scene]; track viewerScene.id) {
+                <app-panorama-viewer
+                  [imageUrl]="viewerScene.imageUrl"
+                  [fallbackUrl]="viewerScene.thumbnailUrl"
+                  [fallbackAlt]="viewerScene.fallback.alt"
+                  [fallbackDescription]="viewerScene.fallback.description"
+                  [hotspots]="viewerScene.hotspots"
+                  [credits]="viewerScene.credits"
+                  [embeddedNavigation]="true"
+                  (sceneRequested)="requestPanoramaScene($event)"
+                  (locationRequested)="requestPanoramaLocation($event)"
+                />
+                <p class="map-tour__rights">
+                  {{ viewerScene.credits }}
+                  @if (viewerScene.licenseUrl) {
+                    ·
+                    <a [href]="viewerScene.licenseUrl" target="_blank" rel="noopener noreferrer">
+                      {{ viewerScene.license }}
+                    </a>
+                  } @else {
+                    · {{ viewerScene.license }}
+                  }
+                </p>
+              }
+            }
+          }
+        }
+      </section>
+    }
+
+    <div class="map-stage__actions">
+      <button
+        type="button"
+        class="map-stage__action"
+        title="Ajustar el mapa al límite operativo del estado Falcón"
+        (click)="showFalconOverview()"
+      >
+        Ver todo Falcón
+      </button>
+    </div>
+    @if (tourState() === 'closed' && !popupOpen()) {
+      <div class="map-stage__overlay" aria-hidden="true">
+        <span class="map-stage__hint">Selecciona un punto para ver su ficha</span>
+      </div>
+    }
+  </div>
+</section>

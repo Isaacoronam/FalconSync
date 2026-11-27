@@ -1,19 +1,24 @@
 # Base de conocimiento — Unidades 2 a 7
 
-Esta carpeta contiene la transcripción estructurada y fiel de los materiales académicos de la asignatura.
+Esta carpeta contiene los materiales fuente originales recibidos para las Unidades 2 a 7.
+Las transcripciones estructuradas están en la carpeta superior: `../unidad-02.md` a
+`../unidad-07.md`.
 
-## Archivos esperados
+## Material disponible
 
-- `unidad-02.md`
-- `unidad-03.md`
-- `unidad-04.md`
-- `unidad-05.md`
-- `unidad-06.md`
-- `unidad-07.md`
-
-Los PDFs/DOCX originales deben colocarse en `fuentes/`. Los documentos de trabajo deben prepararse usando `plantillas/plantilla-unidad.md`.
+- `UNIDAD #2 AYDS.pdf`
+- `UNIDAD #3 DS.pdf`
+- `UNIDAD #4 PS.pdf`
+- `UNIDAD #5 DOS.docx`
+- `UNIDAD #6 DPS.pdf`
+- `UNIDAD #7 SSS.pdf`
 
 **Unidad 1:** no proporcionada. No crear un documento ficticio ni inferir su contenido.
+
+Las transcripciones `unidad-02.md` a `unidad-07.md` se elaboraron a partir de estos
+originales. Deben conservar fielmente su contenido, registrar páginas/secciones y separar
+cualquier complemento externo. No afirmes que se consultó una fuente si no se pudo leer o
+verificar su contenido.
 
 ## Reglas de fidelidad
 

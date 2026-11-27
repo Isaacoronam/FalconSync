@@ -1,0 +1,114 @@
+{
+  "corpusVersion": "2026-11-22.1",
+  "date": "2026-11-26",
+  "environment": "MongoDB replica set local falconsyncTest en 127.0.0.1:27018, base temporal falconsync_rag_eval",
+  "dataset": "projects/backend/corpus/evaluation/rag-golden-v5.json",
+  "report": "projects/backend/corpus/evaluation/rag-golden-v5-report.json",
+  "sampleSize": 146,
+  "embeddingModel": "Xenova/paraphrase-multilingual-MiniLM-L12-v2@q8",
+  "minSimilarity": 0.6,
+  "metrics": {
+    "poiAccuracy": 1,
+    "clarificationAccuracy": 1,
+    "abstentionAccuracy": 1,
+    "sourceHit": 0.9217877094972067,
+    "citationValidity": 1,
+    "fallbackExact": 1,
+    "suggestionsComplete": 1,
+    "invalidCitations": 0,
+    "latencyP50Ms": 30,
+    "latencyP95Ms": 110
+  },
+  "unmetTargets": [],
+  "failures": 0,
+  "scope": {
+    "tourist": "enabled",
+    "technical": "disabled"
+  },
+  "sources": [
+    "S-002",
+    "S-003",
+    "S-020",
+    "S-021",
+    "S-022",
+    "S-024",
+    "S-025",
+    "S-026",
+    "S-027",
+    "S-028",
+    "S-029",
+    "S-030",
+    "S-031",
+    "S-032"
+  ],
+  "declaredAsDraft": [],
+  "excludedSources": ["S-005", "S-023"],
+  "corpus": {
+    "sourceCount": 14,
+    "chunkCount": 133,
+    "note": "S-022 pasa a la V3 con 8 fragmentos: corrige el alcance del mapa y añade la Ruta del Casco Histórico como recomendación."
+  },
+  "caseComposition": {
+    "v4CarriedOver": 134,
+    "correctedExpectations": ["p-18", "p-45", "p-48", "oos-07"],
+    "newCases": 12,
+    "newCaseCategories": {
+      "identidad_ciudad": 2,
+      "poi_overview": 1,
+      "compound": 2,
+      "orientacion": 5,
+      "dataset_cultura": 2
+    },
+    "total": 146
+  },
+  "v4Frozen": {
+    "dataset": "projects/backend/corpus/evaluation/rag-golden-v4.json",
+    "report": "projects/backend/corpus/evaluation/rag-golden-v4-postfix-report.json",
+    "sampleSize": 134,
+    "failures": 2,
+    "failureIds": ["p-45", "p-48"],
+    "reason": "V4 premiaba respuestas tangenciales para visitas nocturnas y estacionamiento. V5 corrige esas expectativas a abstención; V4 se conserva sin editar."
+  },
+  "categoryBreakdown": {
+    "adversarial": "3/3",
+    "ambiguity": "2/2",
+    "arquitectura_tierra": "1/1",
+    "compound": "8/8",
+    "dataset_atractivos": "10/10",
+    "dataset_cultura": "12/12",
+    "dataset_logistica": "10/10",
+    "dataset_normativa": "10/10",
+    "dataset_robustez": "10/10",
+    "follow_up": "3/3",
+    "heritage": "6/6",
+    "hueque_unpublished": "1/1",
+    "identidad_ciudad": "4/4",
+    "multi_source": "1/1",
+    "orientacion": "6/6",
+    "out_of_scope": "9/9",
+    "paraphrase": "10/10",
+    "poi_detail": "2/2",
+    "poi_overview": "25/25",
+    "poi_paraphrase": "2/2",
+    "product": "7/7",
+    "producto": "2/2",
+    "saludo": "2/2"
+  },
+  "behaviorChanges": [
+    "«ciudad» y «Coro» no cuentan como señales suficientes para atribuir un POI; «¿Qué es la ciudad?» no responde con Ciudad Deportiva.",
+    "Las preguntas dobles y triples se dividen por «?», comas o conectores interrogativos, y cada parte resuelve su POI y compone su texto en orden.",
+    "Las partes elípticas («su horario», «cómo se obtienen») usan la selección de la pregunta completa para no perder el sujeto.",
+    "Las intenciones de ruta, estacionamiento, transporte, distancia y visitas nocturnas exigen evidencia del aspecto preguntado; si falta, se abstienen con un mensaje específico.",
+    "Una pregunta «¿Qué es la Casa X?» sin POI resuelto y sin la palabra distintiva en la evidencia se abstiene en lugar de responder con otra ficha parecida.",
+    "El aviso «Historia, horarios y estado actual no están verificados» se retira cuando la respuesta aporta un horario o estado actual.",
+    "Las preguntas de precio sin fuente usan un mensaje de precios, no de horarios.",
+    "S-022 corrige el alcance del mapa y añade la Ruta del Casco Histórico como recomendación, no como navegación paso a paso."
+  ],
+  "limitations": [
+    "El asistente técnico sigue cerrado; S-005 y S-023 permanecen en borrador.",
+    "sourceHit es 0.91: algunas expectativas piden más fuentes de las que caben en el máximo de citas; no hay fallos de caso.",
+    "Los horarios solo se responden donde hay fuente publicada: MUCOR (S-030) y misas de la Catedral (S-031); el resto se abstiene.",
+    "La Ruta del Casco Histórico es una recomendación con paradas, no una ruta giro a giro ni un cálculo por calles.",
+    "La reingesta de S-022 en la base de desarrollo requiere un historiador activo que verifique derechos; el manifiesto y la evaluación aislada ya están actualizados."
+  ]
+}

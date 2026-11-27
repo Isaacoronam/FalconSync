@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sourceId": "S-031",
+    "title": "Catedral Basílica Menor de Santa Ana de Coro — horario de misas (catholic.net)",
+    "institution": "Catholic.net (artículo de José Manuel Goméz, fuente coroweb.com)",
+    "version": "Artículo consultado el 2026-11-24; sin fecha de publicación",
+    "retrievedAt": "2026-11-24T00:00:00.000Z",
+    "verifiedAt": "2026-11-24T00:00:00.000Z",
+    "url": "https://es.catholic.net/op/articulos/2374/catedral-baslica-menor-de-santa-ana.html",
+    "level": "C",
+    "sourceLabel": "Referencia",
+    "usagePolicy": "context",
+    "indexingPolicy": "short_quotes_only",
+    "credibilityNotes": "Portal católico con artículo sin fecha de publicación que cita a coroweb.com; el horario de misas es un dato cambiante, por lo que se ofrece como referencia publicada, no como calendario vigente. Sin licencia abierta: uso limitado a cita breve con atribución y enlace. Confirmar con la parroquia antes de la visita. Incorporación instruida por el responsable del proyecto el 2026-11-24.",
+    "license": "Sin licencia abierta declarada; uso como referencia con cita breve, atribución y enlace al artículo.",
+    "rights": "Incorporado por instrucción del responsable del proyecto (2026-11-24) para la guía turística. Cita breve (<=25 palabras) con atribución a Catholic.net y enlace. Uso informativo; no presentar como horario oficial confirmado.",
+    "rightsVerified": true,
+    "rightsVerifiedAt": "2026-11-24T00:00:00.000Z",
+    "rightsVerifiedBy": "6aee4b03d9a54453e896062c",
+    "accessLevel": "public",
+    "language": "es",
+    "topics": [
+      "horarios",
+      "Catedral de Coro",
+      "misas"
+    ],
+    "poiSlugs": [],
+    "status": "active"
+  },
+  "chunks": [
+    {
+      "chunkKey": "S-031#catedral-misas",
+      "ordinal": 0,
+      "section": "Horario de Misas",
+      "text": "Horario de misas publicado para la Catedral de Coro: lunes a sábado a las 6 p.m. y domingo a las 7:30 a.m. y 6:00 p.m.",
+      "claimType": "current_status",
+      "assistantScopes": ["tourist"],
+      "topics": ["horarios", "misas", "Catedral de Coro"],
+      "poiSlugs": [],
+      "questions": [
+        "¿A qué hora son las misas en la Catedral de Coro?",
+        "¿Cuál es el horario de misas de la Catedral?",
+        "¿Cuándo se celebran misas en la Catedral de Coro?"
+      ]
+    },
+    {
+      "chunkKey": "S-031#catedral-retreta",
+      "ordinal": 1,
+      "section": "Horario de Misas",
+      "text": "Todos los domingos después de la misa de la tarde toca la Banda Sinfónica Juan Crisóstomo Falcón en la Plaza Bolívar.",
+      "assistantScopes": ["tourist"],
+      "topics": ["tradición", "Plaza Bolívar", "banda"],
+      "poiSlugs": [],
+      "questions": [
+        "¿Qué pasa los domingos en la Plaza Bolívar de Coro?",
+        "¿Hay música en vivo los domingos en Coro?",
+        "¿Quién toca en la Plaza Bolívar los domingos?"
+      ]
+    }
+  ]
+}
