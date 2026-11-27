@@ -43,7 +43,7 @@
       }
 
       @if (queueLoading() && queueReports().length === 0) {
-        <p class="conservation-state">Cargando la cola de triaje…</p>
+        <app-page-skeleton variant="table" label="Cargando la cola de triaje…" [rows]="4" />
       } @else if (queueReports().length === 0) {
         <div class="conservation-empty">
           <p>No hay reportes pendientes de triaje.</p>
@@ -305,7 +305,7 @@
     }
 
     @if (loading() && inspections().length === 0) {
-      <p class="conservation-state">Cargando inspecciones…</p>
+      <app-page-skeleton variant="table" label="Cargando inspecciones…" [rows]="6" />
     } @else if (inspections().length === 0) {
       <div class="conservation-empty">
         <p>No hay inspecciones con este filtro.</p>

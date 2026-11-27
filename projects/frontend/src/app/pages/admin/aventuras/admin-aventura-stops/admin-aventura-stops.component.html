@@ -9,7 +9,7 @@
 }
 
 @if (loading()) {
-  <p>Cargando paradas…</p>
+  <app-page-skeleton variant="list" label="Cargando paradas…" [rows]="5" />
 } @else {
   <section class="stops-actions">
     @if (!adding()) {

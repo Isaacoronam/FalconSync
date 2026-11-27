@@ -124,7 +124,8 @@ pm2 logs falconsync-telegram
 ## 6. Acceso desde la web
 
 - El chat de `/guia` muestra una franja al pie, solo en modo turista, con el enlace
-  `https://t.me/Falconsync_bot`.
+  `https://t.me/Falconsync_bot`. El botón incluye el icono de Telegram (Simple Icons, CC0) en un
+  círculo blanco, nombre accesible «Abrir @Falconsync_bot en Telegram» y ancho completo en móvil.
 - El perfil, tras generar el código, ofrece «Abrir en Telegram» con el deep link
   `https://t.me/Falconsync_bot?start=CODIGO`. El bot interpreta el payload de `/start`
   y canjea el código sin que la persona tenga que copiarlo.

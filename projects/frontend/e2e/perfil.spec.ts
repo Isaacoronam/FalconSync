@@ -23,19 +23,21 @@ async function crearUsuario(request: APIRequestContext): Promise<{
   email: string;
   password: string;
   name: string;
+  surname: string;
 }> {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   return {
     email: `perfil-${suffix}@e2e.local`,
     password: EXPLORER_PASSWORD,
-    name: `Explorador Perfil ${suffix.slice(-4)}`,
+    name: 'Explorador',
+    surname: 'Perfil',
   };
 }
 
 async function registrarUsuario(
   request: APIRequestContext,
-  usuario: { email: string; password: string; name: string },
+  usuario: { email: string; password: string; name: string; surname: string },
 ): Promise<void> {
   const registro = await request.post(`${BACKEND_URL}/api/auth/register`, {
     data: usuario,
@@ -147,7 +149,7 @@ test('perfil privado: edita datos, sube avatar, registra check-in con foto e ins
   await expect(page.locator('.perfil__usuario')).toContainText('@');
   await expect(page.locator('.perfil__chivito')).toContainText('Chivito');
 
-  await page.locator('#perfil-nombre').fill('Cronista E2E');
+  await page.locator('#perfil-nombre').fill('Cronista Local');
   await page.locator('#perfil-usuario').fill('cronista.e2e');
   await page
     .locator('#perfil-bio')
@@ -155,9 +157,9 @@ test('perfil privado: edita datos, sube avatar, registra check-in con foto e ins
   await page.getByRole('button', { name: 'Guardar cambios' }).click();
 
   await expect(page.locator('.form-message--success')).toContainText('Perfil actualizado.');
-  await expect(page.locator('h1')).toContainText('Cronista E2E');
+  await expect(page.locator('h1')).toContainText('Cronista Local');
   await expect(page.locator('.perfil__usuario')).toContainText('@cronista.e2e');
-  await expect(page.locator('.site-nav__user')).toContainText('Cronista E2E');
+  await expect(page.locator('.site-nav__user')).toContainText('Cronista Local');
 
   await page.locator('#perfil-avatar').setInputFiles({
     name: 'avatar-e2e.png',

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PanoramaViewerComponent } from '../../../components/panoramas/panorama-viewer/panorama-viewer.component';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdminPanoramaDetail } from '../../../models/panorama.model';
 import { AuthService } from '../../../services/auth.service';
 import { PanoramaApiService } from '../../../services/panorama-api.service';
@@ -20,7 +21,7 @@ type TransitionAction = 'approve' | 'publish' | 'archive';
 
 @Component({
   selector: 'app-admin-panorama-detail',
-  imports: [RouterLink, PanoramaViewerComponent],
+  imports: [RouterLink, PanoramaViewerComponent, PageSkeletonComponent],
   templateUrl: './admin-panorama-detail.component.html',
   styleUrl: './admin-panorama-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

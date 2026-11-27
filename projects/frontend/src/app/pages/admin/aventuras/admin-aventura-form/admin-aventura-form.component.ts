@@ -9,6 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdventureApiService } from '../../../../services/adventure-api.service';
 import {
   Adventure,
@@ -28,7 +29,7 @@ const DIFFICULTY_OPTIONS = ADVENTURE_DIFFICULTIES.map((value) => ({
 
 @Component({
   selector: 'app-admin-aventura-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './admin-aventura-form.component.html',
   styleUrl: './admin-aventura-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

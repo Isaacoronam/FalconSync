@@ -29,7 +29,7 @@
   }
 
   @if (loading()) {
-    <p class="admin-state" role="status">Cargando el panorama…</p>
+    <app-page-skeleton variant="form" label="Cargando el panorama…" />
   } @else {
     <form class="admin-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <fieldset class="admin-panel admin-fieldset">

@@ -43,7 +43,7 @@
       </div>
 
       @if (loading()) {
-        <p class="state">Cargando lugares…</p>
+        <app-page-skeleton variant="list" label="Cargando lugares…" [rows]="5" />
       } @else if (error()) {
         <div class="state state--error">
           <p>{{ error() }}</p>
@@ -86,7 +86,14 @@
                     }
                   </span>
                 </span>
-                <span class="location-card__arrow" aria-hidden="true">→</span>
+                <svg
+                  class="location-card__arrow"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M5 12h13M13 6l6 6-6 6" />
+                </svg>
               </button>
               <a class="location-card__detail-link" [routerLink]="['/lugares', location.slug]">
                 Leer historia
@@ -128,7 +135,7 @@
 
         @switch (tourState()) {
           @case ('loading') {
-            <p class="map-tour__state" role="status">Cargando escenas publicadas…</p>
+            <app-page-skeleton variant="list" label="Cargando escenas publicadas…" [rows]="2" />
           }
           @case ('empty') {
             <div class="map-tour__state">

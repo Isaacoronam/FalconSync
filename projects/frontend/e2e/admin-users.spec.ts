@@ -22,10 +22,12 @@ test('cambia rol, estado y revoca sesiones de una cuenta', async ({
 }) => {
   const stamp = Date.now();
   const email = `cuenta-${stamp}@example.com`;
-  const name = `Cuenta E2E ${stamp}`;
+  const name = 'Cuenta';
+  const surname = 'Prueba';
+  const displayName = 'Cuenta Prueba';
 
   const registered = await request.post('/api/auth/register', {
-    data: { name, email, password: USER_PASSWORD },
+    data: { name, surname, email, password: USER_PASSWORD },
   });
 
   expect(registered.ok()).toBeTruthy();
@@ -42,7 +44,7 @@ test('cambia rol, estado y revoca sesiones de una cuenta', async ({
   await expect(row).toHaveCount(1);
   await expect(row).toContainText('Turista');
 
-  await row.getByRole('button', { name: `Cambiar rol de ${name}` }).click();
+  await row.getByRole('button', { name: `Cambiar rol de ${displayName}` }).click();
 
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
@@ -53,7 +55,7 @@ test('cambia rol, estado y revoca sesiones de una cuenta', async ({
   await expect(page.locator('.form-success')).toContainText('Rol');
   await expect(row).toContainText('Historiador');
 
-  await row.getByRole('button', { name: `Desactivar a ${name}` }).click();
+  await row.getByRole('button', { name: `Desactivar a ${displayName}` }).click();
   await expect(dialog).toBeVisible();
   await dialog.locator('#account-password').fill(ADMIN_PASSWORD);
   await dialog.getByRole('button', { name: 'Desactivar cuenta' }).click();
@@ -61,7 +63,7 @@ test('cambia rol, estado y revoca sesiones de una cuenta', async ({
   await expect(page.locator('.form-success')).toContainText('desactivada');
   await expect(row.locator('.admin-badge')).toContainText('Desactivado');
 
-  await row.getByRole('button', { name: `Activar a ${name}` }).click();
+  await row.getByRole('button', { name: `Activar a ${displayName}` }).click();
   await expect(dialog).toBeVisible();
   await dialog.locator('#account-password').fill(ADMIN_PASSWORD);
   await dialog.getByRole('button', { name: 'Activar cuenta' }).click();
@@ -70,7 +72,7 @@ test('cambia rol, estado y revoca sesiones de una cuenta', async ({
   await expect(row.locator('.admin-badge')).toContainText('Activo');
 
   await row
-    .getByRole('button', { name: `Revocar sesiones de ${name}` })
+    .getByRole('button', { name: `Revocar sesiones de ${displayName}` })
     .click();
   await expect(dialog).toBeVisible();
   await dialog.locator('#account-password').fill(ADMIN_PASSWORD);

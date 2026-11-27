@@ -183,6 +183,24 @@ El E2E usa por defecto la base `falconsync_e2e` en el replica set local
 `mongodb://127.0.0.1:27018` (`replicaSet=falconsyncTest`), porque conservación y
 evidencia requieren transacciones. Puedes sobrescribirlo con `E2E_MONGODB_URI`.
 
+Para ejecutar la guía con el corpus RAG real (incluye las pruebas del chatbot que se
+omiten en el modo rápido) usa:
+
+```bash
+npm run e2e:rag
+npm run verify:rag
+```
+
+`e2e:rag` fija `RAG_TOURIST_ENABLED=true` y `RAG_CORPUS_VERSION=e2e-2026-11-26`, ingiere
+S-033 y ejecuta las pruebas de los 23 lugares. El modo por defecto sigue sin corpus para
+mantener `verify` rápido y determinista.
+
+Para activar S-033 en una base con un administrador operativo y un historiador activo:
+
+```bash
+npm --prefix projects/backend run rag:apply-poi
+```
+
 El workflow de CI (`.github/workflows/ci.yml`) se ejecuta en push y PR a `develop`, `main` y
 `master`, inicia un replica set de MongoDB y reproduce las auditorías, pruebas, build y E2E.
 La ejecución remota requiere publicar la rama o el PR; hasta entonces se considera

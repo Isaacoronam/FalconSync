@@ -86,7 +86,11 @@ npm run test:backend
 npm run test:frontend
 npm run build
 npm run e2e
+npm run e2e:rag
 ```
+
+`e2e:rag` requiere el modelo local de embeddings y tarda más porque ingiere el corpus S-033.
+Ejecútalo cuando el cambio toque el chatbot, el corpus o las fichas de los 23 lugares.
 
 Si la tarea es de documentación o configuración, ajusta la validación según el alcance del cambio.
 

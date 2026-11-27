@@ -49,7 +49,8 @@ function unique(prefix) {
 async function registerUser(prefix) {
   const email = `${unique(prefix)}@logros-test.local`;
   const response = await request(app).post('/api/auth/register').send({
-    name: `Usuario ${prefix}`,
+    name: 'Usuario',
+    surname: prefix,
     email,
     password: PASSWORD,
   });

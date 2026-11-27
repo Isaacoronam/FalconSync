@@ -8,6 +8,7 @@ export type UserRole =
 export interface AuthUser {
   id: string;
   name: string;
+  surname?: string | null;
   username?: string | null;
   email: string;
   role: UserRole;
@@ -40,6 +41,7 @@ export interface LoginPayload {
 
 export interface RegisterPayload {
   name: string;
+  surname: string;
   email: string;
   password: string;
 }

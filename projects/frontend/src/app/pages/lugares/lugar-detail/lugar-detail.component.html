@@ -1,5 +1,5 @@
 @if (loading()) {
-  <p class="lugar-state" role="status">Cargando la ficha del lugar…</p>
+  <app-page-skeleton variant="detail" label="Cargando la ficha del lugar…" [rows]="4" />
 } @else if (error() || !location()) {
   <section class="lugar-state lugar-state--error" role="alert">
     <h1>No se pudo encontrar este lugar</h1>
@@ -22,13 +22,32 @@
       @if (place.address) {
         <p class="lugar-article__address">{{ place.address }}</p>
       }
+      <div class="lugar-article__actions">
+        <button class="button button--primary button--small" type="button" (click)="share(place)">
+          Compartir este lugar
+        </button>
+        <a
+          class="button button--ghost button--small"
+          [href]="mapUrl(place)"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Ver ubicación en el mapa
+        </a>
+      </div>
+      @if (shareStatus()) {
+        <p class="lugar-article__share-status" role="status">{{ shareStatus() }}</p>
+      }
+      @if (shareError()) {
+        <p class="form-error" role="alert">{{ shareError() }}</p>
+      }
     </header>
 
     @if (place.images.length > 0) {
       <figure class="lugar-article__figure">
         <img
           [src]="place.images[0]"
-          [alt]="'Imagen de ' + place.title"
+          [alt]="'Vista principal de ' + place.title"
           fetchpriority="high"
           (error)="onImageError($event)"
         />
@@ -43,11 +62,53 @@
               · {{ imageCredit.license }}
             }
             @if (imageCredit.sourceUrl) {
-              · <a [href]="imageCredit.sourceUrl" target="_blank" rel="noopener noreferrer">Ver imagen original</a>
+              ·
+              <a [href]="imageCredit.sourceUrl" target="_blank" rel="noopener noreferrer"
+                >Ver imagen original</a
+              >
             }
           </figcaption>
         }
       </figure>
+
+      @if (galleryImages(place).length > 0) {
+        <section class="lugar-article__gallery" aria-labelledby="lugar-galeria">
+          <h2 id="lugar-galeria">Galería</h2>
+          <ul>
+            @for (image of galleryImages(place); track image; let index = $index) {
+              <li>
+                <figure>
+                  <img
+                    [src]="image"
+                    [alt]="'Vista ' + (index + 2) + ' de ' + place.title"
+                    loading="lazy"
+                    decoding="async"
+                    (error)="onImageError($event)"
+                  />
+                  @if (creditFor(place, image); as imageCredit) {
+                    <figcaption>
+                      @if (imageCredit.author) {
+                        {{ imageCredit.author }}
+                      } @else {
+                        Autoría pendiente de confirmar
+                      }
+                      @if (imageCredit.license) {
+                        · {{ imageCredit.license }}
+                      }
+                      @if (imageCredit.sourceUrl) {
+                        ·
+                        <a [href]="imageCredit.sourceUrl" target="_blank" rel="noopener noreferrer"
+                          >Ver original</a
+                        >
+                      }
+                    </figcaption>
+                  }
+                </figure>
+              </li>
+            }
+          </ul>
+        </section>
+      }
     }
 
     <section class="lugar-article__panoramas" aria-labelledby="lugar-panoramas">
@@ -105,6 +166,13 @@
 
     <div class="lugar-article__layout">
       <div class="lugar-article__story">
+        @if (place.whatIs) {
+          <section aria-labelledby="lugar-que-es">
+            <h2 id="lugar-que-es">Qué es este lugar</h2>
+            <p class="lugar-article__prose">{{ place.whatIs }}</p>
+          </section>
+        }
+
         @if (place.historicalStory) {
           <section aria-labelledby="lugar-historia">
             <h2 id="lugar-historia">Historia</h2>
@@ -139,7 +207,12 @@
         }
 
         @if (place.audioGuideUrl) {
-          <a class="button button--ghost" [href]="place.audioGuideUrl" target="_blank" rel="noopener noreferrer">
+          <a
+            class="button button--ghost"
+            [href]="place.audioGuideUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Escuchar audioguía
           </a>
         }
@@ -147,9 +220,16 @@
         @if (place.contentSources?.length) {
           <section class="lugar-article__sources" aria-labelledby="lugar-fuentes">
             <h2 id="lugar-fuentes">Fuentes históricas y lecturas</h2>
+            @if (reviewedAt(place); as reviewed) {
+              <p class="lugar-article__reviewed">Contenido revisado el {{ reviewed }}.</p>
+            }
             <ul>
               @for (source of place.contentSources ?? []; track source) {
-                <li><a [href]="source" target="_blank" rel="noopener noreferrer">{{ source }}</a></li>
+                <li>
+                  <a [href]="source" target="_blank" rel="noopener noreferrer">
+                    {{ sourceHost(source) }}
+                  </a>
+                </li>
               }
             </ul>
           </section>
@@ -162,6 +242,9 @@
           <p><strong>Periodo:</strong> {{ place.historicalPeriod }}</p>
         }
         <p><strong>Conservación:</strong> {{ conservationLabels[place.conservationStatus] }}</p>
+        @if (reviewedAt(place); as reviewed) {
+          <p><strong>Ficha revisada:</strong> {{ reviewed }}</p>
+        }
         @if (place.tags.length > 0) {
           <div class="lugar-article__tags" aria-label="Temas">
             @for (tag of place.tags; track tag) {

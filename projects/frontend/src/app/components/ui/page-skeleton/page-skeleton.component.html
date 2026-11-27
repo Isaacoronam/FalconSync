@@ -1,0 +1,203 @@
+<div class="page-skeleton" aria-busy="true">
+  <p class="sr-only" role="status">{{ label() }}</p>
+
+  <div class="sk-visual" aria-hidden="true">
+    @switch (variant()) {
+      @case ('cards') {
+        <div class="sk-grid">
+          @for (item of items(); track item) {
+            <article class="sk-card">
+              <span class="sk sk--media"></span>
+              <div class="sk-card__body">
+                <span class="sk sk--line sk--w-35"></span>
+                <span class="sk sk--line sk--w-80"></span>
+                <span class="sk sk--line sk--w-60"></span>
+                <span class="sk sk--line sk--w-30"></span>
+              </div>
+            </article>
+          }
+        </div>
+      }
+
+      @case ('table') {
+        <div class="sk-table-shell">
+          <div class="sk-table">
+            <div class="sk-table__row sk-table__row--head">
+              @for (width of tableColumns; track $index) {
+                <span class="sk sk--line" [style.width.%]="width"></span>
+              }
+            </div>
+            @for (item of items(); track item) {
+              <div class="sk-table__row">
+                @for (width of tableColumns; track $index) {
+                  <span class="sk sk--line" [style.width.%]="width"></span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @case ('detail') {
+        <div class="sk-detail">
+          <div class="sk-detail__main">
+            <span class="sk sk--line sk--w-25"></span>
+            <span class="sk sk--title"></span>
+            <span class="sk sk--line sk--w-70"></span>
+            <span class="sk sk--media sk--media-lg"></span>
+            <span class="sk sk--line"></span>
+            <span class="sk sk--line"></span>
+            <span class="sk sk--line sk--w-80"></span>
+            <span class="sk sk--line sk--w-55"></span>
+          </div>
+          <aside class="sk-detail__aside">
+            <span class="sk sk--line sk--w-45"></span>
+            <span class="sk sk--line sk--w-80"></span>
+            <span class="sk sk--line sk--w-70"></span>
+            <span class="sk sk--button sk--button-wide"></span>
+            <span class="sk sk--line sk--w-60"></span>
+            <span class="sk sk--line sk--w-75"></span>
+          </aside>
+        </div>
+      }
+
+      @case ('dashboard') {
+        <div class="sk-dashboard">
+          <div class="sk-stats">
+            @for (item of [0, 1, 2, 3]; track item) {
+              <div class="sk-stat">
+                <span class="sk sk--line sk--w-60"></span>
+                <span class="sk sk--value"></span>
+                <span class="sk sk--line sk--w-80"></span>
+              </div>
+            }
+          </div>
+          <div class="sk-dashboard__columns">
+            <div class="sk-panel">
+              <span class="sk sk--line sk--w-35"></span>
+              <span class="sk sk--chart"></span>
+            </div>
+            <div class="sk-panel">
+              <span class="sk sk--line sk--w-45"></span>
+              @for (item of items(); track item) {
+                <span class="sk sk--line"></span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @case ('profile') {
+        <div class="sk-profile">
+          <div class="sk-profile__header">
+            <span class="sk sk--avatar"></span>
+            <div class="sk-profile__identity">
+              <span class="sk sk--line sk--w-25"></span>
+              <span class="sk sk--title sk--w-40"></span>
+              <span class="sk sk--line sk--w-30"></span>
+            </div>
+          </div>
+          <div class="sk-stats">
+            @for (item of [0, 1, 2, 3]; track item) {
+              <div class="sk-stat">
+                <span class="sk sk--line sk--w-55"></span>
+                <span class="sk sk--value"></span>
+              </div>
+            }
+          </div>
+          <div class="sk-dashboard__columns">
+            <div class="sk-panel">
+              <span class="sk sk--line sk--w-35"></span>
+              <span class="sk sk--line"></span>
+              <span class="sk sk--line sk--w-75"></span>
+            </div>
+            <div class="sk-panel">
+              <span class="sk sk--line sk--w-40"></span>
+              <span class="sk sk--line sk--w-85"></span>
+              <span class="sk sk--line sk--w-60"></span>
+            </div>
+          </div>
+        </div>
+      }
+
+      @case ('form') {
+        <div class="sk-form">
+          <span class="sk sk--line sk--w-25"></span>
+          <span class="sk sk--title sk--w-45"></span>
+          <div class="sk-form__row">
+            <span class="sk sk--field"></span>
+            <span class="sk sk--field"></span>
+          </div>
+          <span class="sk sk--field"></span>
+          <span class="sk sk--field sk--field-tall"></span>
+          <div class="sk-form__row">
+            <span class="sk sk--field"></span>
+            <span class="sk sk--field"></span>
+          </div>
+          <div class="sk-form__actions">
+            <span class="sk sk--button"></span>
+            <span class="sk sk--button sk--button-ghost"></span>
+          </div>
+        </div>
+      }
+
+      @case ('list') {
+        <div class="sk-list">
+          @for (item of items(); track item) {
+            <div class="sk-list__row">
+              <span class="sk sk--thumb"></span>
+              <div class="sk-list__body">
+                <span class="sk sk--line sk--w-55"></span>
+                <span class="sk sk--line sk--w-35"></span>
+              </div>
+              <span class="sk sk--line sk--w-12"></span>
+            </div>
+          }
+        </div>
+      }
+
+      @case ('map') {
+        <div class="sk-map">
+          <div class="sk-map__frame">
+            <span class="sk sk--map-pin"></span>
+            <span class="sk sk--map-pin sk--map-pin-alt"></span>
+          </div>
+          <aside class="sk-map__panel">
+            <span class="sk sk--line sk--w-45"></span>
+            <div class="sk-chips">
+              <span class="sk sk--chip"></span>
+              <span class="sk sk--chip"></span>
+              <span class="sk sk--chip"></span>
+            </div>
+            <div class="sk-list">
+              @for (item of items(); track item) {
+                <div class="sk-list__row">
+                  <span class="sk sk--thumb"></span>
+                  <div class="sk-list__body">
+                    <span class="sk sk--line sk--w-65"></span>
+                    <span class="sk sk--line sk--w-40"></span>
+                  </div>
+                </div>
+              }
+            </div>
+          </aside>
+        </div>
+      }
+
+      @case ('viewer') {
+        <div class="sk-viewer">
+          <div class="sk-viewer__frame">
+            <span class="sk sk--viewer-control"></span>
+            <span class="sk sk--viewer-control sk--viewer-control-right"></span>
+          </div>
+          <div class="sk-viewer__info">
+            <span class="sk sk--line sk--w-20"></span>
+            <span class="sk sk--title sk--w-50"></span>
+            <span class="sk sk--line"></span>
+            <span class="sk sk--line sk--w-70"></span>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

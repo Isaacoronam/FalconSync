@@ -217,6 +217,18 @@
   gap: 0.9rem;
 }
 
+.perfil__form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+@media (max-width: 560px) {
+  .perfil__form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .perfil__form textarea {
   width: 100%;
   min-height: 6rem;

@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |---|---|
-| Versión | 1.0 |
-| Fecha | 2026-11-25 |
+| Versión | 1.1 |
+| Fecha | 2026-11-26 |
 | Estado | Implementado en la SPA; derechos de las imágenes pendientes de registro formal |
 | Relacionados | [`REQUISITOS.md`](./REQUISITOS.md), [`WIREFRAMES.md`](./WIREFRAMES.md), [`AVENTURAS.md`](./AVENTURAS.md), [`ADR-008`](./ADR/ADR-008-identidad-chivito.md) |
 
@@ -56,6 +56,7 @@ Los tokens viven en `projects/frontend/src/styles.scss`:
 |---|---|---|
 | `--ink` | `#2b1a13` | Texto principal |
 | `--ink-soft` | `#5d4338` | Texto secundario |
+| `--muted` | `#6f5b50` | Texto atenuado; 5,98:1 sobre `--paper` y 4,62:1 sobre `--sand` |
 | `--paper` | `#fbf7ef` | Fondo base |
 | `--cream` | `#f6ecdc` | Superficies cálidas |
 | `--sand` | `#ead9bf` | Footer y separadores |
@@ -84,9 +85,35 @@ Reglas:
   se corte; el contenido queda sobre una base crema.
 - La capa es `position: fixed`, `pointer-events: none` y `z-index: -1` dentro de
   `.app-shell` con `isolation: isolate`; no intercepta clics ni scroll.
-- El panel de filtros del mapa usa una superficie translúcida (80 %) con desenfoque para
-  integrarse con el paisaje sin perder contraste.
+- El panel de filtros del mapa usa un gradiente translúcido (74 % arriba, 52 % abajo) con
+  desenfoque de 12 px para integrarse con el paisaje sin perder legibilidad. Si el navegador no
+  admite `backdrop-filter`, cae a una superficie opaca al 94 %.
 - En impresión se desactiva.
+
+### 4.1 Barra de navegación y carga
+
+- La barra es una superficie crema translúcida con `backdrop-filter`, borde cálido y sombra
+  suave. El elemento sticky es `app-site-header` —no la barra interna— porque su contenedor
+  abarca toda la página; así permanece visible durante el desplazamiento. Al hacer scroll
+  oscurece el fondo y gana sombra, sin animar altura ni padding.
+- La marca queda centrada. Los enlaces públicos van a la izquierda; las áreas por rol y la
+  cuenta, a la derecha. El CTA principal usa terracota y un círculo de flecha.
+- En móvil se sustituye por una marca compacta y una hoja `<dialog>` a pantalla completa
+  con filas de 48 px, cierre visible, Escape, clic en fondo y retorno de foco.
+- El skeleton de arranque se pinta desde `index.html` antes de Angular, con retardo visual
+  para evitar parpadeos y `role="status"` oculto. Las vistas usan `PageSkeletonComponent`
+  con variantes por tipo de contenido. El brillo se desplaza con `transform`, no con
+  `background-position`.
+- Las animaciones se limitan a `transform` y `opacity`; no se animan `width`, `height`,
+  `padding`, `top` ni otras propiedades de layout. Las transiciones de estado que solo
+  cambian color o sombra se mantienen puntuales y con propiedades explícitas.
+- `prefers-reduced-motion` desactiva shimmer, desplazamientos y transiciones no esenciales.
+- El contenido editorial del catálogo abre con un hero de una columna: título, entradilla y CTA,
+  sin *kicker*, tarjeta ni imagen decorativa. No se usan degradados decorativos ni imágenes sin
+  crédito.
+- No se añaden colores nuevos al sistema: se reutilizan `--paper`, `--cream`, `--line`, `--ink`,
+  `--terracotta` y `--gold`. El icono de Telegram conserva su azul de marca (`#229ED9`) dentro de
+  un círculo blanco.
 
 ## 5. Chivito en el chat
 
@@ -151,11 +178,17 @@ inventan nombres.
 | Tests de frontend | `npm run test:frontend` |
 | Build | `npm run build` |
 | Tests de backend | `npm run test:backend` (requiere MongoDB; conservation exige replica set en 27018) |
-| E2E identidad | `npm run e2e -- e2e/identidad.spec.ts e2e/brand.spec.ts e2e/guia.spec.ts` → 9/9 aprobadas (2026-11-25) |
-| E2E check-in | `npm run e2e -- e2e/coro-aventura.spec.ts` → 6/6 aprobadas, incluida la celebración y la ausencia de modal en duplicados (2026-11-25) |
+| E2E identidad | `npm run e2e -- e2e/identidad.spec.ts e2e/brand.spec.ts e2e/guia.spec.ts` → 9/9 aprobadas (2026-11-26) |
+| E2E check-in | `npm run e2e -- e2e/coro-aventura.spec.ts` → 6/6 aprobadas, incluida la celebración y la ausencia de modal en duplicados (2026-11-26) |
+| E2E navegación y carga | `npm run e2e -- e2e/navigation.spec.ts e2e/loading.spec.ts e2e/registro.spec.ts` → 8/8 aprobadas (2026-11-26) |
+| E2E catálogo enriquecido | `npm run e2e -- e2e/lugares.spec.ts` → 4/4 aprobadas: búsqueda, filtros, galería, compartir y móvil (2026-11-26) |
+| Verificación completa | `npm run verify` → backend 190, frontend 111, build y 42 E2E aprobadas + 6 omitidas por corpus RAG (2026-11-26) |
+| E2E con corpus RAG | `npm run e2e:rag` → 47 aprobadas + 1 omitida esperada; incluye los 23 lugares (2026-11-26) |
 
 Capturas: `projects/frontend/test-results/brand-header-desktop.png`,
-`brand-header-mobile.png` y las que genere la suite E2E.
+`brand-header-mobile.png`, `navigation-mobile-menu.png`, `navigation-1024.png`,
+`navigation-768.png`, `registro-desktop.png`, `registro-mobile.png` y las que genere la
+suite E2E.
 
 ## 9. Pendientes
 

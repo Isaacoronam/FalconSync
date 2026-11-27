@@ -1,6 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, finalize, firstValueFrom, map, shareReplay, tap, throwError } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  finalize,
+  firstValueFrom,
+  map,
+  shareReplay,
+  tap,
+  throwError,
+  timeout,
+} from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
   AuthSessionResponse,
@@ -68,7 +78,7 @@ export class AuthService {
   );
 
   initialize(): Promise<void> {
-    return firstValueFrom(this.refresh())
+    return firstValueFrom(this.refresh().pipe(timeout(12_000)))
       .then(() => undefined)
       .catch(() => this.clearSession());
   }
@@ -146,7 +156,7 @@ export class AuthService {
   }
 
   updateCurrentUser(
-    patch: Partial<Pick<AuthUser, 'name' | 'username'>>,
+    patch: Partial<Pick<AuthUser, 'name' | 'surname' | 'username'>>,
   ): void {
     this.currentUserState.update((user) =>
       user ? { ...user, ...patch } : user,

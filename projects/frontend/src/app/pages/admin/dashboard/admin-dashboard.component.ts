@@ -1,15 +1,25 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdminSummary } from '../../../models/admin.model';
 import { AdminApiService } from '../../../services/admin-api.service';
 import { AuthService } from '../../../services/auth.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
 import { AUDIT_ACTION_LABELS } from '../../../services/utils/location-labels';
+import { userDisplayName } from '../../../services/utils/user-display';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,6 +29,10 @@ export class AdminDashboardComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly auth = inject(AuthService);
+  protected readonly displayName = computed(() => {
+    const user = this.auth.currentUser();
+    return user ? userDisplayName(user) : '';
+  });
   protected readonly summary = signal<AdminSummary | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);

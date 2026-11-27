@@ -1,5 +1,5 @@
 <section class="auth-page" aria-labelledby="register-title">
-  <div class="auth-card">
+  <div class="auth-card auth-card--register">
     <app-auth-brand />
     <p class="auth-card__eyebrow">Cuenta FalconSync</p>
     <h1 id="register-title">Crea tu cuenta</h1>
@@ -12,20 +12,50 @@
         <p class="form-error" role="alert">{{ error() }}</p>
       }
 
-      <div class="form-field">
-        <label for="register-name">Nombre</label>
-        <input
-          id="register-name"
-          type="text"
-          formControlName="name"
-          autocomplete="name"
-          maxlength="80"
-          [attr.aria-invalid]="nameError() ? 'true' : null"
-          [attr.aria-describedby]="nameError() ? 'register-name-error' : null"
-        />
-        @if (nameError()) {
-          <p id="register-name-error" class="form-field__error">{{ nameError() }}</p>
-        }
+      <div class="auth-form__row">
+        <div class="form-field">
+          <label for="register-name">Nombre</label>
+          <input
+            id="register-name"
+            type="text"
+            formControlName="name"
+            autocomplete="given-name"
+            autocapitalize="words"
+            maxlength="16"
+            [attr.aria-invalid]="nameError() ? 'true' : null"
+            [attr.aria-describedby]="
+              'register-name-help' + (nameError() ? ' register-name-error' : '')
+            "
+          />
+          <p id="register-name-help" class="form-field__help">
+            Solo letras, espacios, guiones y apóstrofes · máx. 16.
+          </p>
+          @if (nameError()) {
+            <p id="register-name-error" class="form-field__error">{{ nameError() }}</p>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="register-surname">Apellido</label>
+          <input
+            id="register-surname"
+            type="text"
+            formControlName="surname"
+            autocomplete="family-name"
+            autocapitalize="words"
+            maxlength="16"
+            [attr.aria-invalid]="surnameError() ? 'true' : null"
+            [attr.aria-describedby]="
+              'register-surname-help' + (surnameError() ? ' register-surname-error' : '')
+            "
+          />
+          <p id="register-surname-help" class="form-field__help">
+            Solo letras, espacios, guiones y apóstrofes · máx. 16.
+          </p>
+          @if (surnameError()) {
+            <p id="register-surname-error" class="form-field__error">{{ surnameError() }}</p>
+          }
+        </div>
       </div>
 
       <div class="form-field">
@@ -47,21 +77,72 @@
 
       <div class="form-field">
         <label for="register-password">Contraseña</label>
-        <input
-          id="register-password"
-          type="password"
-          formControlName="password"
-          autocomplete="new-password"
-          [attr.aria-describedby]="
-            passwordError()
-              ? 'register-password-help register-password-error'
-              : 'register-password-help'
-          "
-          [attr.aria-invalid]="passwordError() ? 'true' : null"
-        />
+        <div class="form-field__control">
+          <input
+            id="register-password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="new-password"
+            [attr.aria-describedby]="
+              passwordError()
+                ? 'register-password-help register-password-error'
+                : 'register-password-help'
+            "
+            [attr.aria-invalid]="passwordError() ? 'true' : null"
+          />
+          <button
+            class="form-field__toggle"
+            type="button"
+            [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="showPassword()"
+            (click)="showPassword.set(!showPassword())"
+          >
+            @if (showPassword()) {
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M3 3l18 18M10.6 10.7a2 2 0 002.8 2.8M9.9 5.2A10.5 10.5 0 0112 5c5.5 0 9 6 9 6a17 17 0 01-2.3 3.1M6.2 6.9A17.7 17.7 0 003 11s3.5 6 9 6c1.1 0 2.2-.2 3.2-.6"
+                />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" />
+                <circle cx="12" cy="12" r="2.8" />
+              </svg>
+            }
+          </button>
+        </div>
         <p id="register-password-help" class="form-field__help">
           Mínimo 10 caracteres, con al menos una letra y un número.
         </p>
+        <ul class="password-checks" aria-label="Requisitos de la contraseña">
+          <li [class.password-checks__item--ok]="hasPasswordLength()">
+            <span class="password-checks__icon" aria-hidden="true">
+              {{ hasPasswordLength() ? '✓' : '•' }}
+            </span>
+            <span>10 caracteres</span>
+            <span class="sr-only">
+              {{ hasPasswordLength() ? 'Cumplido' : 'Pendiente' }}
+            </span>
+          </li>
+          <li [class.password-checks__item--ok]="hasPasswordLetter()">
+            <span class="password-checks__icon" aria-hidden="true">
+              {{ hasPasswordLetter() ? '✓' : '•' }}
+            </span>
+            <span>Una letra</span>
+            <span class="sr-only">
+              {{ hasPasswordLetter() ? 'Cumplido' : 'Pendiente' }}
+            </span>
+          </li>
+          <li [class.password-checks__item--ok]="hasPasswordDigit()">
+            <span class="password-checks__icon" aria-hidden="true">
+              {{ hasPasswordDigit() ? '✓' : '•' }}
+            </span>
+            <span>Un número</span>
+            <span class="sr-only">
+              {{ hasPasswordDigit() ? 'Cumplido' : 'Pendiente' }}
+            </span>
+          </li>
+        </ul>
         @if (passwordError()) {
           <p id="register-password-error" class="form-field__error">{{ passwordError() }}</p>
         }
@@ -69,21 +150,56 @@
 
       <div class="form-field">
         <label for="register-confirm-password">Confirmar contraseña</label>
-        <input
-          id="register-confirm-password"
-          type="password"
-          formControlName="confirmPassword"
-          autocomplete="new-password"
-          [attr.aria-invalid]="confirmPasswordError() ? 'true' : null"
-          [attr.aria-describedby]="confirmPasswordError() ? 'register-confirm-error' : null"
-        />
+        <div class="form-field__control">
+          <input
+            id="register-confirm-password"
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            [attr.aria-invalid]="confirmPasswordError() ? 'true' : null"
+            [attr.aria-describedby]="confirmPasswordError() ? 'register-confirm-error' : null"
+          />
+          <button
+            class="form-field__toggle"
+            type="button"
+            [attr.aria-label]="
+              showConfirmPassword() ? 'Ocultar confirmación' : 'Mostrar confirmación'
+            "
+            [attr.aria-pressed]="showConfirmPassword()"
+            (click)="showConfirmPassword.set(!showConfirmPassword())"
+          >
+            @if (showConfirmPassword()) {
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  d="M3 3l18 18M10.6 10.7a2 2 0 002.8 2.8M9.9 5.2A10.5 10.5 0 0112 5c5.5 0 9 6 9 6a17 17 0 01-2.3 3.1M6.2 6.9A17.7 17.7 0 003 11s3.5 6 9 6c1.1 0 2.2-.2 3.2-.6"
+                />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" />
+                <circle cx="12" cy="12" r="2.8" />
+              </svg>
+            }
+          </button>
+        </div>
         @if (confirmPasswordError()) {
           <p id="register-confirm-error" class="form-field__error">{{ confirmPasswordError() }}</p>
         }
       </div>
 
-      <button class="button button--primary button--block" type="submit" [disabled]="submitting()">
-        {{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}
+      <button
+        class="button button--primary button--block button--cta"
+        type="submit"
+        [disabled]="submitting()"
+        [attr.aria-busy]="submitting() ? 'true' : null"
+      >
+        @if (submitting()) {
+          <span class="spinner" aria-hidden="true"></span>
+        }
+        <span>{{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}</span>
+        @if (!submitting()) {
+          <span class="button__arrow" aria-hidden="true">→</span>
+        }
       </button>
     </form>
 

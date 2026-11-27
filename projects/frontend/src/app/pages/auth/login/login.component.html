@@ -44,8 +44,19 @@
         }
       </div>
 
-      <button class="button button--primary button--block" type="submit" [disabled]="submitting()">
-        {{ submitting() ? 'Entrando…' : 'Entrar' }}
+      <button
+        class="button button--primary button--block button--cta"
+        type="submit"
+        [disabled]="submitting()"
+        [attr.aria-busy]="submitting() ? 'true' : null"
+      >
+        @if (submitting()) {
+          <span class="spinner" aria-hidden="true"></span>
+        }
+        <span>{{ submitting() ? 'Entrando…' : 'Entrar' }}</span>
+        @if (!submitting()) {
+          <span class="button__arrow" aria-hidden="true">→</span>
+        }
       </button>
     </form>
 

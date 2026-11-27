@@ -1,0 +1,350 @@
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<div class="site-header-shell" [class.site-header-shell--scrolled]="scrolled()">
+  <header class="site-header">
+    <nav class="site-nav site-nav--primary" aria-label="Navegación principal">
+      <div class="site-nav__group site-nav__group--left">
+        @for (link of publicLinks; track link.path) {
+          <a
+            class="site-nav__link"
+            [routerLink]="link.path"
+            routerLinkActive="site-nav__link--active"
+            [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenus()"
+          >
+            {{ link.label }}
+          </a>
+        }
+
+        @if (areaLinks().length > 0) {
+          <div class="site-nav__dropdown">
+            <button
+              #areasTrigger
+              class="site-nav__link site-nav__link--button"
+              [class.site-nav__link--active]="areasActive()"
+              type="button"
+              aria-controls="areas-menu"
+              [attr.aria-expanded]="areasOpen()"
+              (click)="toggleAreas()"
+            >
+              Áreas
+              <svg
+                class="site-nav__chevron"
+                [class.site-nav__chevron--open]="areasOpen()"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            @if (areasOpen()) {
+              <div
+                id="areas-menu"
+                class="site-nav__menu"
+                role="group"
+                aria-label="Áreas de trabajo"
+              >
+                @for (link of areaLinks(); track link.path) {
+                  <a
+                    class="site-nav__menu-link"
+                    [routerLink]="link.path"
+                    routerLinkActive="site-nav__menu-link--active"
+                    ariaCurrentWhenActive="page"
+                    (click)="closeMenus()"
+                  >
+                    {{ link.label }}
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </nav>
+
+    <a class="brand" routerLink="/" aria-label="FalconSync, ir al mapa">
+      <img class="brand__mark" src="brand/falconsync-logo-128.png" alt="" width="48" height="48" />
+      <span class="brand__copy">
+        <span class="brand__eyebrow">Santa Ana de Coro · Patrimonio Mundial</span>
+        <span class="brand__name">FALCONSYNC</span>
+      </span>
+    </a>
+
+    <nav class="site-nav site-nav__group site-nav__group--right" aria-label="Cuenta y acceso">
+      @if (auth.isAuthenticated()) {
+        @if (auth.isAdmin()) {
+          <a
+            class="site-nav__link site-nav__admin"
+            routerLink="/admin"
+            routerLinkActive="site-nav__link--active"
+            ariaCurrentWhenActive="page"
+          >
+            Admin
+          </a>
+        }
+
+        <div class="site-nav__dropdown">
+          <button
+            #accountTrigger
+            class="site-nav__user"
+            type="button"
+            aria-controls="account-menu"
+            [attr.aria-expanded]="accountOpen()"
+            [attr.aria-label]="'Cuenta de ' + displayName()"
+            (click)="toggleAccount()"
+          >
+            <span class="site-nav__avatar" aria-hidden="true">{{ initials() }}</span>
+            <span class="site-nav__user-name">{{ displayName() }}</span>
+            <svg
+              class="site-nav__chevron"
+              [class.site-nav__chevron--open]="accountOpen()"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          @if (accountOpen()) {
+            <div
+              id="account-menu"
+              class="site-nav__menu site-nav__menu--account"
+              role="group"
+              aria-label="Menú de cuenta"
+            >
+              <div class="site-nav__menu-header">
+                <p class="site-nav__menu-name">{{ displayName() }}</p>
+                <p class="site-nav__menu-email">{{ auth.currentUser()?.email }}</p>
+                <span class="site-nav__role">{{ roleLabel() }}</span>
+              </div>
+              <a
+                class="site-nav__menu-link"
+                routerLink="/perfil"
+                routerLinkActive="site-nav__menu-link--active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenus()"
+              >
+                Mi perfil
+              </a>
+              <a
+                class="site-nav__menu-link"
+                routerLink="/cambiar-contrasena"
+                routerLinkActive="site-nav__menu-link--active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenus()"
+              >
+                Cambiar contraseña
+              </a>
+              @if (auth.isAdmin()) {
+                <a
+                  class="site-nav__menu-link"
+                  routerLink="/admin"
+                  routerLinkActive="site-nav__menu-link--active"
+                  ariaCurrentWhenActive="page"
+                  (click)="closeMenus()"
+                >
+                  Administración
+                </a>
+              }
+            </div>
+          }
+        </div>
+
+        <button
+          class="site-nav__icon-button"
+          type="button"
+          aria-label="Salir"
+          title="Salir"
+          [disabled]="loggingOut()"
+          (click)="logout()"
+        >
+          @if (loggingOut()) {
+            <span class="spinner" aria-hidden="true"></span>
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M15 4h3a1 1 0 011 1v14a1 1 0 01-1 1h-3M10 17l5-5-5-5M15 12H3" />
+            </svg>
+          }
+        </button>
+      } @else {
+        <a
+          class="site-nav__link site-nav__link--login"
+          routerLink="/login"
+          routerLinkActive="site-nav__link--active"
+          ariaCurrentWhenActive="page"
+        >
+          Iniciar sesión
+        </a>
+        <a
+          class="site-nav__link site-nav__link--cta button button--primary button--cta"
+          routerLink="/registro"
+          routerLinkActive="site-nav__link--active"
+          ariaCurrentWhenActive="page"
+        >
+          <span>Crear cuenta</span>
+          <span class="button__arrow" aria-hidden="true">→</span>
+        </a>
+      }
+
+      <button
+        #menuButton
+        class="site-nav__burger"
+        type="button"
+        aria-controls="mobile-navigation"
+        [attr.aria-expanded]="mobileOpen()"
+        [attr.aria-label]="mobileOpen() ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'"
+        (click)="openMobileNav()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+    </nav>
+  </header>
+</div>
+
+<dialog
+  #mobileNav
+  id="mobile-navigation"
+  class="mobile-nav"
+  aria-labelledby="mobile-nav-title"
+  (close)="onMobileClosed()"
+  (click)="onMobileBackdrop($event)"
+>
+  <div class="mobile-nav__panel">
+    <header class="mobile-nav__header">
+      <a
+        class="mobile-nav__brand"
+        routerLink="/"
+        aria-label="FalconSync, ir al mapa"
+        (click)="closeMobileNav()"
+      >
+        <img src="brand/falconsync-logo-128.png" alt="" width="44" height="44" />
+        <span>FALCONSYNC</span>
+      </a>
+      <button
+        #mobileClose
+        class="mobile-nav__close"
+        type="button"
+        aria-label="Cerrar menú"
+        (click)="closeMobileNav()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </header>
+
+    <h2 id="mobile-nav-title" class="sr-only">Navegación principal</h2>
+
+    <nav class="mobile-nav__links" aria-label="Navegación principal móvil">
+      @for (link of publicLinks; track link.path) {
+        <a
+          class="mobile-nav__link"
+          [routerLink]="link.path"
+          routerLinkActive="mobile-nav__link--active"
+          [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+          ariaCurrentWhenActive="page"
+          (click)="closeMobileNav()"
+        >
+          {{ link.label }}
+        </a>
+      }
+    </nav>
+
+    @if (areaLinks().length > 0) {
+      <nav class="mobile-nav__section" aria-labelledby="mobile-areas-title">
+        <h2 id="mobile-areas-title">Áreas</h2>
+        @for (link of areaLinks(); track link.path) {
+          <a
+            class="mobile-nav__link"
+            [routerLink]="link.path"
+            routerLinkActive="mobile-nav__link--active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMobileNav()"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </nav>
+    }
+
+    @if (auth.isAuthenticated()) {
+      <div class="mobile-nav__account">
+        <div class="mobile-nav__identity">
+          <span class="site-nav__avatar" aria-hidden="true">{{ initials() }}</span>
+          <div>
+            <p class="mobile-nav__name">{{ displayName() }}</p>
+            <p class="mobile-nav__email">{{ auth.currentUser()?.email }}</p>
+            <p class="mobile-nav__role">{{ roleLabel() }}</p>
+          </div>
+        </div>
+
+        <a
+          class="mobile-nav__link"
+          routerLink="/perfil"
+          routerLinkActive="mobile-nav__link--active"
+          ariaCurrentWhenActive="page"
+          (click)="closeMobileNav()"
+        >
+          Mi perfil
+        </a>
+        <a
+          class="mobile-nav__link"
+          routerLink="/cambiar-contrasena"
+          routerLinkActive="mobile-nav__link--active"
+          ariaCurrentWhenActive="page"
+          (click)="closeMobileNav()"
+        >
+          Cambiar contraseña
+        </a>
+        @if (auth.isAdmin()) {
+          <a
+            class="mobile-nav__link"
+            routerLink="/admin"
+            routerLinkActive="mobile-nav__link--active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMobileNav()"
+          >
+            Administración
+          </a>
+        }
+
+        <button
+          class="button button--ghost button--block mobile-nav__logout"
+          type="button"
+          [disabled]="loggingOut()"
+          (click)="logout()"
+        >
+          @if (loggingOut()) {
+            <span class="spinner" aria-hidden="true"></span>
+          }
+          {{ loggingOut() ? 'Saliendo…' : 'Salir' }}
+        </button>
+      </div>
+    } @else {
+      <div class="mobile-nav__account">
+        <a
+          class="button button--primary button--block button--cta"
+          routerLink="/registro"
+          (click)="closeMobileNav()"
+        >
+          <span>Crear cuenta</span>
+          <span class="button__arrow" aria-hidden="true">→</span>
+        </a>
+        <a
+          class="button button--ghost button--block"
+          routerLink="/login"
+          ariaCurrentWhenActive="page"
+          (click)="closeMobileNav()"
+        >
+          Iniciar sesión
+        </a>
+      </div>
+    }
+  </div>
+</dialog>

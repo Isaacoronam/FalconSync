@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
+import { userDisplayName } from '../../../services/utils/user-display';
 
 @Component({
   selector: 'app-admin-layout',
@@ -11,6 +12,10 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class AdminLayoutComponent {
   protected readonly auth = inject(AuthService);
+  protected readonly displayName = computed(() => {
+    const user = this.auth.currentUser();
+    return user ? userDisplayName(user) : '';
+  });
 
   protected roleLabel(): string {
     switch (this.auth.currentUser()?.role) {

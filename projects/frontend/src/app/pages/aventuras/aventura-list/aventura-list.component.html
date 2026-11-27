@@ -13,7 +13,7 @@
 }
 
 @if (loading()) {
-  <p>Cargando recorridos…</p>
+  <app-page-skeleton variant="cards" label="Cargando recorridos…" [rows]="6" />
 } @else if (adventures().length === 0) {
   <p class="empty">No hay recorridos publicados todavía.</p>
 } @else {

@@ -124,7 +124,8 @@ describe('Administración de POI', () => {
     adminToken = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
 
     const registered = await request(app).post('/api/auth/register').send({
-      name: 'Usuario de Pruebas',
+      name: 'Usuario',
+      surname: 'Pruebas',
       email: 'usuario@admin-test.local',
       password: USER_PASSWORD,
     });
@@ -302,6 +303,7 @@ describe('Administración de POI', () => {
       'lastLoginAt',
       'name',
       'role',
+      'surname',
       'username',
     ]);
   });
@@ -348,7 +350,9 @@ describe('Administración de POI', () => {
 
   it('guarda y publica contenido editorial y valida sus fuentes', async () => {
     const location = await createLocation({
+      whatIs: 'Presentación ampliada del lugar con contexto patrimonial.',
       historicalStory: 'Relato histórico con referencias documentadas.',
+      contentReviewedAt: '2026-11-26',
       interestingFacts: ['Primer dato de interés.', 'Segundo dato de interés.'],
       visitorInfo: 'El acceso está sujeto al horario del recinto.',
       contentSources: ['https://example.org/historia-del-lugar'],
@@ -360,9 +364,14 @@ describe('Administración de POI', () => {
 
     assert.equal(publicDetail.status, 200);
     assert.equal(
+      publicDetail.body.data.whatIs,
+      'Presentación ampliada del lugar con contexto patrimonial.',
+    );
+    assert.equal(
       publicDetail.body.data.historicalStory,
       'Relato histórico con referencias documentadas.',
     );
+    assert.ok(publicDetail.body.data.contentReviewedAt);
     assert.deepEqual(publicDetail.body.data.interestingFacts, [
       'Primer dato de interés.',
       'Segundo dato de interés.',

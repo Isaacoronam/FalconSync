@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AuditEntry } from '../../../models/admin.model';
 import { AdminApiService } from '../../../services/admin-api.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
@@ -7,6 +8,7 @@ import { AUDIT_ACTION_LABELS } from '../../../services/utils/location-labels';
 
 @Component({
   selector: 'app-admin-audit',
+  imports: [PageSkeletonComponent],
   templateUrl: './admin-audit.component.html',
   styleUrl: './admin-audit.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

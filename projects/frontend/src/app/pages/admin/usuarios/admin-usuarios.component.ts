@@ -20,15 +20,17 @@ import {
   AssignableUserRole,
 } from '../../../models/admin.model';
 import { UserRole } from '../../../models/auth.model';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdminApiService } from '../../../services/admin-api.service';
 import { AuthService } from '../../../services/auth.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
+import { userDisplayName } from '../../../services/utils/user-display';
 
 type AccountAction = 'role' | 'status' | 'revoke';
 
 @Component({
   selector: 'app-admin-usuarios',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PageSkeletonComponent],
   templateUrl: './admin-usuarios.component.html',
   styleUrl: './admin-usuarios.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -228,13 +230,13 @@ export class AdminUsuariosComponent implements OnInit {
 
     switch (action) {
       case 'role':
-        return `Cambiar rol de ${user.name}`;
+        return `Cambiar rol de ${userDisplayName(user)}`;
       case 'status':
         return user.isActive
-          ? `Desactivar a ${user.name}`
-          : `Activar a ${user.name}`;
+          ? `Desactivar a ${userDisplayName(user)}`
+          : `Activar a ${userDisplayName(user)}`;
       case 'revoke':
-        return `Revocar sesiones de ${user.name}`;
+        return `Revocar sesiones de ${userDisplayName(user)}`;
     }
   }
 
@@ -286,6 +288,10 @@ export class AdminUsuariosComponent implements OnInit {
     return this.auth.currentUser()?.id === user.id;
   }
 
+  protected displayName(user: AdminUser): string {
+    return userDisplayName(user);
+  }
+
   protected roleLabel(role: AdminUser['role']): string {
     switch (role) {
       case 'admin':
@@ -315,13 +321,13 @@ export class AdminUsuariosComponent implements OnInit {
   private successMessage(action: AccountAction, user: AdminUser): string {
     switch (action) {
       case 'role':
-        return `Rol de ${user.name} actualizado. Se revocaron sus sesiones.`;
+        return `Rol de ${userDisplayName(user)} actualizado. Se revocaron sus sesiones.`;
       case 'status':
         return user.isActive
-          ? `Cuenta de ${user.name} desactivada. Sus sesiones fueron revocadas.`
-          : `Cuenta de ${user.name} activada.`;
+          ? `Cuenta de ${userDisplayName(user)} desactivada. Sus sesiones fueron revocadas.`
+          : `Cuenta de ${userDisplayName(user)} activada.`;
       case 'revoke':
-        return `Sesiones de ${user.name} revocadas.`;
+        return `Sesiones de ${userDisplayName(user)} revocadas.`;
     }
   }
 }

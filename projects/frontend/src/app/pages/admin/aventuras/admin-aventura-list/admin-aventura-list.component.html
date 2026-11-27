@@ -31,7 +31,7 @@
 }
 
 @if (loading()) {
-  <p>Cargando aventuras…</p>
+  <app-page-skeleton variant="table" label="Cargando aventuras…" [rows]="6" />
 } @else if (adventures().length === 0) {
   <p class="empty">No se encontraron aventuras con esos filtros.</p>
 } @else {

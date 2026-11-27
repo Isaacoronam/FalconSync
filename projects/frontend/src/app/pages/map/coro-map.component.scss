@@ -90,10 +90,16 @@
   min-height: 0;
   border: 1px solid var(--line);
   border-radius: 18px;
-  background: rgba(251, 247, 239, 0.8);
+  background: linear-gradient(180deg, rgba(251, 247, 239, 0.74) 0%, rgba(251, 247, 239, 0.52) 100%);
   box-shadow: 0 14px 36px rgba(43, 26, 19, 0.09);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px) saturate(1.02);
   overflow: hidden;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .map-panel {
+    background: rgba(251, 247, 239, 0.94);
+  }
 }
 
 .map-panel__section {
@@ -275,15 +281,21 @@
 
 .location-card__meta {
   overflow: hidden;
-  color: var(--muted);
+  color: var(--ink-soft);
   font-size: 0.66rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .location-card__arrow {
-  color: var(--terracotta);
-  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--terracotta);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .location-card__detail-link {

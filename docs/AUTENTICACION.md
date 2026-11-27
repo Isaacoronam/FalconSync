@@ -1,6 +1,6 @@
 # Autenticación y autorización — Cortes 1, 2 y 5
 
-Fecha de verificación: 2026-11-07.
+Fecha de verificación: 2026-11-26.
 
 ## Modelo de sesión
 
@@ -28,14 +28,14 @@ distintos, la cookie dejará de enviarse y habrá que revisar el diseño.
 
 | Método | Ruta | Acceso | Resultado |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | Público, rate limit | Crea usuario `user`, sesión y cookie. |
+| `POST` | `/api/auth/register` | Público, rate limit | Crea usuario `user` con nombre y apellido, sesión y cookie. |
 | `POST` | `/api/auth/login` | Público, rate limit | Devuelve access token, usuario y cookie. |
 | `POST` | `/api/auth/refresh` | Cookie + origen confiable | Rota la sesión y devuelve un access token nuevo. |
 | `POST` | `/api/auth/logout` | Cookie | Revoca la sesión y borra la cookie. |
 | `GET` | `/api/auth/me` | Bearer | Devuelve el usuario autenticado. |
 | `POST` | `/api/auth/change-password` | Bearer | Cambia la contraseña, incrementa `tokenVersion` y revoca las demás sesiones. |
 | `GET` | `/api/profile/me` | Bearer | Perfil privado, estadísticas y últimos check-in. |
-| `PATCH` | `/api/profile/me` | Bearer | Edita nombre, `username` y biografía. |
+| `PATCH` | `/api/profile/me` | Bearer | Edita nombre, apellido, `username` y biografía. |
 | `GET` | `/api/profile/avatar` | Bearer | Sirve el avatar del usuario autenticado. |
 | `POST` | `/api/profile/avatar` | Bearer + rate limit | Sube o reemplaza el avatar (`multipart/form-data`, campo `image`). |
 | `DELETE` | `/api/profile/avatar` | Bearer | Elimina el avatar. |
@@ -52,19 +52,34 @@ Errores relevantes: `INVALID_CREDENTIALS`, `EMAIL_IN_USE`, `AUTHENTICATION_REQUI
 `INVALID_ACCESS_TOKEN`, `SESSION_REVOKED`, `PASSWORD_CHANGE_REQUIRED`, `FORBIDDEN`,
 `RATE_LIMITED`.
 
+### Registro con nombre y apellido
+
+`POST /api/auth/register` recibe `name`, `surname`, `email` y `password`:
+
+- `name` y `surname` son obligatorios, se normalizan con NFC, se recortan y se colapsan
+  espacios internos.
+- Cada uno admite entre 2 y 16 caracteres y solo letras Unicode, espacios internos,
+  guiones y apóstrofes. Se rechazan números, emojis y otros símbolos.
+- Se aceptan formas como `María José`, `Pérez-Jiménez` y `O'Brien`.
+- El `username` generado parte de `name + surname` y conserva el mecanismo de sufijos
+  para evitar colisiones.
+- Las cuentas creadas antes de esta regla conservan `surname` vacío; la interfaz muestra
+  el nombre disponible y permite completar el apellido desde el perfil.
+
 ## Flujo del frontend
 
-1. `provideAppInitializer` intenta `/api/auth/refresh` al arrancar. Si no hay cookie,
-   continúa como visitante.
+1. `provideAppInitializer` intenta `/api/auth/refresh` al arrancar con un tiempo máximo de
+   12 segundos. Si no hay cookie o la API no responde, continúa como visitante.
 2. El interceptor añade el access token solo a peticiones `/api`.
 3. Ante un `401`, el interceptor comparte una única petición de refresh, reintenta la
    petición original y, si el refresh falla, limpia la sesión local.
 4. Los guards protegen `/admin` y las rutas autenticadas. Un admin con cambio pendiente
    es redirigido a `/cambiar-contrasena`.
-5. El header muestra la cuenta, el enlace de administración cuando corresponde y el
-   botón de salida. El nombre de la cuenta enlaza a `/perfil`.
-6. Al guardar el nombre desde el perfil, `AuthService.updateCurrentUser` actualiza el header
-   sin necesidad de recargar la sesión.
+5. El header flotante mantiene la marca centrada, agrupa las áreas por rol en «Áreas» y
+   ofrece un menú de cuenta con perfil, cambio de contraseña y salida. En móvil usa una
+   hoja a pantalla completa con foco atrapado y retorno al botón de menú.
+6. Al guardar nombre o apellido desde el perfil, `AuthService.updateCurrentUser` actualiza
+   el header sin necesidad de recargar la sesión.
 
 ## Configuración
 
@@ -81,14 +96,20 @@ y debe cambiarse en el primer acceso.
 
 ## Verificación
 
-- 12 pruebas backend de autenticación y autorización.
-- 89 pruebas backend en total, incluidas las 6 del perfil privado y las 10 de roles y
-  administración sensible (verificado el 2026-11-13).
-- 53 pruebas frontend en total (verificado el 2026-11-13).
-- 17 pruebas E2E con navegador real, incluyendo registro, persistencia tras recarga,
-  logout, acceso admin, cambio obligatorio, bloqueo de usuario normal, CRUD de POI, perfil,
-  avatar, check-in con foto y gestión de rol, estado y sesiones de una cuenta.
-- `npm audit --omit=dev`: 0 vulnerabilidades en backend y frontend.
+- 15 pruebas backend de autenticación y autorización.
+- 190 pruebas backend en total, incluidas las del perfil privado, roles, conservación,
+  evidencias, panoramas y seeds (verificado el 2026-11-26).
+- 111 pruebas frontend en total (verificado el 2026-11-26).
+- 48 pruebas E2E con navegador real. En modo rápido: 42 aprobadas y 6 omitidas (las cinco
+  del corpus RAG y el caso de los 23 lugares). En modo `npm run e2e:rag`: 47 aprobadas y
+  1 omitida (el caso que valida el estado sin corpus). Incluyen registro con
+  nombre/apellido, validación de caracteres, persistencia tras recarga, logout, acceso
+  admin, cambio obligatorio, bloqueo de usuario normal, CRUD de POI, perfil, avatar,
+  check-in con foto, gestión de rol/estado/sesiones, navegación móvil accesible, skeletons,
+  sticky header, catálogo con búsqueda/filtros/galería y las respuestas de los 23 lugares.
+- `npm run verify` completo en verde el 2026-11-26: backend 190, frontend 111, build y E2E.
+- `npm run e2e:rag` en verde el 2026-11-26: 47/48 con S-033 y una omisión esperada.
+- `npm audit --omit=dev`: 0 vulnerabilidades en backend y frontend (verificación previa).
 
 El contrato detallado del perfil, el avatar y las fotos está en [`PERFIL.md`](./PERFIL.md).
 

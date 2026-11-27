@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PanoramaViewerComponent } from '../../../components/panoramas/panorama-viewer/panorama-viewer.component';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { PanoramaDetail } from '../../../models/panorama.model';
 import { PanoramaApiService } from '../../../services/panorama-api.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
@@ -9,7 +10,7 @@ import { formatPanoramaDate } from '../../../services/utils/panorama-labels';
 
 @Component({
   selector: 'app-panorama-detail',
-  imports: [RouterLink, PanoramaViewerComponent],
+  imports: [RouterLink, PanoramaViewerComponent, PageSkeletonComponent],
   templateUrl: './panorama-detail.component.html',
   styleUrl: './panorama-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

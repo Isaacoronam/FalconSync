@@ -39,10 +39,12 @@
 }
 
 .progreso-barra__relleno {
+  width: 100%;
   height: 100%;
   background: var(--terracotta);
   border-radius: 999px;
-  transition: width 400ms ease;
+  transform-origin: left center;
+  transition: transform 400ms ease;
 }
 
 .progreso-siguiente {
@@ -175,4 +177,10 @@
   font-size: 0.86rem;
   color: var(--muted);
   font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progreso-barra__relleno {
+    transition: none;
+  }
 }

@@ -8,13 +8,14 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdventureApiService } from '../../../services/adventure-api.service';
 import { apiErrorMessage } from '../../../services/utils/api-error';
 import { AdventureProgress } from '../../../models/adventure.model';
 
 @Component({
   selector: 'app-aventura-progreso',
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './aventura-progreso.component.html',
   styleUrl: './aventura-progreso.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

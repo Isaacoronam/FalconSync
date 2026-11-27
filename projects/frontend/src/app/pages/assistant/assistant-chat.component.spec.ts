@@ -412,6 +412,8 @@ describe('AssistantChatComponent', () => {
     expect(link?.getAttribute('href')).toBe('https://t.me/Falconsync_bot');
     expect(link?.getAttribute('target')).toBe('_blank');
     expect(link?.getAttribute('rel')).toContain('noopener');
+    expect(link?.getAttribute('aria-label')).toBe('Abrir @Falconsync_bot en Telegram');
+    expect(link?.querySelector('.chat-telegram__icon svg')).not.toBeNull();
     expect(link?.textContent).toContain('@Falconsync_bot');
   });
 

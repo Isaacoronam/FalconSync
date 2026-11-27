@@ -5,8 +5,13 @@ import { usernameFromIdentity } from '../helpers/validation.js';
  * Genera un nombre de usuario legible y único a partir del nombre o el correo.
  * No se usa como identificador público: el perfil solo lo consulta su dueño.
  */
-export async function generateUniqueUsername({ name, email, excludeUserId } = {}) {
-  const base = usernameFromIdentity({ name, email });
+export async function generateUniqueUsername({
+  name,
+  surname,
+  email,
+  excludeUserId,
+} = {}) {
+  const base = usernameFromIdentity({ name, surname, email });
   let candidate = base;
   let suffix = 2;
 

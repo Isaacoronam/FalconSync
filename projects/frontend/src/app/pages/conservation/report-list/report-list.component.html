@@ -144,7 +144,7 @@
     }
 
     @if (loading() && reports().length === 0) {
-      <p class="conservation-state">Cargando tus reportes…</p>
+      <app-page-skeleton variant="cards" label="Cargando tus reportes…" [rows]="4" />
     } @else if (reports().length === 0) {
       <div class="conservation-empty">
         <p>Aún no has creado reportes.</p>

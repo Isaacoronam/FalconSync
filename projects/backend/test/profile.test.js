@@ -45,7 +45,8 @@ function uniqueEmail(prefix) {
 async function registerUser(prefix) {
   const email = uniqueEmail(prefix);
   const response = await request(app).post('/api/auth/register').send({
-    name: `Usuario ${prefix}`,
+    name: 'Usuario',
+    surname: prefix,
     email,
     password: PASSWORD,
   });
@@ -143,13 +144,15 @@ describe('Perfil privado y fotos de check-in', () => {
       first.token,
       request(app).patch('/api/profile/me'),
     ).send({
-      name: 'Nombre Editado',
+      name: 'Nombre',
+      surname: 'Editado',
       username: 'cronista.coro',
       bio: 'Explorador del casco histórico.',
     });
 
     assert.equal(updated.status, 200, JSON.stringify(updated.body));
-    assert.equal(updated.body.data.profile.name, 'Nombre Editado');
+    assert.equal(updated.body.data.profile.name, 'Nombre');
+    assert.equal(updated.body.data.profile.surname, 'Editado');
     assert.equal(updated.body.data.profile.username, 'cronista.coro');
     assert.equal(
       updated.body.data.profile.bio,
@@ -169,6 +172,19 @@ describe('Perfil privado y fotos de check-in', () => {
     ).send({ username: 'No Válido' });
     assert.equal(invalid.status, 400);
     assert.equal(invalid.body.error.code, 'VALIDATION_ERROR');
+
+    const invalidName = await asUser(
+      first.token,
+      request(app).patch('/api/profile/me'),
+    ).send({ name: 'Nombre2' });
+    assert.equal(invalidName.status, 400);
+    assert.equal(invalidName.body.error.code, 'VALIDATION_ERROR');
+
+    const longSurname = await asUser(
+      first.token,
+      request(app).patch('/api/profile/me'),
+    ).send({ surname: 'Apellido Demasiado Largo' });
+    assert.equal(longSurname.status, 400);
 
     const longBio = await asUser(
       first.token,

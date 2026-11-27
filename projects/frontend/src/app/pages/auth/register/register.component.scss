@@ -1,3 +1,67 @@
 :host {
   display: block;
 }
+
+.auth-card--register {
+  width: min(42rem, 100%);
+}
+
+.auth-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.password-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.1rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.password-checks li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: color 160ms ease;
+}
+
+.password-checks__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--cream);
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.password-checks__item--ok {
+  color: #395c33;
+}
+
+.password-checks__item--ok .password-checks__icon {
+  border-color: #b9d0b4;
+  color: #395c33;
+  background: #eef6ec;
+}
+
+@media (max-width: 560px) {
+  .auth-form__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .password-checks li {
+    transition: none;
+  }
+}

@@ -64,7 +64,7 @@
   }
 
   @if (loading()) {
-    <p class="admin-state" role="status">Cargando panoramas…</p>
+    <app-page-skeleton variant="table" label="Cargando panoramas…" [rows]="8" />
   } @else if (panoramas().length === 0) {
     <div class="admin-empty">
       <p>

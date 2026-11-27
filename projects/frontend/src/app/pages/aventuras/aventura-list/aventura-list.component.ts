@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import { AdventureApiService } from '../../../services/adventure-api.service';
 import { Adventure, difficultyLabel, statusLabel } from '../../../models/adventure.model';
 
@@ -13,7 +14,7 @@ interface ListMeta {
 
 @Component({
   selector: 'app-aventura-list',
-  imports: [RouterLink],
+  imports: [RouterLink, PageSkeletonComponent],
   templateUrl: './aventura-list.component.html',
   styleUrl: './aventura-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

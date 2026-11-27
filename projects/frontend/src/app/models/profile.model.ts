@@ -5,6 +5,7 @@ import type { UserRole } from './auth.model';
 export interface Profile {
   id: string;
   name: string;
+  surname: string;
   username: string | null;
   email: string;
   bio: string;
@@ -78,6 +79,7 @@ export interface GalleryResponse {
 
 export interface ProfileUpdatePayload {
   name?: string;
+  surname?: string;
   username?: string;
   bio?: string;
 }

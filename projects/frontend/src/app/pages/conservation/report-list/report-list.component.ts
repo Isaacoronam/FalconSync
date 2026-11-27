@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import {
   DAMAGE_CATEGORIES,
   DamageCategory,
@@ -28,7 +29,7 @@ import {
 
 @Component({
   selector: 'app-report-list',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './report-list.component.html',
   styleUrl: './report-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

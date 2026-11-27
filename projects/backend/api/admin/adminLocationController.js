@@ -461,6 +461,18 @@ function buildPayload(body, { partial = false } = {}) {
     payload.historicalStory = historicalStory;
   }
 
+  const whatIs = readText(body, 'whatIs', issues, { max: 5000 });
+
+  if (whatIs !== undefined) {
+    payload.whatIs = whatIs;
+  }
+
+  const contentReviewedAt = readDate(body, 'contentReviewedAt', issues);
+
+  if (contentReviewedAt !== undefined) {
+    payload.contentReviewedAt = contentReviewedAt;
+  }
+
   const interestingFacts = readContentArray(body, 'interestingFacts', issues, {
     maxItems: 8,
     maxLength: 280,

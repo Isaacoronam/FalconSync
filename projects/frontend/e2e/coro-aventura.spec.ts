@@ -31,7 +31,12 @@ async function crearUsuario(request: APIRequestContext): Promise<UsuarioE2E> {
   const email = `explorador-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@e2e.local`;
 
   const registro = await request.post(`${BACKEND_URL}/api/auth/register`, {
-    data: { name: 'Explorador E2E', email, password: EXPLORER_PASSWORD },
+    data: {
+      name: 'Explorador',
+      surname: 'Visitante',
+      email,
+      password: EXPLORER_PASSWORD,
+    },
   });
   expect(registro.ok(), 'registrar usuario E2E').toBeTruthy();
 

@@ -23,7 +23,7 @@
   }
 
   @if (loading()) {
-    <p class="conservation-state">Cargando evidencia…</p>
+    <app-page-skeleton variant="list" label="Cargando evidencia…" [rows]="3" />
   } @else if (evidence().length === 0) {
     <div class="conservation-empty">
       <p>{{ emptyMessage() }}</p>

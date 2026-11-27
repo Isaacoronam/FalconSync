@@ -135,8 +135,16 @@ describe("Seed de POI", () => {
         `${location.title} debe declarar un nivel de verificación`,
       );
       assert.ok(
+        location.whatIs?.length >= 100,
+        `${location.title} debe tener una presentación «Qué es»`,
+      );
+      assert.ok(
         location.historicalStory?.length >= 100,
         `${location.title} debe tener una reseña editorial ampliada`,
+      );
+      assert.ok(
+        location.contentReviewedAt instanceof Date,
+        `${location.title} debe declarar la fecha de revisión editorial`,
       );
       assert.ok(
         location.interestingFacts?.length >= 2,
@@ -192,7 +200,9 @@ describe("Seed de POI", () => {
   it("sincroniza solo el contenido editorial vacío y no borra ni sobrescribe otros datos", async () => {
     for (const location of locations) {
       const base = { ...location };
+      delete base.whatIs;
       delete base.historicalStory;
+      delete base.contentReviewedAt;
       delete base.interestingFacts;
       delete base.visitorInfo;
       delete base.contentSources;
@@ -203,7 +213,9 @@ describe("Seed de POI", () => {
       ...locations[0],
       title: "Mirador legado",
       slug: "mirador-legado",
+      whatIs: undefined,
       historicalStory: undefined,
+      contentReviewedAt: null,
       interestingFacts: [],
       visitorInfo: undefined,
       contentSources: [],
@@ -215,10 +227,15 @@ describe("Seed de POI", () => {
 
     assert.equal(result.updated, locations.length);
     assert.equal(
+      cathedral.whatIs,
+      locations.find((location) => location.slug === "catedral-de-coro").whatIs,
+    );
+    assert.equal(
       cathedral.historicalStory,
       locations.find((location) => location.slug === "catedral-de-coro")
         .historicalStory,
     );
+    assert.ok(cathedral.contentReviewedAt);
     assert.ok(legacy);
     assert.equal(legacy.historicalStory, undefined);
     assert.equal(

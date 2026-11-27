@@ -10,19 +10,32 @@ test('Chivito carga con su estado, sus preguntas de inicio y sin selector de lug
   await expect(page.locator('.chat__avatar')).toBeVisible();
   await expect(page.locator('.chat__top')).toContainText('Guía turístico de FalconSync');
 
-  // El entorno E2E corre sin corpus RAG (RAG_TOURIST_ENABLED apagado): Chivito se
-  // declara en preparación y bloquea la consulta. Si se habilita el corpus en E2E,
-  // este estado pasa a "Chivito disponible" y el spec debe actualizarse.
+  // El spec funciona en los dos modos: sin corpus (Chivito en preparación)
+  // y con corpus RAG (Chivito disponible, entrada y preguntas habilitadas).
   const status = page.locator('.chat__availability');
   await expect(status).toBeVisible();
-  await expect(status).toHaveText('Chivito en preparación');
+  await expect(status).toHaveText(/Chivito (disponible|en preparación)/);
 
-  await expect(page.locator('#chat-question')).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Enviar pregunta' })).toBeDisabled();
-
+  const statusText = ((await status.textContent()) ?? '').trim();
+  const available = statusText.startsWith('Chivito disponible');
+  const question = page.locator('#chat-question');
+  const send = page.getByRole('button', { name: 'Enviar pregunta' });
   const prompt = page.getByRole('button', { name: '¿Qué es Coro?' });
+
   await expect(prompt).toBeVisible();
-  await expect(prompt).toBeDisabled();
+
+  if (available) {
+    await expect(question).toBeEnabled();
+    await expect(prompt).toBeEnabled();
+    // El botón de envío se habilita cuando hay texto en el compositor.
+    await question.fill('¿Qué es Coro?');
+    await expect(send).toBeEnabled();
+    await question.fill('');
+  } else {
+    await expect(question).toBeDisabled();
+    await expect(send).toBeDisabled();
+    await expect(prompt).toBeDisabled();
+  }
 
   // Sin selector de lugar: el lugar se resuelve desde el texto de la pregunta.
   await expect(page.locator('select')).toHaveCount(0);
@@ -30,9 +43,11 @@ test('Chivito carga con su estado, sus preguntas de inicio y sin selector de lug
   // El apoyo técnico no se ofrece a visitantes anónimos.
   await expect(page.getByRole('button', { name: /Apoyo técnico/ })).toHaveCount(0);
 
-  // La guía ofrece continuar en Telegram.
+  // La guía ofrece continuar en Telegram con el icono de la marca.
   const telegram = page.locator('.chat-telegram__action');
   await expect(telegram).toBeVisible();
   await expect(telegram).toHaveAttribute('href', 'https://t.me/Falconsync_bot');
   await expect(telegram).toHaveAttribute('target', '_blank');
+  await expect(telegram).toHaveAccessibleName('Abrir @Falconsync_bot en Telegram');
+  await expect(telegram.locator('.chat-telegram__icon svg')).toBeVisible();
 });

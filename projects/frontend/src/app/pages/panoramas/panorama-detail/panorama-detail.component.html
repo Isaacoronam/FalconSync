@@ -1,5 +1,5 @@
 @if (loading()) {
-  <p class="panorama-state" role="status">Cargando la visita 360°…</p>
+  <app-page-skeleton variant="viewer" label="Cargando la visita 360°…" />
 } @else if (error() || !panorama()) {
   <section class="panorama-state panorama-state--error" role="alert">
     <h1>No se pudo abrir esta visita 360°</h1>

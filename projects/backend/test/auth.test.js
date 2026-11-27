@@ -45,7 +45,8 @@ async function register(overrides = {}) {
   return request(app)
     .post('/api/auth/register')
     .send({
-      name: 'Ana Pérez',
+      name: 'Ana',
+      surname: 'Pérez',
       email: 'ana@example.com',
       password: USER_PASSWORD,
       ...overrides,
@@ -85,6 +86,8 @@ describe('Autenticación FalconSync', () => {
     assert.equal(response.status, 201);
     assert.ok(response.body.data.accessToken);
     assert.equal(response.body.data.user.email, 'ana@example.com');
+    assert.equal(response.body.data.user.name, 'Ana');
+    assert.equal(response.body.data.user.surname, 'Pérez');
     assert.equal(response.body.data.user.role, 'user');
     assert.equal(response.body.data.user.passwordHash, undefined);
 
@@ -119,6 +122,56 @@ describe('Autenticación FalconSync', () => {
     assert.equal(response.status, 400);
     assert.equal(response.body.error.code, 'VALIDATION_ERROR');
     assert.ok(response.body.error.details.length >= 3);
+  });
+
+  it('rechaza números y símbolos en nombre o apellido', async () => {
+    const response = await register({
+      name: 'Ana2',
+      surname: 'Pérez!',
+      email: 'ana-numeros@example.com',
+    });
+
+    assert.equal(response.status, 400);
+    const details = response.body.error.details.join(' ');
+    assert.match(details, /nombre solo puede contener letras/);
+    assert.match(details, /apellido solo puede contener letras/);
+  });
+
+  it('exige apellido y limita nombre y apellido a 16 caracteres', async () => {
+    const missing = await register({
+      surname: '',
+      email: 'sin-apellido@example.com',
+    });
+    assert.equal(missing.status, 400);
+    assert.ok(
+      missing.body.error.details.some((detail) =>
+        detail.includes('apellido es obligatorio'),
+      ),
+    );
+
+    const tooLong = await register({
+      name: 'Alejandra',
+      surname: 'Fernández de la Cruz',
+      email: 'apellido-largo@example.com',
+    });
+    assert.equal(tooLong.status, 400);
+    assert.ok(
+      tooLong.body.error.details.some((detail) =>
+        detail.includes('apellido no puede superar 16 caracteres'),
+      ),
+    );
+  });
+
+  it('acepta acentos, espacios internos, guiones y apóstrofes', async () => {
+    const response = await register({
+      name: 'María José',
+      surname: "O'Brien-Pérez",
+      email: 'maria@example.com',
+    });
+
+    assert.equal(response.status, 201, JSON.stringify(response.body));
+    assert.equal(response.body.data.user.name, 'María José');
+    assert.equal(response.body.data.user.surname, "O'Brien-Pérez");
   });
 
   it('inicia sesión con credenciales válidas y rechaza las inválidas', async () => {

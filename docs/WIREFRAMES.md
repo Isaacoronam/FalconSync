@@ -114,10 +114,10 @@ Administrador
 
 | Componente | Uso | Reglas |
 |---|---|---|
-| `AppHeader` | Navegación pública | Enlace activo con `aria-current`; menú móvil accesible. |
+| `AppHeader` | Navegación pública | Barra flotante sticky, marca centrada, áreas por rol y menú de cuenta. Enlace activo con `aria-current`; hoja móvil con foco atrapado, Escape y retorno de foco. |
 | `RoleBadge` | Rol visible | Texto, no solo color; `moderator` se muestra como “Moderador (legacy)”. |
 | `ConservationBadge` | Estado público | “Buen estado”, “Estado regular”, “Estado deficiente” o “Sin inspección verificada”; incluye fecha. |
-| `StatePanel` | Carga, vacío, error | `role="status"` para carga; `role="alert"` para error; acción de reintento. |
+| `StatePanel` | Carga, vacío, error | Skeleton con `aria-busy` y estado textual oculto para carga; `role="alert"` para error; acción de reintento. |
 | `ConfirmDialog` | Acciones críticas | `<dialog>` nativo, foco atrapado, Escape, motivo obligatorio cuando aplique. |
 | `ReauthDialog` | Rol, estado, revocación | Pide contraseña actual; nunca la conserva tras cerrar. |
 | `EvidenceThumb` | Evidencia privada | Carga autenticada; sin URL pública; texto alternativo genérico. |
@@ -156,6 +156,39 @@ Reglas:
 - “Visita 360” solo aparece si hay un panorama publicado para ese POI.
 - En móvil, la tarjeta se convierte en hoja inferior y el mapa conserva el contexto.
 
+### W-01b — Catálogo «Explorar lugares» (público)
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ Explora los lugares de Coro                                  │
+│ Conoce la historia, los detalles…                            │
+│ [Escanear el QR de un lugar]                                 │
+├──────────────────────────────────────────────────────────────┤
+│ Encuentra tu próximo lugar              23 de 23 lugares     │
+│ [Buscar nombre o contenido] [Categoría] [Zona] [Limpiar]     │
+├──────────────────────────────────────────────────────────────┤
+│ [Foto]  Catedral de Coro      [Foto]  Casa del Sol           │
+│         ● Religioso · 1771            ● Arquitectura civil   │
+│         Resumen breve…                 Resumen breve…        │
+│         Casco histórico   Leer historia →                    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Reglas:
+
+- El hero es editorial y sin *kicker* ni imagen decorativa: título, entradilla y CTA.
+- Cada tarjeta tiene un único enlace real: el título extiende su área clicable a toda la
+  tarjeta mediante un overlay. La imagen y «Leer historia» son presentación, no enlaces
+  duplicados.
+- La tarjeta muestra un punto de color por categoría —siempre acompañado del texto de la
+  categoría—, el periodo histórico y el circuito; «Leer historia» se alinea al pie.
+- La búsqueda ignora mayúsculas y tildes y recorre título, descripción, `whatIs`, periodo,
+  dirección, etiquetas y circuitos.
+- Los filtros de categoría y circuito se combinan; el contador y el estado vacío usan
+  `role="status"`/`aria-live`.
+- Si no hay resultados, se explica y se ofrece «Ver todos los lugares».
+- En móvil los filtros se apilan en una columna y las tarjetas mantienen una sola columna.
+
 ### W-02 — Ficha del POI con conservación y 360
 
 ```text
@@ -165,20 +198,28 @@ Reglas:
 │ Catedral de Coro                                             │
 │ Resumen histórico…                                           │
 │ Dirección…                                                   │
+│ [Compartir] [Ver ubicación en el mapa]                       │
 ├──────────────────────────────────────────────────────────────┤
 │ [ Imagen principal ]                                         │
 │ Autoría · Licencia · Ver original                            │
+├──────────────────────────────────────────────────────────────┤
+│ Galería: [foto 2] [foto 3] … con crédito por imagen          │
 ├───────────────────────────────────────────┬──────────────────┤
-│ Historia                                  │ Datos del lugar  │
+│ Qué es este lugar                         │ Datos del lugar  │
 │ …                                         │ Conservación:    │
 │                                           │ [Sin inspección  │
-│ Detalles de interés                       │  verificada]     │
-│ …                                         │ Última revisión: │
-│                                           │ —                │
-│ [Ver visita 360°]  [Reportar un daño]     │ Temas…           │
-│                                           │                  │
-│ Fuentes históricas                        │                  │
+│ Historia                                  │  verificada]     │
+│ …                                         │ Ficha revisada:  │
+│                                           │ 26/11/2026       │
+│ Detalles de interés                       │ Temas…           │
 │ …                                         │                  │
+│                                           │                  │
+│ Información para tu visita                │                  │
+│ …                                         │                  │
+│ [Ver visita 360°]  [Reportar un daño]     │                  │
+│                                           │                  │
+│ Fuentes históricas y lecturas             │                  │
+│ Contenido revisado el …                   │                  │
 └───────────────────────────────────────────┴──────────────────┘
 ```
 
@@ -189,6 +230,11 @@ Reglas:
   “Sin inspección verificada”.
 - La ficha no muestra identidad del inspector, evidencia, GPS exacto ni notas internas.
 - La sección 360 se enlaza a `/panoramas/:id` y conserva el retorno a la ficha.
+- «Compartir» usa Web Share API; si no existe, copia el enlace al portapapeles y lo anuncia
+  con `role="status"`. Las fuentes muestran solo el dominio visible, con enlace externo.
+- La galería solo usa imágenes locales con crédito; si una falla, se oculta y la portada
+  conserva el fallback.
+- La fecha de revisión se formatea en UTC para no desplazarse un día según la zona horaria.
 
 ### W-03 — Crear reporte (turista autenticado)
 
@@ -450,6 +496,8 @@ Reglas:
 - El chat usa HTTP/RAG; no hay WebSocket ni LLM generativo externo en esta iteración.
 - El historial tiene altura máxima y barra de desplazamiento propia; el compositor y la franja
   de Telegram permanecen estables aunque aumenten los mensajes.
+- La franja de Telegram muestra el icono de la marca en un círculo blanco, el texto «Abrir
+  @Falconsync_bot» y un nombre accesible explícito; en móvil el botón ocupa el ancho completo.
 - El historial baja al último mensaje al enviar una pregunta, pero no arrastra la vista si la
   persona está leyendo mensajes anteriores. Es enfocable con teclado y tiene nombre accesible.
 - El asistente técnico es una pantalla separada, solo para inspector/historiador.

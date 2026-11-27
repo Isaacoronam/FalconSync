@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { PageSkeletonComponent } from '../../../components/ui/page-skeleton/page-skeleton.component';
 import {
   AdminPanoramaSummary,
   PanoramaStatus,
@@ -26,7 +27,7 @@ interface ListMeta {
 
 @Component({
   selector: 'app-admin-panorama-list',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PageSkeletonComponent],
   templateUrl: './admin-panorama-list.component.html',
   styleUrl: './admin-panorama-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

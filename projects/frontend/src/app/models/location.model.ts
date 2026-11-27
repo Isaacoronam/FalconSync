@@ -40,14 +40,9 @@ export const LOCATION_TAGS = [
 
 export type LocationTag = (typeof LOCATION_TAGS)[number];
 
-export const LOCATION_VERIFICATION_LEVELS = [
-  'unverified',
-  'single-source',
-  'verified',
-] as const;
+export const LOCATION_VERIFICATION_LEVELS = ['unverified', 'single-source', 'verified'] as const;
 
-export type LocationVerificationLevel =
-  (typeof LOCATION_VERIFICATION_LEVELS)[number];
+export type LocationVerificationLevel = (typeof LOCATION_VERIFICATION_LEVELS)[number];
 
 export type ConservationStatus = 'good' | 'fair' | 'poor' | 'unknown';
 
@@ -72,6 +67,8 @@ export interface FalconLocation {
   tags: LocationTag[];
   historicalPeriod?: string;
   historicalStory?: string;
+  whatIs?: string;
+  contentReviewedAt?: string | null;
   interestingFacts?: string[];
   visitorInfo?: string;
   contentSources?: string[];

@@ -66,6 +66,7 @@ export interface AdminSummary {
 export interface AdminUser {
   id: string;
   name: string;
+  surname: string;
   username: string | null;
   email: string;
   role: UserRole;
@@ -147,6 +148,8 @@ export interface AdminLocationPayload {
   tags: LocationTag[];
   historicalPeriod?: string;
   historicalStory?: string;
+  whatIs?: string;
+  contentReviewedAt?: string | null;
   interestingFacts?: string[];
   visitorInfo?: string;
   contentSources?: string[];

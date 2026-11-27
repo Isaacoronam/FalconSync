@@ -219,7 +219,8 @@ describe('CoroAventura — aventuras, QR y check-in', () => {
     adminToken = await login(ADMIN_EMAIL, ADMIN_PASSWORD);
 
     const registered = await request(app).post('/api/auth/register').send({
-      name: 'Usuario de Aventuras',
+      name: 'Usuario',
+      surname: 'Aventuras',
       email: USER_EMAIL,
       password: USER_PASSWORD,
     });
